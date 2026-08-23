@@ -1,59 +1,56 @@
-# Frontend
+# Welcome to your Expo app 👋
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.5.
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-## Development server
+## Get started
 
-To start a local development server, run:
+1. Install dependencies
 
-```bash
-ng serve
-```
+   ```bash
+   npm install
+   ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+2. Start the app
 
-## Code scaffolding
+   ```bash
+   npx expo start
+   ```
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+In the output, you'll find options to open the app in a
 
-```bash
-ng generate component component-name
-```
+- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-```bash
-ng generate --help
-```
+## Get a fresh project
 
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+When you're ready, run:
 
 ```bash
-ng test
+npm run reset-project
 ```
 
-## Running end-to-end tests
+This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
-For end-to-end (e2e) testing, run:
+### Other setup steps
 
-```bash
-ng e2e
-```
+- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
+- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
+- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## Learn more
 
-## Additional Resources
+To learn more about developing your project with Expo, look at the following resources:
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
+- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+
+## Join the community
+
+Join our community of developers creating universal apps.
+
+- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
+- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
