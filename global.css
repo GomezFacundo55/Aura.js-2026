@@ -17,19 +17,25 @@
     --color-brand-800: #B32E1D;
     --color-brand-900: #8C2416;
 
-  /* Superficies */
+    /* Superficies */
     --color-surface-light: #FFFFFF;
     --color-surface-muted: #F5F5F6;
     --color-surface-dark: #1A1A1A;
 
-  /* Texto */
+    /* Texto */
     --color-neutral-400: #A0A0A5;
     --color-neutral-500: #8A8A8F;
     --color-neutral-600: #5C5C61;
     --color-neutral-700: #3D3D40;
     --color-neutral-900: #1C1C1E;
 
-  /* Estados */
+    /* Fuentes */
+    --font-sans: 'Poppins-Regular', sans-serif;
+    --font-medium: 'Poppins-Medium', sans-serif;
+    --font-semibold: 'Poppins-SemiBold', sans-serif;
+    --font-bold: 'Poppins-Bold', sans-serif;
+
+    /* Estados */
     --color-success: #2E9E5B;
     --color-danger: #E3372F;
 
@@ -59,4 +65,11 @@
     --font-medium: 'Poppins-Medium', sans-serif;
     --font-semibold: 'Poppins-SemiBold', sans-serif;
     --font-bold: 'Poppins-Bold', sans-serif;
+
+    /* Radios */
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-full: 999px;
+
 }
