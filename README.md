@@ -8,11 +8,9 @@
 
 ## 1. Justificación del stack elegido
 
-> _Completar con el detalle de las tecnologías seleccionadas (frontend, backend, base de datos, notificaciones push, autenticación, envío de correos automáticos, generación/lectura de códigos QR, etc.) y los motivos de la elección de cada una._
-
 | Capa / Componente | Tecnología | Justificación |
 |---|---|---|
-| Frontend / App móvil | _(a completar)_ | _(a completar)_ |
+| Frontend / App móvil | React Native + Expo + NativeWind v5 (Android) | Expo agiliza el desarrollo y build para Android sin configuración nativa manual. NativeWind v5 permite estilizar con la sintaxis de Tailwind CSS v4 (`className`), acelerando el desarrollo de la UI. |
 | Backend / API | _(a completar)_ | _(a completar)_ |
 | Base de datos | _(a completar)_ | _(a completar)_ |
 | Notificaciones push | _(a completar)_ | _(a completar)_ |
@@ -129,17 +127,16 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 Índice de **todas y cada una** de las imágenes asociadas al proyecto (íconos, pantallas de presentación/splash, formularios, listados, logos, capturas de pantalla, etc.), para que cualquier miembro del equipo pueda ubicar rápidamente el recurso visual correspondiente.
 
-> Actualizar esta tabla cada vez que se agregue, modifique o elimine una imagen del proyecto. La ruta debe apuntar a la ubicación real del archivo dentro del repositorio.
-
 | # | Nombre / Descripción | Categoría | Pantalla / Módulo asociado | Ruta / Archivo | Vista previa |
 |---|---|---|---|---|---|
-| 1 | | Ícono | | | |
+| 1 | Ícono de la app | Ícono | - | `assets/icon.png` | ![Splash Icon](https://raw.githubusercontent.com/GomezFacundo55/Aura.js-2026/desarrollo/assets/images/splash-icon.png) |
 | 2 | | Splash / Presentación | | | |
 | 3 | | Formulario | | | |
 | 4 | | Listado | | | |
-| 5 | | Logo | | | |
+| 5 | Logo principal | Logo | - | `assets/logo.png` | ![Logo](https://raw.githubusercontent.com/GomezFacundo55/Aura.js-2026/desarrollo/assets/images/Logo.png) |
+| 6 | Landing Page | Pantalla | HomeScreen | `assets/images/Landing-Page.png` | ![Landing Page](https://i.postimg.cc/9Q7B64wJ/Landing-Page.png) |
 
-**Categorías sugeridas:**
+**Categorías:**
 - Íconos (app, botones, controles)
 - Pantallas de presentación / splash / login
 - Formularios (alta de empleado, plato, bebida, mesa, cliente, etc.)
