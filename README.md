@@ -31,31 +31,22 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 4. Fecha de finalización de la tarea
 5. Branch (si posee)
 
+
 ---
 
-### Sprint 1 — Sábado 29 de agosto
-**Alcance:** Requisitos 1, 2, 3 (Agregar empleado / Agregar plato / Agregar bebida)
+### Sprint 1 — Sábado 05 de septiembre
+**Alcance:** Requisitos 1,2,3,4, 5, 6 (Agregar empleado / Agregar plato / Agregar bebida Agregar mesa / Crear cliente registrado / Verificar ingreso del cliente registrado)
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
 |---|---|---|---|---|
-| | | | | |
-| | | | | |
-| | | | | |
+| Gomez Facundo| 4 y 6  | 30/08 | | Gomez | 
+|Delgobbo Giuliani | 1 y 5|30/08 | | Delgobbo |
+| Enzo Jauregui| 2 y 3| 30/08| | Jauregui|
+| Emir Almonacid | BD | 30/08| | Almonacid|
 
 ---
 
-### Sprint 2 — Sábado 05 de septiembre
-**Alcance:** Requisitos 4, 5, 6 (Agregar mesa / Crear cliente registrado / Verificar ingreso del cliente registrado)
-
-| Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
-|---|---|---|---|---|
-| | | | | |
-| | | | | |
-| | | | | |
-
----
-
-### Sprint 3 — Sábado 12 de septiembre
+### Sprint 2 — Sábado 12 de septiembre
 **Alcance:** Requisitos 7, 8, 9 (Rechazo de cliente / Aceptación de cliente / Ingreso como cliente anónimo)
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
@@ -66,7 +57,7 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 ---
 
-### Sprint 4 — Sábado 19 de septiembre
+### Sprint 3 — Sábado 19 de septiembre
 **Alcance:** Requisitos 10, 11, 12 (Asignación de mesa / Listado de productos y consulta al mozo / Pedido del cliente)
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
@@ -77,7 +68,7 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 ---
 
-### Sprint 5 — Sábado 26 de septiembre
+### Sprint 4 — Sábado 26 de septiembre
 **Alcance:** Requisitos 13, 14, 15 (Rechazo/confirmación del pedido por el mozo / Juegos y descuentos)
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
@@ -90,7 +81,7 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 ---
 
-### Sprint 6 — Sábado 03 de octubre
+### Sprint 5 — Sábado 03 de octubre
 **Alcance:** Requisitos 16, 17, 18 (Sector cocina / Sector bar / Aviso de pedido completo)
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
