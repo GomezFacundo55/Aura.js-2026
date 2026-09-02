@@ -50,7 +50,7 @@ export default function WelcomeScreen() {
         </Link>
 
         <Link
-          href="/(app)/home"
+          href="/(onboarding)/guest"
           className="py-2 text-center text-base text-white font-medium underline"
         >
           Ingresar como invitado
