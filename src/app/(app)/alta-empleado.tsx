@@ -5,22 +5,26 @@ import { FormError } from "@/components/ui/FormError";
 import { Input } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { QRScannerDNI } from "@/components/ui/QRScannerDNI";
-import { signUpWithProfile } from "@/lib/auth";
+import { SelectPicker } from "@/components/ui/SelectPicker";
+import { createEmployeeAccount, getMyProfile } from "@/lib/auth";
 import { parseDniQr } from "@/lib/dni-parser";
 import {
+  EMPLOYEE_PROFILE_OPTIONS,
+  isManagerRole,
+  type ProfileRole,
   validateCuit,
   validateDni,
   validateEmail,
+  validateEmployeeProfile,
   validatePasswordConfirm,
   validatePersonName,
   validateSignUpPassword,
 } from "@/lib/validation";
-import { Link, router } from "expo-router";
-import { useMemo, useState } from "react";
+import { router } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
-
-type SignUpForm = {
+type EmployeeForm = {
   apellidos: string;
   nombres: string;
   dni: string;
@@ -28,10 +32,11 @@ type SignUpForm = {
   email: string;
   password: string;
   passwordConfirm: string;
+  perfil: string;
   photoUri: string | null;
 };
 
-type TouchedFields = Record<Exclude<keyof SignUpForm, "photoUri">, boolean>;
+type TouchedFields = Record<Exclude<keyof EmployeeForm, "photoUri">, boolean>;
 
 const INITIAL_TOUCHED: TouchedFields = {
   apellidos: false,
@@ -41,10 +46,12 @@ const INITIAL_TOUCHED: TouchedFields = {
   email: false,
   password: false,
   passwordConfirm: false,
+  perfil: false,
 };
 
-export default function SignUpScreen() {
-  const [form, setForm] = useState<SignUpForm>({
+export default function AltaEmpleadoScreen() {
+  const [allowed, setAllowed] = useState(false);
+  const [form, setForm] = useState<EmployeeForm>({
     apellidos: "",
     nombres: "",
     dni: "",
@@ -52,13 +59,27 @@ export default function SignUpScreen() {
     email: "",
     password: "",
     passwordConfirm: "",
+    perfil: "",
     photoUri: null,
   });
   const [touched, setTouched] = useState<TouchedFields>(INITIAL_TOUCHED);
   const [qrScannerVisible, setQrScannerVisible] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      const profile = await getMyProfile();
+      if (!isManagerRole(profile?.perfil)) {
+        router.replace("/(app)/manager-home");
+        return;
+      }
+      setAllowed(true);
+    };
+
+    checkRole();
+  }, []);
 
   const errors = useMemo(
     () => ({
@@ -69,13 +90,14 @@ export default function SignUpScreen() {
       email: validateEmail(form.email),
       password: validateSignUpPassword(form.password),
       passwordConfirm: validatePasswordConfirm(form.password, form.passwordConfirm),
+      perfil: validateEmployeeProfile(form.perfil),
     }),
     [form],
   );
 
   const isFormValid = Object.values(errors).every((error) => error === null);
 
-  const updateField = <K extends keyof SignUpForm>(key: K, value: SignUpForm[K]) => {
+  const updateField = <K extends keyof EmployeeForm>(key: K, value: EmployeeForm[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
   };
 
@@ -92,33 +114,35 @@ export default function SignUpScreen() {
       email: true,
       password: true,
       passwordConfirm: true,
+      perfil: true,
     });
 
     if (!isFormValid) return;
 
     setIsSubmitting(true);
-    setAuthError(null);
+    setFormError(null);
 
     try {
-      const { error } = await signUpWithProfile({
+      const { error } = await createEmployeeAccount({
         email: form.email,
         password: form.password,
         nombres: form.nombres,
         apellidos: form.apellidos,
         dni: form.dni,
         cuil: form.cuit,
+        perfil: form.perfil as ProfileRole,
         photoUri: form.photoUri,
       });
 
       if (error) {
-        setAuthError(error);
+        setFormError(error);
         return;
       }
 
-      router.replace("/(app)/home");
+      router.replace("/(app)/manager-home");
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "No pudimos completar el registro.";
-      setAuthError(message);
+      const message = caught instanceof Error ? caught.message : "No pudimos dar de alta al empleado.";
+      setFormError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -142,18 +166,20 @@ export default function SignUpScreen() {
       dni: parsed.documentNumber,
       cuit: parsed.cuil ?? current.cuit,
     }));
-    setTouched((current) => ({
-      ...current,
-      apellidos: true,
-      nombres: true,
-      dni: true,
-      cuit: parsed.cuil ? true : current.cuit,
-    }));
   };
 
+  if (!allowed) {
+    return null;
+  }
+
   return (
-    <AuthScreenLayout>
+    <AuthScreenLayout backHref="/(app)/manager-home">
       <View className="gap-5">
+        <Text className="text-center text-xl font-bold text-neutral-900">Alta de empleado</Text>
+        <Text className="text-center text-sm text-neutral-600">
+          Solo supervisor o dueño pueden crear mozos o administradores.
+        </Text>
+
         <AvatarCapture
           photoUri={form.photoUri}
           onPhotoChange={(uri) => updateField("photoUri", uri)}
@@ -204,10 +230,7 @@ export default function SignUpScreen() {
               </Pressable>
             }
           />
-
-          {qrError ? (
-            <FormError message={qrError} onDismiss={() => setQrError(null)} />
-          ) : null}
+          <FormError message={qrError} onDismiss={() => setQrError(null)} />
         </View>
 
         <Input
@@ -253,16 +276,21 @@ export default function SignUpScreen() {
           onChangeText={(value) => updateField("passwordConfirm", value)}
         />
 
-        <FormError message={authError} onDismiss={() => setAuthError(null)} />
+        <SelectPicker
+          label="Perfil"
+          value={form.perfil}
+          options={[...EMPLOYEE_PROFILE_OPTIONS]}
+          placeholder="Seleccioná mozo o administrador"
+          error={touched.perfil ? errors.perfil : null}
+          onChange={(perfil) => {
+            updateField("perfil", perfil);
+            markTouched("perfil");
+          }}
+        />
 
-        <Button title="Registrarme" disabled={!isFormValid || isSubmitting} onPress={handleSubmit} />
+        <FormError message={formError} onDismiss={() => setFormError(null)} />
 
-        <View className="flex-row justify-center gap-1">
-          <Text className="text-sm text-neutral-600">¿Ya tenés cuenta?</Text>
-          <Link href="/(auth)/log-in" className="text-sm font-semibold text-brand-600">
-            Ingresá
-          </Link>
-        </View>
+        <Button title="Crear empleado" disabled={!isFormValid || isSubmitting} onPress={handleSubmit} />
       </View>
 
       <QRScannerDNI

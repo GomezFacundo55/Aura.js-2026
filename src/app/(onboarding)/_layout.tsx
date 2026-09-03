@@ -1,7 +1,7 @@
 import { Slot } from "expo-router";
 import { View } from "react-native";
 
-export default function AuthLayout() {
+export default function OnboardingLayout() {
   return (
     <View style={{ flex: 1 }}>
       <Slot />

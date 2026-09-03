@@ -1,5 +1,10 @@
-import { Stack } from "expo-router";
+import { Slot } from "expo-router";
+import { View } from "react-native";
 
 export default function AppLayout() {
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <View style={{ flex: 1 }}>
+      <Slot />
+    </View>
+  );
 }
