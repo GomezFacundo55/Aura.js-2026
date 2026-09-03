@@ -2,8 +2,6 @@
 
 > Este README es un documento vivo: se irá actualizando y completando a medida que el equipo avance en el desarrollo del proyecto.
 
-**Integrantes:** Neiner, Maximiliano - Constanzo, Alejandro - Villegas, Octavio - Ferrero, Nicolás - Morelli, Augusto - Loredo, Alejandro
-
 ---
 
 ## 1. Justificación del stack elegido
@@ -39,9 +37,9 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
 |---|---|---|---|---|
 | Delgobbo Giuliana | Módulos 1 y 5 | 23/8 | 2/9 | Delgobbo |
-| Gómez Facundo | Módulos 4 y 6 | | | |
-| Jauregui Enzo  | Módulo 2 y 3 | | | |
-| Almonacid Emir | Base de datos Supabase | | | |
+| Gómez Facundo | Módulos 4 y 6 | 30/8 | | Gomez |
+| Jauregui Enzo  | Módulo 2 y 3 | 30/8 | | Jauregui |
+| Almonacid Emir | Base de datos Supabase | 30/8 | | Almonacid |
 
 ---
 
@@ -50,9 +48,10 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
 |---|---|---|---|---|
-| | | | | |
-| | | | | |
-| | | | | |
+| Gomez Facundo| 4 y 6  | 30/08 | | Gomez | 
+|Delgobbo Giuliani | 1 y 5|30/08 | | Delgobbo |
+| Enzo Jauregui| 2 y 3| 30/08| | Jauregui|
+| Emir Almonacid | BD | 30/08| | Almonacid|
 
 ---
 
