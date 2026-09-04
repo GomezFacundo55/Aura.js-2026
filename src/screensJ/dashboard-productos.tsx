@@ -32,6 +32,12 @@ export default function ProductDashboard() {
   const [actionModal, setActionModal] = useState<boolean>(false);
   const [modalVisible, setModalVisible] = useState(false);
 
+  const [paginaActual, setPaginaActual] = useState(1);
+  const ELEMENTOS_POR_PAGINA = 3;
+  const totalPaginas = Math.ceil(productos.length / ELEMENTOS_POR_PAGINA) || 1;
+  const indiceInicio = (paginaActual - 1) * ELEMENTOS_POR_PAGINA;
+  const productosVisibles = productos.slice(indiceInicio, indiceInicio + ELEMENTOS_POR_PAGINA);
+
   useEffect(() => {
     async function loadUserData(){
 
@@ -81,6 +87,7 @@ export default function ProductDashboard() {
   
       if (respuesta.exito) {
         setProductos(respuesta.datos || []);
+        setPaginaActual(1);
         showToast('success', 'Productos cargados', 'Los productos se han cargado correctamente.');
         SoundService.reproducir("exito");
       } else {
@@ -204,10 +211,11 @@ export default function ProductDashboard() {
         <ActivityIndicator size="large" color="#16A34A" />
       </View>
     ) : (
+      <View className='flex-1'>
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 24 }}
+        contentContainerStyle={{ paddingBottom: 8 }}
       >
         {productos.length === 0 ? (
           <View className="py-20 items-center justify-center bg-white rounded-2xl border border-gray-200 mt-2">
@@ -217,7 +225,7 @@ export default function ProductDashboard() {
             </Text>
           </View>
         ) : (
-          productos.map((item) => (
+          productosVisibles.map((item) => (
             <View
               key={item.id}
               className="bg-orange-100 rounded-2xl p-3.5 mb-3 border border-orange-200 shadow-sm flex-row"
@@ -233,8 +241,8 @@ export default function ProductDashboard() {
               <View className="flex-1 ml-3.5 justify-between">
                 <View className="flex-row items-start justify-between">
                   <Text
-                    className="font-bold text-gray-900 text-base flex-1 pr-2"
-                    numberOfLines={1}
+                    className="font-bold text-gray-900 text-sm flex-1 pr-2"
+                    numberOfLines={2}
                   >
                     {item.nombre}
                   </Text>
@@ -278,21 +286,58 @@ export default function ProductDashboard() {
           ))
         )}
       </ScrollView>
+    
+    {productos.length > ELEMENTOS_POR_PAGINA && (
+        <View className="flex-row items-center justify-between bg-orange-500/30 px-4 py-2.5 rounded-2xl mt-1 mb-2">
+          <TouchableOpacity
+            disabled={paginaActual === 1}
+            onPress={() => setPaginaActual((prev) => Math.max(prev - 1, 1))}
+            className={`w-9 h-9 rounded-xl items-center justify-center ${
+              paginaActual === 1 ? 'bg-white/10' : 'bg-white/40'
+            }`}
+          >
+            <Ionicons
+              name="chevron-back"
+              size={20}
+              color={paginaActual === 1 ? '#9CA3AF' : '#FFFFFF'}
+            />
+          </TouchableOpacity>
+
+          <Text className="text-white font-bold text-sm">
+            Página {paginaActual} de {totalPaginas}
+          </Text>
+
+          <TouchableOpacity
+            disabled={paginaActual === totalPaginas}
+            onPress={() => setPaginaActual((prev) => Math.min(prev + 1, totalPaginas))}
+            className={`w-9 h-9 rounded-xl items-center justify-center ${
+              paginaActual === totalPaginas ? 'bg-white/10' : 'bg-white/40'
+            }`}
+          >
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={paginaActual === totalPaginas ? '#9CA3AF' : '#FFFFFF'}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
+      </View>
     )}
-    </View>
-    <ConfirmModal
-      visible={modalVisible}
-      title={tituloModal}
-      message={mensajeModal}
-      confirmText="Si"
-      cancelText="No"
-      action={actionModal}
-      onConfirm={handleModal}
-      onCancel={() => {
-        setModalVisible(false);
-        setProductoSeleccionado(null);
-      }}
-    />
   </View>
+  <ConfirmModal
+    visible={modalVisible}
+    title={tituloModal}
+    message={mensajeModal}
+    confirmText="Si"
+    cancelText="No"
+    action={actionModal}
+    onConfirm={handleModal}
+    onCancel={() => {
+      setModalVisible(false);
+      setProductoSeleccionado(null);
+    }}
+  />
+</View>
   );
 }
