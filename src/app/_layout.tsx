@@ -4,6 +4,7 @@ import { useFonts } from "expo-font";
 import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../../global.css";
+import { ToastProvider } from "../contextJ/Toast";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,12 +28,14 @@ export default function RootLayout() {
     <SafeAreaProvider>
       {/* translucent={false}: la status bar no flota encima del contenido. */}
       <StatusBar style="dark" />
+      <ToastProvider>
       <Stack
         screenOptions={{
           headerShown: false,
           contentStyle: { flex: 1, backgroundColor: "#F5F5F6" },
         }}
       />
+      </ToastProvider>
     </SafeAreaProvider>
   );
 }
