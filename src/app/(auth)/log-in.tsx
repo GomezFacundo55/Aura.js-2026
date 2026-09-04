@@ -62,11 +62,11 @@ export default function LogInScreen() {
     switch (role) {
       case "cocinero":
         await signInWithEmail("pruebaLuisa@foodly.com", "Luisa1234");
-        router.replace("/(app)/cocinero-home");
+        router.replace("/(app)/dashboard");
         break;
       case "cantinero":
         await signInWithEmail("pruebaCamila@foodly.com", "Camila1234");
-        router.replace("/(app)/cantinero-home");
+        router.replace("/(app)/dashboard");
         break;
       case "mozo":
         await signInWithEmail("pruebaCarlos@foodly.com", "Carlos1234");

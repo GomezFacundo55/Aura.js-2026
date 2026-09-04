@@ -58,7 +58,8 @@
         {
           "cameraPermission": "Aura necesita acceder a la cámara para tomar tu foto de perfil."
         }
-      ]
+      ],
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true,
