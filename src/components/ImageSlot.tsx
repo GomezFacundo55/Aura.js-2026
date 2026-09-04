@@ -5,7 +5,7 @@ import { ImageSlotProps } from '../interfaces/ImageSlotProps';
 
 export const ImageSlot: React.FC<ImageSlotProps> = ({ uri, index, onPress }) => {
   return (
-    <View className="w-full h-52 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden items-center justify-center relative mb-4">
+    <View className="w-full h-52 rounded-2xl border border-gray-200 shadow-sm overflow-hidden items-center justify-center relative mb-4">
       {uri ? (
         <>
           <Image
@@ -26,7 +26,7 @@ export const ImageSlot: React.FC<ImageSlotProps> = ({ uri, index, onPress }) => 
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => onPress(index)}
-          className="w-full h-full items-center justify-center bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl"
+          className="bg-orange-100 w-full h-full items-center justify-center  border-2 border-dashed border-gray-300 rounded-2xl"
         >
           <View className="w-12 h-12 rounded-full bg-green-50 items-center justify-center mb-2">
             <Ionicons name="camera-outline" size={26} color="#16A34A" />

@@ -11,9 +11,10 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useToast } from '../contextJ/Toast';
 import { SoundService } from '../servicesJ/soundService';
-import { ConfirmModal } from '../componentsZ/modal';
-import { eliminarProducto, obtenerProductos } from '../servicesJ/productService';
+import { ConfirmModal } from '../components/modal';
+import { eliminarProducto, obtenerProductos, type tabla } from '../servicesJ/productService';
 import { IProductoPedido } from '../interfaces/IProductoPedido';
+import { getMyProfile, signOut, type UserProfile } from "@/lib/auth";
 
 export default function ProductDashboard() {
   const router = useRouter();
@@ -22,7 +23,8 @@ export default function ProductDashboard() {
   const [mensajeError, setMensajeError] = useState<string | null>(null);
   const [productos, setProductos] = useState<IProductoPedido[]>([]);
   const [accion, setAccion] = useState<'eliminar' | 'editar'>('editar');
-  const [cargoUsuario, setCargoUsuario] = useState<string | null>('bebidas');
+  const [perfilUsuario, setPerfilUsuario] = useState<UserProfile | null>(null);
+  const [cargoUsuario, setCargoUsuario] = useState<tabla>('');
   const [productoSeleccionado, setProductoSeleccionado] = useState<IProductoPedido | null>(null);
 
   const [mensajeModal, setMensajeModal] = useState<string>("");
@@ -31,13 +33,51 @@ export default function ProductDashboard() {
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    
+    async function loadUserData(){
+
+      try {
+        const user = await getMyProfile();
+        if (user) {
+          setPerfilUsuario(user);
+          if(user.perfil === "cantinero"){
+            setCargoUsuario('bebidas')
+            await cargarDatos('bebidas')
+          } else if (user.perfil === "cocinero"){
+            setCargoUsuario('platos');
+            await cargarDatos('platos');
+          } else{
+            showToast("error", "Perfil no admitido.", "Debe ser Cocinero o Bartender.");
+            await SoundService.reproducir('error');
+            await logOut();
+          }
+        } else {
+          setCargoUsuario("");
+          showToast("error", "Error al cargar usuario.", "Redirigiendo al login.");
+          await SoundService.reproducir('error');
+          await logOut();
+        }
+      } catch {
+        showToast("error", "Error", "Error al cargar el perfil.");
+      } finally{
+        setCargando(false);
+      }
+    }
       
-    cargarDatos();
+    loadUserData();
   }, []);
 
-  const cargarDatos = async () => {
-      const respuesta = await obtenerProductos('bebidas');
+  const logOut = async()=>{
+    const { error } = await signOut();
+    if(error){
+      showToast("error", "Error", "Error al cerrar sesión")
+    } else {
+      router.replace("/log-in");
+    }
+  }
+
+  const cargarDatos = async (tabla: tabla) => {
+      if(!tabla) return;
+      const respuesta = await obtenerProductos(tabla);
   
       if (respuesta.exito) {
         setProductos(respuesta.datos || []);
@@ -53,13 +93,16 @@ export default function ProductDashboard() {
   
   
   const handleAddProduct = () => {
-    router.push('/create-product' as any);
+    router.push({
+      pathname: "/create-product",
+      params: { cargo: cargoUsuario },
+    });
   };
 
   const handleEdit = (producto: IProductoPedido) => {
       router.push({
       pathname: '/create-product',
-      params: { id: producto.id },
+      params: { id: producto.id, cargo: cargoUsuario },
     });
   };
   const handleAction = (accion: 'eliminar' | 'editar', producto: IProductoPedido) => 
@@ -82,11 +125,11 @@ export default function ProductDashboard() {
     setModalVisible(false);
     setCargando(true);
     try{
-      const respuesta = await eliminarProducto('bebidas', productoSeleccionado!.id);
+      const respuesta = await eliminarProducto(cargoUsuario, productoSeleccionado!.id);
       if (!respuesta.exito) 
         throw new Error(respuesta.error || 'Error desconocido al eliminar el producto.');
     
-      await cargarDatos();
+      await cargarDatos(cargoUsuario);
     } catch (error) {
       showToast('error', 'Error al eliminar', 'Ocurrió un problema al eliminar el producto.');
       SoundService.reproducir('error');
@@ -110,11 +153,40 @@ export default function ProductDashboard() {
   };
 
   return (
-  <View className="flex-1 bg-gray-100 p-4">
+    <View className="flex-1 bg-orange-400 p-4">
+      <View className="flex-row items-center justify-between mt-2 mb-3 bg-orange-500/30 p-2.5 rounded-2xl">
+        <View className="flex-row items-center flex-1 mr-2">
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={logOut}
+            className="w-9 h-9 rounded-xl bg-red-500 items-center justify-center mr-3 shadow-sm"
+          >
+            <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          <View className="flex-1">
+            <Text className="text-white font-medium text-xs">Bienvenido/a,</Text>
+            <Text className="text-white font-bold text-base" numberOfLines={1}>
+              {perfilUsuario ? `${perfilUsuario.nombres} ${perfilUsuario.apellidos}` : "Cargando..."}
+            </Text>
+          </View>
+        </View>
+
+        {cargoUsuario ? (
+          <View className="bg-white/20 px-2.5 py-1 rounded-full">
+            <Text className="text-white text-xs font-semibold uppercase tracking-wider">
+              {perfilUsuario? `${perfilUsuario.perfil}` : "Cargando..."}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+  <View className="flex-1 bg-orange-400 p-4">
     <View className="flex-row items-center justify-between mb-4 mt-2">
       <View className="flex-1 pr-2">
-        <Text className="text-2xl font-bold text-gray-900">Panel de Productos</Text>
-        <Text className="text-xs text-gray-500">Gestión de la carta</Text>
+        <Text className="text-2xl font-bold text-black">
+          Panel de Productos del {perfilUsuario? perfilUsuario.perfil : ""}
+        </Text>
+        <Text className="text-xs text-gray-600">Gestión de la carta</Text>
       </View>
 
       <TouchableOpacity
@@ -148,7 +220,7 @@ export default function ProductDashboard() {
           productos.map((item) => (
             <View
               key={item.id}
-              className="bg-white rounded-2xl p-3.5 mb-3 border border-gray-200 shadow-sm flex-row"
+              className="bg-orange-100 rounded-2xl p-3.5 mb-3 border border-orange-200 shadow-sm flex-row"
             >
               <View className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 border border-gray-100 relative self-center">
                 <Image
@@ -170,9 +242,9 @@ export default function ProductDashboard() {
                     <TouchableOpacity
                       activeOpacity={0.7}
                       onPress={() => handleAction('editar', item)}
-                      className="w-7 h-7 rounded-lg bg-blue-50 items-center justify-center border border-blue-200 mr-1.5"
+                      className="w-7 h-7 rounded-lg bg-yellow-50 items-center justify-center border border-yellow-500 mr-1.5"
                     >
-                      <Ionicons name="pencil" size={13} color="#2563EB" />
+                      <Ionicons name="pencil" size={13} color="#9f9b2b" />
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -207,7 +279,7 @@ export default function ProductDashboard() {
         )}
       </ScrollView>
     )}
-
+    </View>
     <ConfirmModal
       visible={modalVisible}
       title={tituloModal}

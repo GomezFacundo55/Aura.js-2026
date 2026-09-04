@@ -36,11 +36,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       >
         <Pressable
           onPress={(e) => e.stopPropagation()}
-          className="w-full max-w-sm bg-white rounded-3xl p-6 items-center shadow-2xl"
+          className="w-full max-w-sm bg-orange-200 rounded-3xl p-6 items-center shadow-2xl"
         >
           <View
             className={`w-14 h-14 rounded-full items-center justify-center mb-4 ${
-              action ? 'bg-red-50' : 'bg-yellow-100'
+              action ? 'bg-red-100' : 'bg-yellow-100'
             }`}
           >
             <Ionicons
@@ -50,7 +50,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             />
           </View>
 
-          <Text className="text-lg font-bold text-gray-900 text-center mb-2">
+          <Text className="text-lg font-bold text-gray-700 text-center mb-2">
             {title}
           </Text>
           <Text className="text-sm text-gray-500 text-center mb-6 leading-relaxed">
@@ -61,7 +61,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={onCancel}
-              className="flex-1 py-3 rounded-xl border border-  gray-300 items-center justify-center"
+              className="flex-1 py-3 rounded-xl border border-orange-300 items-center justify-center"
             >
               <Text className="text-gray-700 font-semibold text-sm">
                 {cancelText}

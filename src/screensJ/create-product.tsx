@@ -11,12 +11,12 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useToast } from '../contextJ/Toast';
-import { ImageSlot } from '../componentsZ/ImageSlot';
+import { ImageSlot } from '../components/ImageSlot';
 import { pickImageHelper } from '@/servicesJ/imagePickerService';
 import { ImageSourceOption } from '@/interfaces/IPickImageOptios';
 import { SoundService } from '@/servicesJ/soundService';
-import { ConfirmModal } from '../componentsZ/modal';
-import { crearProducto, obtenerUnProducto, actualizarProducto, verificarNombreExistente } from '../servicesJ/productService';
+import { ConfirmModal } from '../components/modal';
+import { crearProducto, obtenerUnProducto, actualizarProducto, verificarNombreExistente, tabla } from '../servicesJ/productService';
 import { IProductFormData } from '@/interfaces/IProductoForm';
 import { IProductoPedido } from '@/interfaces/IProductoPedido';
 
@@ -32,7 +32,8 @@ export default function CreateProduct() {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalDosVisible, setModalDosVisible] = useState(false);
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, cargo } = useLocalSearchParams<{ id?: string, cargo: tabla }>();
+  const tablaSeleccionada: tabla = cargo;
   const [isEditing, setIsEditing] = useState(Boolean(id));
   const [product, setProduct] = useState<IProductoPedido | null>(null);
 
@@ -53,7 +54,7 @@ export default function CreateProduct() {
   const cargarProducto = async () => {
     if(!id) return;
     try {
-      const respuesta = await obtenerUnProducto('bebidas', id!);
+      const respuesta = await obtenerUnProducto(tablaSeleccionada, id!);
       if(!respuesta.exito)
         throw new Error(respuesta.error || 'Error desconocido al obtener el producto.');
 
@@ -146,7 +147,7 @@ export default function CreateProduct() {
     }
     setLoading(true);
     try{
-      const checkNameResponse = await verificarNombreExistente('bebidas', name, product?.id);
+      const checkNameResponse = await verificarNombreExistente(tablaSeleccionada, name, product?.id);
       if (checkNameResponse.existe) {
         await SoundService.reproducir('error');
         showToast('error', 'Nombre existente', 'Ya existe un producto con ese nombre.');
@@ -159,7 +160,7 @@ export default function CreateProduct() {
       setLoading(false);
     }
     setModalVisible(true);
-  }
+  };
 
   function payload(): IProductFormData {
     return {
@@ -176,7 +177,7 @@ export default function CreateProduct() {
     setModalVisible(false);
     setLoading(true);
     try {
-      const respuesta = await crearProducto('bebidas', payload());
+      const respuesta = await crearProducto(tablaSeleccionada, payload());
       if (!respuesta.exito) {
         throw new Error(respuesta.error || 'Error desconocido al crear el producto.');
       }
@@ -202,7 +203,7 @@ export default function CreateProduct() {
     setModalVisible(false);
     setLoading(true);
     try{
-      const respuesta = await actualizarProducto('bebidas', product?.id!, payload());
+      const respuesta = await actualizarProducto(tablaSeleccionada, product?.id!, payload());
       if (!respuesta.exito) 
         throw new Error(respuesta.error || 'Error desconocido al actualizar el producto.');
       redirectToDashboard();
@@ -220,7 +221,7 @@ export default function CreateProduct() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-gray-50 px-4 py-6" contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView className="flex-1 bg-orange-400 px-4 py-6" contentContainerStyle={{ paddingBottom: 40 }}>
       <View className="flex-row items-center mb-6">
         <View className="flex-1">
         <Text className="text-2xl font-bold text-gray-800 mb-0.5">Datos del Producto</Text>
@@ -229,7 +230,7 @@ export default function CreateProduct() {
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={redirectToDashboard}
-        className="w-10 h-10 rounded-full bg-white border border-gray-200 items-center justify-center mr-3 shadow-sm"
+        className="w-10 h-10 rounded-full bg-orange-300 border border-transparent items-center justify-center mr-3 shadow-sm"
       >
         <Ionicons name="arrow-back" size={20} color="#1F2937" />
       </TouchableOpacity>
@@ -238,7 +239,7 @@ export default function CreateProduct() {
       <View className="mb-4">
         <Text className="text-sm font-semibold text-gray-700 mb-1">Nombre</Text>
         <TextInput
-          className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:border-green-600"
+          className="bg-orange-100 border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:border-green-600"
           placeholder="Nombre del pedido"
           placeholderTextColor="#9CA3AF"
           value={name}
@@ -249,7 +250,7 @@ export default function CreateProduct() {
       <View className="mb-4">
         <Text className="text-sm font-semibold text-gray-700 mb-1">Descripción</Text>
         <TextInput
-          className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:border-green-600"
+          className="bg-orange-100 border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:border-green-600"
           placeholder="Ingredientes, presentación, detalles..."
           placeholderTextColor="#9CA3AF"
           multiline
@@ -264,7 +265,7 @@ export default function CreateProduct() {
         <View className="flex-1">
           <Text className="text-sm font-semibold text-gray-700 mb-1">Tiempo (min)</Text>
           <TextInput
-            className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:border-green-600"
+            className="bg-orange-100 border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:border-green-600"
             placeholder="Ej. 25"
             placeholderTextColor="#9CA3AF"
             keyboardType="numeric"
@@ -276,7 +277,7 @@ export default function CreateProduct() {
         <View className="flex-1">
           <Text className="text-sm font-semibold text-gray-700 mb-1">Precio ($)</Text>
           <TextInput
-            className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:border-green-600"
+            className="bg-orange-100 border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:border-green-600"
             placeholder="Ej. 6500"
             placeholderTextColor="#9CA3AF"
             keyboardType="numeric"

@@ -275,3 +275,13 @@ export async function resolveHomeRoute(): Promise<{ route: Href | null; error: s
 
   return { route: "/(app)/home", error: null };
 }
+
+export async function signOut(): Promise<{ error: string | null }> {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    return { error: supabaseErrorMessage(error, "No pudimos cerrar la sesión.") };
+  }
+
+  return { error: null };
+}

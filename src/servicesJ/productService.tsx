@@ -1,7 +1,7 @@
 import { supabase } from '../servicesJ/supabaseConexion';
 import {IProductFormData} from '../interfaces/IProductoForm';
 
-type tabla = 'platos' | 'bebidas';
+export type tabla = 'platos' | 'bebidas' | '';
 
 export async function obtenerProductos(tabla: tabla) {
   try {
