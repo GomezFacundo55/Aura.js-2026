@@ -21,10 +21,19 @@ export default function HomeScreen() {
             ) : null}
 
             {canManageStaff ? (
-                <View className="mt-6">
-                <Link href="/(app)/alta-empleado" asChild>
-                    <Button title="Alta de empleado" />
-                </Link>
+                <View className="mt-6 gap-3">
+                    <Link href="/(app)/alta-empleado" asChild>
+                        <Button title="Alta de empleado" />
+                    </Link>
+                    <Link href="/mesas/nueva" asChild>
+                        <Button title="Agregar mesa" variant="primary" />
+                    </Link>
+                    <Link href="/mesas" asChild>
+                        <Button title="Ver listado de mesas" variant="secondary" />
+                    </Link>
+                    <Link href="/clientes/pendientes" asChild>
+                        <Button title="Clientes pendientes" variant="primary" />
+                    </Link>
                 </View>
             ) : null}
         </View>
