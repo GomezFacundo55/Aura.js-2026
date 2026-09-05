@@ -9,12 +9,12 @@
 | Capa / Componente | Tecnología | Justificación |
 |---|---|---|
 | Frontend / App móvil | React Native + Expo + NativeWind v5 (Android) | Expo agiliza el desarrollo y build para Android sin configuración nativa manual. NativeWind v5 permite estilizar con la sintaxis de Tailwind CSS v4 (`className`), acelerando el desarrollo de la UI. |
-| Backend / API | _(a completar)_ | _(a completar)_ |
+| Backend / API | _Supabase_ | _Expone automáticamente una API REST y en tiempo real sobre la base de datos, sin necesidad de programar y mantener un servidor propio. Integra en un mismo servicio la base de datos, autenticación, storage de archivos y suscripciones en tiempo real (Realtime), reduciendo el trabajo de un equipo chico a definir el esquema y consumirlo desde la app._ |
 | Base de datos | _(a completar)_ | _(a completar)_ |
-| Notificaciones push | _(a completar)_ | _(a completar)_ |
+| Notificaciones push | _Supabase Realtime + expo-notifications (notificaciones locales disparadas por eventos de la base de datos)_ | _Al detectar cambios en tiempo real sobre las tablas (por ejemplo, un nuevo cliente pendiente de aprobación), se dispara una notificación local en el dispositivo del dueño/supervisor sin necesidad de un servidor propio de push._ |
 | Envío de correos automáticos | _(a completar)_ | _(a completar)_ |
-| Lectura/generación de código QR | _(a completar)_ | _(a completar)_ |
-| Autenticación / perfiles | _(a completar)_ | _(a completar)_ |
+| Lectura/generación de código QR | _react-native-qrcode-svg (generación)_ | _Librería liviana que renderiza el QR como componente SVG nativo, sin depender de servicios externos de generación de imágenes. Se usa para generar automáticamente el QR de cada mesa al momento del alta._ |
+| Autenticación / perfiles | _Supabase Auth + tabla profiles (con campo perfil para el rol)_ | _Maneja registro, login y sesión persistente de forma nativa junto con el resto del backend. Los roles (dueño, supervisor, empleados, cliente registrado) se modelan en la tabla profiles, vinculada al usuario autenticado, y las políticas de RLS restringen qué puede hacer cada rol directamente a nivel de base de datos._ |
 | Otros | _(a completar)_ | _(a completar)_ |
 
 ---
@@ -36,10 +36,10 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
 |---|---|---|---|---|
-| Delgobbo Giuliana | Módulos 1 y 5 | 23/8 | 2/9 | Delgobbo |
-| Gómez Facundo | Módulos 4 y 6 | 30/8 | | Gomez |
-| Jauregui Enzo  | Módulo 2 y 3 | 30/8 | | Jauregui |
-| Almonacid Emir | Base de datos Supabase | 30/8 | | Almonacid |
+| Delgobbo Giuliana | Módulos 1 y 5 | 23/8 | 4/9 | Delgobbo |
+| Gómez Facundo | Módulos 4 | 30/8 | 4/9| Gomez |
+| Jauregui Enzo  | Módulo 2 y 3 | 30/8 | 4/9 | Jauregui |
+| Almonacid Emir | Base de datos Supabase | 30/8 |4/9 | Almonacid |
 
 ---
 
@@ -48,10 +48,10 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
 |---|---|---|---|---|
-| Gomez Facundo| 4 y 6  | 30/08 | | Gomez | 
-|Delgobbo Giuliani | 1 y 5|30/08 | | Delgobbo |
-| Enzo Jauregui| 2 y 3| 30/08| | Jauregui|
-| Emir Almonacid | BD | 30/08| | Almonacid|
+| Gomez Facundo|   |  | | Gomez | 
+|Delgobbo Giuliani | | | | Delgobbo |
+| Enzo Jauregui| | | | Jauregui|
+| Emir Almonacid |  | | | Almonacid|
 
 ---
 
@@ -139,4 +139,16 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 ## 4. Estado general del proyecto
 
-> _(Opcional, a completar más adelante: checklist de requisitos entregados, pendientes, bugs conocidos, links de interés, instrucciones de instalación/ejecución, etc.)_
+> _### Estado de los módulos 1 al 6 (primera fecha de entrega)
+
+| # | Módulo | Responsable | Estado |
+|---|---|---|---|
+| 1 | Agregar un empleado (dispositivo 1) | Delgobbo Giuliana | ✅ Finalizado |
+| 2 | Agregar un nuevo plato (dispositivo 2) | Jauregui Enzo | ✅ Finalizado |
+| 3 | Agregar una nueva bebida (dispositivo 3) | Jauregui Enzo | ✅ Finalizado|
+| 4 | Agregar una nueva mesa (dispositivo 4) | Gómez Facundo | ✅ Finalizado  |
+| 5 | Crear un cliente registrado (dispositivo 2) | Delgobbo Giuliana | ✅ Finalizado |
+
+
+
+
