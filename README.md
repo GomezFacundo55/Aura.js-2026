@@ -119,13 +119,17 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 | # | Nombre / Descripción | Categoría | Pantalla / Módulo asociado | Ruta / Archivo | Vista previa |
 |---|---|---|---|---|---|
 | 1 | Ícono de la app | Ícono | - | `assets/icon.png` | ![Splash Icon](https://i.ibb.co/KzF1wn8X/splash-icon.png) |
-| 2 | | Splash / Presentación | | | |
-| 3 | | Formulario Login | Pantalla | | ![Formulario Login](https://i.ibb.co/mrX3NkKT/Login.png) |
-| 4 | | Formulario Registro | Pantalla | | ![Formulario Login](https://i.ibb.co/Gf3dnjWD/Registro.png) |
-| 5 | | Listado | | | |
-| 6 | Logo principal | Logo | - | `assets/logo.png` | ![Logo](https://i.ibb.co/S40PN8VX/Logo.png) |
-| 7 | Landing Page | Pantalla | HomeScreen | `assets/images/Landing-Page.png` | ![Landing Page](https://i.postimg.cc/9Q7B64wJ/Landing-Page.png) |
-| 8 | Ingreso Invitado | Pantalla | Pantalla | | ![Ingreso Invitado](https://i.ibb.co/6cMPTwSk/Login-Invitado.png) |
+| 2 | Logo principal | Logo | - | `assets/logo.png` | ![Logo](https://i.ibb.co/S40PN8VX/Logo.png) |
+| 3 | | Splash / Presentación | | | ![Splash Screen](https://i.ibb.co/LdmzYF9z/Splash-Screen.png) |
+| 4 | | Formulario Login | Pantalla | | ![Formulario Login](https://i.ibb.co/mrX3NkKT/Login.png) |
+| 5 | | Formulario Registro | Pantalla | | ![Formulario Login](https://i.ibb.co/Gf3dnjWD/Registro.png) |
+| 6 | Landing Page | Pantalla | HomeScreen | `assets/images/Landing-Page.png` | ![Landing Page](https://i.postimg.cc/9Q7B64wJ/Landing-Page.png) |
+| 7 | Ingreso Invitado | Pantalla | Pantalla | | ![Ingreso Invitado](https://i.ibb.co/6cMPTwSk/Login-Invitado.png) |
+| 8 | Agregar Plato | Listados | Listados | | ![Agregar Plato](https://i.ibb.co/fYZ2NhDd/Agregar-Plato.png) |
+| 9 | Agregar Bebida | Listados | Listados | | ![Agregar Bebida](https://i.ibb.co/9kyHmL7r/Agregar-Bebida.png) |
+| 10 | Manager Home | Pantalla | Pantalla | | ![Manager Home](https://i.ibb.co/yc8h6CLz/Manager-Home.png) |
+| 11 | Agregar Mesa | Pantalla | Pantalla | | ![Agregar Mesa](https://i.ibb.co/Xx8XKjqR/Agregar-Mesa.png) |
+| 12 | Listado Mesas | Listados | Listados | | ![Agregar Mesa](https://i.ibb.co/pBvchprp/Listado-Mesas.png) |
 
 **Categorías:**
 - Íconos (app, botones, controles)
