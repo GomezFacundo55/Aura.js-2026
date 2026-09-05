@@ -19,6 +19,7 @@ import { ConfirmModal } from '../components/modal';
 import { crearProducto, obtenerUnProducto, actualizarProducto, verificarNombreExistente, tabla } from '../servicesJ/productService';
 import { IProductFormData } from '@/interfaces/IProductoForm';
 import { IProductoPedido } from '@/interfaces/IProductoPedido';
+import { uploadProductImages } from '../servicesJ/storageService';
 
 
 export default function CreateProduct() {
@@ -162,13 +163,13 @@ export default function CreateProduct() {
     setModalVisible(true);
   };
 
-  function payload(): IProductFormData {
+  function dataForm(imagesUrl: [string, string, string]): IProductFormData {
     return {
       nombre: name.trim(),
       descripcion: description.trim(),
       tiempo_elaboracion: Number(prepTime),
       precio: Number(price),
-      fotos: images,
+      fotos: imagesUrl,
     }
   }
 
@@ -177,7 +178,10 @@ export default function CreateProduct() {
     setModalVisible(false);
     setLoading(true);
     try {
-      const respuesta = await crearProducto(tablaSeleccionada, payload());
+      const publicUrls = await uploadProductImages(images, tablaSeleccionada);
+      const payload = dataForm(publicUrls);
+      
+      const respuesta = await crearProducto(tablaSeleccionada, payload);
       if (!respuesta.exito) {
         throw new Error(respuesta.error || 'Error desconocido al crear el producto.');
       }
@@ -203,7 +207,10 @@ export default function CreateProduct() {
     setModalVisible(false);
     setLoading(true);
     try{
-      const respuesta = await actualizarProducto(tablaSeleccionada, product?.id!, payload());
+      const publicUrls = await uploadProductImages(images, tablaSeleccionada);
+      const payload = dataForm(publicUrls);
+      
+      const respuesta = await actualizarProducto(tablaSeleccionada, product?.id!, payload);
       if (!respuesta.exito) 
         throw new Error(respuesta.error || 'Error desconocido al actualizar el producto.');
       redirectToDashboard();

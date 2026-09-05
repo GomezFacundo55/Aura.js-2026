@@ -161,7 +161,7 @@ export default function ProductDashboard() {
 
   return (
     <View className="flex-1 bg-orange-400 p-4">
-      <View className="flex-row items-center justify-between mt-2 mb-3 bg-orange-500/30 p-2.5 rounded-2xl">
+      <View className="flex-row items-center justify-between mt-2 mb-0 bg-orange-500/30 p-2.5 rounded-2xl">
         <View className="flex-row items-center flex-1 mr-2">
           <TouchableOpacity
             activeOpacity={0.7}
@@ -190,8 +190,8 @@ export default function ProductDashboard() {
   <View className="flex-1 bg-orange-400 p-4">
     <View className="flex-row items-center justify-between mb-4 mt-2">
       <View className="flex-1 pr-2">
-        <Text className="text-2xl font-bold text-black">
-          Panel de Productos del {perfilUsuario? perfilUsuario.perfil : ""}
+        <Text className="text-xl font-bold text-black">
+          Gestión de Productos del {perfilUsuario? perfilUsuario.perfil : ""}
         </Text>
         <Text className="text-xs text-gray-600">Gestión de la carta</Text>
       </View>
@@ -212,11 +212,7 @@ export default function ProductDashboard() {
       </View>
     ) : (
       <View className='flex-1'>
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 8 }}
-      >
+      
         {productos.length === 0 ? (
           <View className="py-20 items-center justify-center bg-white rounded-2xl border border-gray-200 mt-2">
             <Ionicons name="fast-food-outline" size={54} color="#9CA3AF" />
@@ -285,8 +281,7 @@ export default function ProductDashboard() {
             </View>
           ))
         )}
-      </ScrollView>
-    
+      
     {productos.length > ELEMENTOS_POR_PAGINA && (
         <View className="flex-row items-center justify-between bg-orange-500/30 px-4 py-2.5 rounded-2xl mt-1 mb-2">
           <TouchableOpacity
