@@ -1,48 +1,65 @@
+import { subirImagen } from '@/lib/subirImagen';
+import { supabase } from '@/lib/supabase';
+import type { Mesa, MesaDisponibilidad, MesaTipo } from '@/types/database';
 import * as Crypto from 'expo-crypto';
-import type { Mesa, MesaDisponibilidad, MesaTipo } from '../types/database';
-import { escribirTabla, leerTabla } from './localDb';
-
-const TABLA = 'mesas';
 
 export const mesasServicio = {
   async listar(): Promise<Mesa[]> {
-    const mesas = await leerTabla<Mesa>(TABLA);
-    return mesas.sort((a, b) => a.numero - b.numero);
+    const { data, error } = await supabase
+      .from('mesas')
+      .select('*')
+      .order('numero', { ascending: true });
+
+    if (error) throw error;
+    return data as Mesa[];
   },
 
   async existeNumero(numero: number): Promise<boolean> {
-    const mesas = await leerTabla<Mesa>(TABLA);
-    return mesas.some((m) => m.numero === numero);
+    const { data, error } = await supabase
+      .from('mesas')
+      .select('id')
+      .eq('numero', numero)
+      .maybeSingle();
+
+    if (error) throw error;
+    return !!data;
   },
 
   async crear(datos: {
     numero: number;
     comensales: number;
     tipo: MesaTipo;
-    foto_url: string;
+    foto_url: string; // acá llega el URI local del dispositivo
   }): Promise<Mesa> {
-    const mesas = await leerTabla<Mesa>(TABLA);
     const id = Crypto.randomUUID();
     const qr_data = JSON.stringify({ mesaId: id, numero: datos.numero });
 
-    const nueva: Mesa = {
-      id,
-      numero: datos.numero,
-      comensales: datos.comensales,
-      tipo: datos.tipo,
-      disponibilidad: 'vacia',
-      foto_url: datos.foto_url,
-      qr_data,
-      created_at: new Date().toISOString(),
-    };
+    const fotoUrlSubida = await subirImagen('mesas', datos.foto_url, `mesa-${datos.numero}`);
 
-    await escribirTabla(TABLA, [...mesas, nueva]);
-    return nueva;
+    const { data, error } = await supabase
+      .from('mesas')
+      .insert({
+        id,
+        numero: datos.numero,
+        comensales: datos.comensales,
+        tipo: datos.tipo,
+        disponibilidad: 'vacia',
+        foto_url: fotoUrlSubida,
+        qr_data,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Mesa;
   },
 
   async actualizarDisponibilidad(id: string, disponibilidad: MesaDisponibilidad): Promise<void> {
-    const mesas = await leerTabla<Mesa>(TABLA);
-    const actualizadas = mesas.map((m) => (m.id === id ? { ...m, disponibilidad } : m));
-    await escribirTabla(TABLA, actualizadas);
+    const { error } = await supabase
+      .from('mesas')
+      .update({ disponibilidad })
+      .eq('id', id);
+
+    if (error) throw error;
   },
 };

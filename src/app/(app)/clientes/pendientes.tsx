@@ -1,6 +1,6 @@
 import { clientesService } from '@/lib/clientesServicio';
-import { eventBus } from '@/lib/eventos';
 import { notificarNuevoClientePendiente, pedirPermisosNotificaciones } from '@/lib/notificaciones';
+import { supabase } from '@/lib/supabase';
 import type { Cliente } from '@/types/database';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -22,12 +22,24 @@ export default function ClientesPendientesScreen() {
   useEffect(() => {
     pedirPermisosNotificaciones();
 
-    const off = eventBus.on('cliente:nuevo', (nuevo: Cliente) => {
-      setClientes((prev) => [...prev, nuevo]);
-      notificarNuevoClientePendiente(`${nuevo.nombres} ${nuevo.apellidos}`);
-    });
+    const canal = supabase
+      .channel('clientes-pendientes')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'clientes' },
+        (payload) => {
+          const nuevo = payload.new as Cliente;
+          if (nuevo.estado === 'pendiente') {
+            setClientes((prev) => [...prev, nuevo]);
+            notificarNuevoClientePendiente(`${nuevo.nombres} ${nuevo.apellidos}`);
+          }
+        }
+      )
+      .subscribe();
 
-    return off;
+    return () => {
+      supabase.removeChannel(canal);
+    };
   }, []);
 
   const resolver = async (cliente: Cliente, estado: 'aprobado' | 'rechazado') => {
