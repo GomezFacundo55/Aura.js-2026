@@ -118,12 +118,14 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 | # | Nombre / Descripción | Categoría | Pantalla / Módulo asociado | Ruta / Archivo | Vista previa |
 |---|---|---|---|---|---|
-| 1 | Ícono de la app | Ícono | - | `assets/icon.png` | ![Splash Icon](https://raw.githubusercontent.com/GomezFacundo55/Aura.js-2026/desarrollo/assets/images/splash-icon.png) |
+| 1 | Ícono de la app | Ícono | - | `assets/icon.png` | ![Splash Icon](https://i.ibb.co/KzF1wn8X/splash-icon.png) |
 | 2 | | Splash / Presentación | | | |
-| 3 | | Formulario | | | |
-| 4 | | Listado | | | |
-| 5 | Logo principal | Logo | - | `assets/logo.png` | ![Logo](https://raw.githubusercontent.com/GomezFacundo55/Aura.js-2026/desarrollo/assets/images/Logo.png) |
-| 6 | Landing Page | Pantalla | HomeScreen | `assets/images/Landing-Page.png` | ![Landing Page](https://i.postimg.cc/9Q7B64wJ/Landing-Page.png) |
+| 3 | | Formulario Login | Pantalla | | ![Formulario Login](https://i.ibb.co/mrX3NkKT/Login.png) |
+| 4 | | Formulario Registro | Pantalla | | ![Formulario Login](https://i.ibb.co/Gf3dnjWD/Registro.png) |
+| 5 | | Listado | | | |
+| 6 | Logo principal | Logo | - | `assets/logo.png` | ![Logo](https://i.ibb.co/S40PN8VX/Logo.png) |
+| 7 | Landing Page | Pantalla | HomeScreen | `assets/images/Landing-Page.png` | ![Landing Page](https://i.postimg.cc/9Q7B64wJ/Landing-Page.png) |
+| 8 | Ingreso Invitado | Pantalla | Pantalla | | ![Ingreso Invitado](https://i.ibb.co/6cMPTwSk/Login-Invitado.png) |
 
 **Categorías:**
 - Íconos (app, botones, controles)
