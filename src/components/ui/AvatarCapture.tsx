@@ -1,4 +1,5 @@
 import * as ImagePicker from "expo-image-picker";
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Image, Pressable, Text, View } from "react-native";
 
@@ -39,27 +40,23 @@ export function AvatarCapture({ photoUri, onPhotoChange, error }: AvatarCaptureP
   const displayError = error ?? permissionMessage;
 
   return (
-    <View className="items-center gap-3">
-      <Text nativeID="guest-photo-label" className="self-start text-sm font-medium text-neutral-700">
-        Foto de perfil
-      </Text>
-
+    <View className="items-center gap-1.5">
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Tomar foto de perfil"
         aria-labelledby="guest-photo-label"
-        className="h-28 w-28 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-brand-400 bg-surface-light"
+        className="h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-brand-400 bg-surface-light"
         onPress={handleTakePhoto}
       >
         {photoUri ? (
           <Image source={{ uri: photoUri }} className="h-full w-full" />
         ) : (
-          <Text className="px-2 text-center text-sm text-neutral-500">Tocá para{"\n"}tomar foto</Text>
+          <Ionicons name="camera-outline" size={26} color="#FF7A4D" />
         )}
       </Pressable>
 
       {displayError ? (
-        <Text accessibilityRole="alert" className="text-center text-sm text-danger">
+        <Text accessibilityRole="alert" className="max-w-20 text-center text-xs text-danger">
           {displayError}
         </Text>
       ) : null}

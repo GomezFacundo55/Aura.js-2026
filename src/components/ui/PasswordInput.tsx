@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, Text, TextInput, View, type TextInputProps } from "react-native";
 
@@ -12,7 +13,7 @@ export function PasswordInput({ label, error, className, ...props }: PasswordInp
 
   return (
     <View className="gap-1.5">
-      <Text nativeID={`${label}-label`} className="text-sm font-medium text-neutral-700">
+      <Text nativeID={`${label}-label`} className="text-base font-semibold text-neutral-700">
         {label}
       </Text>
 
@@ -28,24 +29,22 @@ export function PasswordInput({ label, error, className, ...props }: PasswordInp
           autoCorrect={false}
           placeholderTextColor="#A0A0A5"
           secureTextEntry={!visible}
-          className={`flex-1 px-4 py-3.5 text-base text-neutral-900 ${className ?? ""}`}
+          className={`flex-1 px-3 py-2.5 text-base text-neutral-900 ${className ?? ""}`}
           {...props}
         />
 
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={visible ? "Ocultar clave" : "Mostrar clave"}
-          className="px-4 py-3.5"
+          className="px-3 py-2.5"
           onPress={() => setVisible((current) => !current)}
         >
-          <Text className="text-sm font-medium text-brand-600">
-            {visible ? "Ocultar" : "Mostrar"}
-          </Text>
+          <Ionicons name={visible ? "eye-off-outline" : "eye-outline"} size={20} color="#F0452A" />
         </Pressable>
       </View>
 
       {hasError ? (
-        <Text accessibilityRole="alert" className="text-sm text-danger">
+        <Text accessibilityRole="alert" className="text-base text-danger">
           {error}
         </Text>
       ) : null}

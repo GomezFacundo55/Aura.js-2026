@@ -23,7 +23,7 @@ export function SelectPicker({
 
   return (
     <View className="gap-1.5">
-      <Text nativeID={`${label}-label`} className="text-sm font-medium text-neutral-700">
+      <Text nativeID={`${label}-label`} className="text-base font-medium text-neutral-700">
         {label}
       </Text>
 
@@ -31,7 +31,7 @@ export function SelectPicker({
         accessibilityRole="button"
         accessibilityLabel={label}
         aria-labelledby={`${label}-label`}
-        className={`rounded-xl border bg-surface-light px-4 py-3.5 ${
+        className={`rounded-xl border bg-surface-light px-3 py-2.5 ${
           hasError ? "border-danger" : "border-neutral-400"
         }`}
         onPress={() => setOpen(true)}
@@ -42,7 +42,7 @@ export function SelectPicker({
       </Pressable>
 
       {hasError ? (
-        <Text accessibilityRole="alert" className="text-sm text-danger">
+        <Text accessibilityRole="alert" className="text-base text-danger">
           {error}
         </Text>
       ) : null}
