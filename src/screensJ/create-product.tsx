@@ -217,11 +217,12 @@ export default function CreateProduct() {
 
   const redirectToDashboard = () => {
     setModalDosVisible(false);
-    router.push('/(app)/dashboard' as any);
+    const route = tablaSeleccionada === "bebidas" ? "/(app)/cantinero-home" : "/(app)/cocinero-home";
+    router.replace(route);
   };
 
   return (
-    <ScrollView className="flex-1 bg-orange-400 px-4 py-6" contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView className="flex-1 px-4 py-6" contentContainerStyle={{ paddingBottom: 40 }}>
       <View className="flex-row items-center mb-6">
         <View className="flex-1">
         <Text className="text-2xl font-bold text-gray-800 mb-0.5">Datos del Producto</Text>

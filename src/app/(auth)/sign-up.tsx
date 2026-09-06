@@ -5,26 +5,23 @@ import { FormError } from "@/components/ui/FormError";
 import { Input } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { QRScannerDNI } from "@/components/ui/QRScannerDNI";
-import { signUpWithProfile } from "@/lib/auth";
+import { resolveHomeRoute, signOut, signUpWithProfile } from "@/lib/auth";
 import { parseDniQr } from "@/lib/dni-parser";
 import {
-  validateCuit,
   validateDni,
   validateEmail,
   validatePasswordConfirm,
   validatePersonName,
   validateSignUpPassword,
 } from "@/lib/validation";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-
 
 type SignUpForm = {
   apellidos: string;
   nombres: string;
   dni: string;
-  cuit: string;
   email: string;
   password: string;
   passwordConfirm: string;
@@ -37,7 +34,6 @@ const INITIAL_TOUCHED: TouchedFields = {
   apellidos: false,
   nombres: false,
   dni: false,
-  cuit: false,
   email: false,
   password: false,
   passwordConfirm: false,
@@ -48,7 +44,6 @@ export default function SignUpScreen() {
     apellidos: "",
     nombres: "",
     dni: "",
-    cuit: "",
     email: "",
     password: "",
     passwordConfirm: "",
@@ -65,7 +60,6 @@ export default function SignUpScreen() {
       apellidos: validatePersonName(form.apellidos, "Apellidos"),
       nombres: validatePersonName(form.nombres, "Nombres"),
       dni: validateDni(form.dni),
-      cuit: validateCuit(form.cuit),
       email: validateEmail(form.email),
       password: validateSignUpPassword(form.password),
       passwordConfirm: validatePasswordConfirm(form.password, form.passwordConfirm),
@@ -88,7 +82,6 @@ export default function SignUpScreen() {
       apellidos: true,
       nombres: true,
       dni: true,
-      cuit: true,
       email: true,
       password: true,
       passwordConfirm: true,
@@ -106,7 +99,6 @@ export default function SignUpScreen() {
         nombres: form.nombres,
         apellidos: form.apellidos,
         dni: form.dni,
-        cuil: form.cuit,
         photoUri: form.photoUri,
       });
 
@@ -115,7 +107,14 @@ export default function SignUpScreen() {
         return;
       }
 
-      router.replace("/(app)/home");
+      const { route, pending } = await resolveHomeRoute();
+      if (pending || !route) {
+        await signOut();
+        router.replace({ pathname: "/(auth)/log-in", params: { pendiente: "1" } });
+        return;
+      }
+
+      router.replace(route);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "No pudimos completar el registro.";
       setAuthError(message);
@@ -140,24 +139,48 @@ export default function SignUpScreen() {
       apellidos: parsed.apellidos,
       nombres: parsed.nombres,
       dni: parsed.documentNumber,
-      cuit: parsed.cuil ?? current.cuit,
     }));
     setTouched((current) => ({
       ...current,
       apellidos: true,
       nombres: true,
       dni: true,
-      cuit: parsed.cuil ? true : current.cuit,
     }));
   };
 
   return (
     <AuthScreenLayout>
-      <View className="gap-5">
+      <View className="gap-3">
         <AvatarCapture
           photoUri={form.photoUri}
           onPhotoChange={(uri) => updateField("photoUri", uri)}
         />
+
+        <View>
+          <Input
+              label="DNI"
+              placeholder="Escanee el DNI o ingrese los campos"
+              value={form.dni}
+              keyboardType="number-pad"
+              error={touched.dni ? errors.dni : null}
+              onBlur={() => markTouched("dni")}
+              onChangeText={(value) => updateField("dni", value.replace(/\D/g, ""))}
+              rightElement={
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Escanear código del DNI"
+                  className="px-2.5 py-2.5"
+                  onPress={() => {
+                    setQrError(null);
+                    setQrScannerVisible(true);
+                  }}
+                >
+                  <Text className="text-sm font-semibold text-brand-600">QR</Text>
+                </Pressable>
+              }
+            />
+          {qrError ? <FormError message={qrError} onDismiss={() => setQrError(null)} /> : null}
+        </View>
 
         <Input
           label="Apellidos"
@@ -179,45 +202,6 @@ export default function SignUpScreen() {
           error={touched.nombres ? errors.nombres : null}
           onBlur={() => markTouched("nombres")}
           onChangeText={(value) => updateField("nombres", value)}
-        />
-
-        <View className="gap-2">
-          <Input
-            label="DNI"
-            placeholder="Ej: 12345678"
-            value={form.dni}
-            keyboardType="number-pad"
-            error={touched.dni ? errors.dni : null}
-            onBlur={() => markTouched("dni")}
-            onChangeText={(value) => updateField("dni", value.replace(/\D/g, ""))}
-            rightElement={
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Escanear código del DNI"
-                className="px-3 py-3.5"
-                onPress={() => {
-                  setQrError(null);
-                  setQrScannerVisible(true);
-                }}
-              >
-                <Text className="text-sm font-semibold text-brand-600">QR</Text>
-              </Pressable>
-            }
-          />
-
-          {qrError ? (
-            <FormError message={qrError} onDismiss={() => setQrError(null)} />
-          ) : null}
-        </View>
-
-        <Input
-          label="CUIT"
-          placeholder="Ej: 20123456789"
-          value={form.cuit}
-          keyboardType="number-pad"
-          error={touched.cuit ? errors.cuit : null}
-          onBlur={() => markTouched("cuit")}
-          onChangeText={(value) => updateField("cuit", value.replace(/\D/g, ""))}
         />
 
         <Input
@@ -256,13 +240,6 @@ export default function SignUpScreen() {
         <FormError message={authError} onDismiss={() => setAuthError(null)} />
 
         <Button title="Registrarme" disabled={!isFormValid || isSubmitting} onPress={handleSubmit} />
-
-        <View className="flex-row justify-center gap-1">
-          <Text className="text-sm text-neutral-600">¿Ya tenés cuenta?</Text>
-          <Link href="/(auth)/log-in" className="text-sm font-semibold text-brand-600">
-            Ingresá
-          </Link>
-        </View>
       </View>
 
       <QRScannerDNI

@@ -10,7 +10,6 @@ import {
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import type { Href } from "expo-router";
-import { Platform } from "react-native";
 
 export type SignUpProfileInput = {
   email: string;
@@ -18,7 +17,7 @@ export type SignUpProfileInput = {
   nombres: string;
   apellidos: string;
   dni: string;
-  cuil: string;
+  cuil?: string;
   photoUri: string | null;
 };
 
@@ -31,10 +30,14 @@ export type UserProfile = {
   nombres: string;
   apellidos: string;
   dni: string;
-  cuil: string;
+  cuil?: string;
   perfil: string;
   foto_url: string | null;
+  estado?: string | null;
 };
+
+export const PENDING_APPROVAL_MESSAGE =
+  "Tu cuenta quedó pendiente de aprobación. Cuando un encargado la habilite vas a poder ingresar.";
 
 function supabaseErrorMessage(error: { message?: string } | null, fallback: string): string {
   const message = error?.message?.trim();
@@ -71,9 +74,10 @@ async function insertProfile(row: {
   nombres: string;
   apellidos: string;
   dni: string;
-  cuil: string;
+  cuil?: string;
   perfil: ProfileRole;
   foto_url: string | null;
+  estado?: "pendiente" | "aprobado";
 }): Promise<{ error: string | null }> {
   const { data, error } = await supabase.from("profiles").insert(row).select("id");
 
@@ -117,7 +121,7 @@ export async function signUpWithProfile(input: SignUpProfileInput): Promise<{ er
         nombres: input.nombres.trim(),
         apellidos: input.apellidos.trim(),
         dni: input.dni,
-        cuil: input.cuil,
+        cuil: input.cuil?.trim() || null,
         perfil,
       },
     },
@@ -146,9 +150,10 @@ export async function signUpWithProfile(input: SignUpProfileInput): Promise<{ er
     nombres: input.nombres.trim(),
     apellidos: input.apellidos.trim(),
     dni: input.dni,
-    cuil: input.cuil,
+    cuil: input.cuil?.trim() || undefined,
     perfil,
     foto_url: fotoUrl,
+    estado: "pendiente",
   });
 }
 
@@ -220,7 +225,7 @@ export async function createEmployeeAccount(
     nombres: input.nombres.trim(),
     apellidos: input.apellidos.trim(),
     dni: input.dni,
-    cuil: input.cuil,
+    cuil: input.cuil?.trim() || undefined,
     perfil: input.perfil,
     foto_url: fotoUrl,
   });
@@ -246,7 +251,11 @@ const EMPLOYEE_ROUTES: Record<string, Href> = {
 const MANAGER_ROUTE: Href = "/(app)/manager-home";
 const DEFAULT_ROUTE: Href = "/(app)/home";
 
-export async function resolveHomeRoute(): Promise<{ route: Href | null; error: string | null }> {
+export async function resolveHomeRoute(): Promise<{
+  route: Href | null;
+  error: string | null;
+  pending?: boolean;
+}> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
 
   if (userError || !userData?.user) {
@@ -255,7 +264,7 @@ export async function resolveHomeRoute(): Promise<{ route: Href | null; error: s
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("perfil")
+    .select("perfil, estado")
     .eq("id", userData.user.id)
     .single();
 
@@ -263,7 +272,12 @@ export async function resolveHomeRoute(): Promise<{ route: Href | null; error: s
     return { route: null, error: "No pudimos cargar tu perfil." };
   }
 
-  const role = profile.perfil as string;
+  const estado = String(profile.estado ?? "").trim().toLowerCase();
+  if (estado === "pendiente") {
+    return { route: null, error: PENDING_APPROVAL_MESSAGE, pending: true };
+  }
+
+  const role = String(profile.perfil ?? "").trim().toLowerCase();
 
   if (isManagerRole(role)) {
     return { route: MANAGER_ROUTE, error: null };

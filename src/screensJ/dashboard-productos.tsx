@@ -160,7 +160,7 @@ export default function ProductDashboard() {
   };
 
   return (
-    <View className="flex-1 bg-orange-400 p-4">
+    <View className="flex-1 p-4">
       <View className="flex-row items-center justify-between mt-2 mb-3 bg-orange-500/30 p-2.5 rounded-2xl">
         <View className="flex-row items-center flex-1 mr-2">
           <TouchableOpacity
