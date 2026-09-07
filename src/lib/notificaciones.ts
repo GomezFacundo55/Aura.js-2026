@@ -1,8 +1,6 @@
-<<<<<<< HEAD
-//import * as Notifications from 'expo-notifications';
-=======
+
 // import * as Notifications from 'expo-notifications';
->>>>>>> origin/desarrollo
+
 
 // Notifications.setNotificationHandler({
 //   handleNotification: async () => ({

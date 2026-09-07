@@ -61,7 +61,7 @@ export default function ProductDetail() {
 
   if (cargando) {
     return (
-      <View className="flex-1 bg-orange-400 justify-center items-center">
+      <View className="flex-1 justify-center items-center">
         <ActivityIndicator size="large" color="#EA580C" />
         <Text className="text-gray-500 font-medium text-xs mt-3">Cargando producto...</Text>
       </View>
@@ -70,13 +70,13 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <View className="flex-1 bg-orange-400 justify-center items-center p-6">
+      <View className="flex-1 justify-center items-center p-6">
         <Ionicons name="alert-circle-outline" size={50} color="#DC2626" />
         <Text className="text-gray-800 font-bold text-base mt-2">Producto no encontrado</Text>
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={onBack}
-          className="mt-4 bg-orange-500 px-6 py-2.5 rounded-xl"
+          className="mt-4 px-6 py-2.5 rounded-xl"
         >
           <Text className="text-white font-semibold text-sm">Volver</Text>
         </TouchableOpacity>
@@ -88,7 +88,7 @@ export default function ProductDetail() {
   const fotoPrincipal = fotos[selectedPhotoIndex] || fotos[0];
 
   return (
-    <View className="flex-1 bg-orange-400 justify-between p-5">
+    <View className="flex-1 justify-between p-5">
       
       <Text className="text-xl font-bold text-gray-800">
         Detalles del Producto

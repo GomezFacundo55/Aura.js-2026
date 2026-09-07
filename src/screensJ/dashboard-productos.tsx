@@ -173,20 +173,20 @@ export default function ProductDashboard() {
   };
 
   return (
-    <View className="flex-1 bg-orange-400 p-4">
+    <View className="flex-1 p-4">
       <View className="flex-row items-center justify-between mt-2 mb-0 bg-orange-500/30 p-2.5 rounded-2xl">
         <View className="flex-row items-center flex-1 mr-2">
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={modalOut}
-            className="w-9 h-9 rounded-xl bg-red-500 items-center justify-center mr-3 shadow-sm"
+            className="w-9 h-9 rounded-xl bg-red-400 items-center justify-center mr-3 shadow-sm"
           >
             <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
           </TouchableOpacity>
 
           <View className="flex-1">
-            <Text className="text-white font-medium text-xs">Bienvenido/a,</Text>
-            <Text className="text-white font-bold text-base" numberOfLines={1}>
+            <Text className="text-dark font-medium text-xs">Bienvenido/a,</Text>
+            <Text className="text-dark font-bold text-base" numberOfLines={1}>
               {perfilUsuario ? `${perfilUsuario.nombres} ${perfilUsuario.apellidos}` : "Cargando..."}
             </Text>
           </View>
@@ -194,17 +194,17 @@ export default function ProductDashboard() {
 
         {cargoUsuario ? (
           <View className="bg-white/20 px-2.5 py-1 rounded-full">
-            <Text className="text-white text-xs font-semibold uppercase tracking-wider">
+            <Text className="text-dark text-xs font-semibold uppercase tracking-wider">
               {perfilUsuario? `${perfilUsuario.perfil}` : "Cargando..."}
             </Text>
           </View>
         ) : null}
       </View>
-  <View className="flex-1 bg-orange-400 p-4">
+  <View className="flex-1 p-4">
     <View className="flex-row items-center justify-between mb-4 mt-2">
       <View className="flex-1 pr-2">
         <Text className="text-xl font-bold text-black">
-          Gestión de Productos del {perfilUsuario? perfilUsuario.perfil : ""}
+          Panel de Productos del {perfilUsuario? perfilUsuario.perfil : ""}
         </Text>
         <Text className="text-xs text-gray-600">Gestión de la carta</Text>
       </View>
@@ -316,7 +316,9 @@ export default function ProductDashboard() {
         <TouchableOpacity
           disabled={paginaActual === 1}
           onPress={() => setPaginaActual((prev) => Math.max(prev - 1, 1))}
-          className={`w-9 h-9 rounded-xl items-center justify-center `}
+          className={`w-9 h-9 rounded-xl items-center justify-center ${
+            paginaActual === totalPaginas ? 'bg-white/10' : 'bg-white/40'
+          }`}
         >
           <Ionicons
             name="chevron-back"
@@ -325,7 +327,7 @@ export default function ProductDashboard() {
           />
         </TouchableOpacity>
 
-        <Text className="text-white font-bold text-sm">
+        <Text className="text-dark font-bold text-sm">
           Página {paginaActual} de {totalPaginas}
         </Text>
 
