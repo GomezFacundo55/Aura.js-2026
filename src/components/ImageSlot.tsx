@@ -32,7 +32,6 @@ export const ImageSlot: React.FC<ImageSlotProps> = ({ uri, index, onPress }) => 
             <Ionicons name="camera-outline" size={26} color="#16A34A" />
           </View>
           <Text className="text-sm font-medium text-gray-700">Cargar Foto {index + 1}</Text>
-          <Text className="text-xs text-gray-400 mt-0.5">Tocar para tomar o elegir</Text>
         </TouchableOpacity>
       )}
     </View>

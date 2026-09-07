@@ -221,7 +221,9 @@ export default function CreateProduct() {
       setLoading(false);
     };
   }
-
+  const mostrarModalDos = ()=>{
+    setModalDosVisible(true);
+  }
   const redirectToDashboard = () => {
     setModalDosVisible(false);
     router.push('/(app)/dashboard' as any);
@@ -236,7 +238,7 @@ export default function CreateProduct() {
       </View>
       <TouchableOpacity
         activeOpacity={0.7}
-        onPress={redirectToDashboard}
+        onPress={mostrarModalDos}
         className="w-10 h-10 rounded-full bg-orange-300 border border-transparent items-center justify-center mr-3 shadow-sm"
       >
         <Ionicons name="arrow-back" size={20} color="#1F2937" />
@@ -280,7 +282,6 @@ export default function CreateProduct() {
             onChangeText={setPrepTime}
           />
         </View>
-
         <View className="flex-1">
           <Text className="text-sm font-semibold text-gray-700 mb-1">Precio ($)</Text>
           <TextInput
@@ -297,14 +298,16 @@ export default function CreateProduct() {
       <Text className="text-sm font-semibold text-gray-700 mb-2">
         Fotos del producto (3 requeridas)
       </Text>      
-      <View className="space-y-4 mb-8">
-        {images.map((uri, index) => (    
+      <View className="flex-row mb-8">
+        {images.map((uri, index) => (  
+          <View key={index} className="flex-1 aspect-square">  
         <ImageSlot
             key={index}
             uri={uri}
             index={index}
             onPress={handlePickImage}
           />
+          </View>
         ))}
       </View>
 
@@ -312,7 +315,7 @@ export default function CreateProduct() {
         activeOpacity={0.8}
         onPress={modalConfirm}
         disabled={loading}
-        className={`w-full py-4 rounded-xl flex-row items-center justify-center shadow-md ${
+        className={`w-full py-4 mt-20 rounded-xl flex-row items-center justify-center shadow-md ${
           loading ? 'bg-green-300' : 'bg-green-600'
         }`}
       >
@@ -336,14 +339,14 @@ export default function CreateProduct() {
         onCancel={() => { setModalVisible(false); }}
       />
       <ConfirmModal
-            visible={modalDosVisible}
-            title="Confirmar acción"
-            message="¿Volver al dashboard?"
-            confirmText="Si"
-            cancelText="No"
-            action={false}
-            onConfirm={redirectToDashboard}
-            onCancel={() => { setModalDosVisible(false); }}
+        visible={modalDosVisible}
+        title="Confirmar acción"
+        message="¿Volver al dashboard?"
+        confirmText="Si"
+        cancelText="No"
+        action={false}
+        onConfirm={redirectToDashboard}
+        onCancel={() => { setModalDosVisible(false); }}
           />
     </ScrollView>
   );
