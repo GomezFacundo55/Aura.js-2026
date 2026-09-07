@@ -1,7 +1,9 @@
+import { GradientBackground } from "@/components/ui/GradientBackground";
 import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import { useEffect } from "react";
+import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../../global.css";
 import { ToastProvider } from "../contextJ/Toast";
@@ -29,12 +31,28 @@ export default function RootLayout() {
       {/* translucent={false}: la status bar no flota encima del contenido. */}
       <StatusBar style="dark" />
       <ToastProvider>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { flex: 1, backgroundColor: "#F5F5F6" },
-        }}
-      />
+        <View className="flex-1">
+          <GradientBackground />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { flex: 1, backgroundColor: "transparent" },
+              animation: "fade",
+              animationDuration: 180,
+            }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(onboarding)" />
+            <Stack.Screen
+              name="(app)"
+              options={{
+                gestureEnabled: false,
+                animation: "none",
+              }}
+            />
+          </Stack>
+        </View>
       </ToastProvider>
     </SafeAreaProvider>
   );

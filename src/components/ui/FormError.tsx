@@ -11,13 +11,13 @@ export function FormError({ message, onDismiss }: FormErrorProps) {
   }
 
   return (
-    <View className="gap-2 rounded-xl border border-danger bg-brand-50 px-4 py-3">
+    <View className="gap-1 rounded-xl border border-danger bg-brand-50 px-3 py-2">
       <Text accessibilityRole="alert" className="text-sm text-danger">
         {message}
       </Text>
       {onDismiss ? (
         <Pressable accessibilityRole="button" onPress={onDismiss}>
-          <Text className="text-sm font-medium text-brand-600">Cerrar</Text>
+          <Text className="text-base font-semibold text-brand-600">Cerrar</Text>
         </Pressable>
       ) : null}
     </View>

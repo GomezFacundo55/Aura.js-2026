@@ -3,9 +3,9 @@ import { AvatarCapture } from "../../components/ui/AvatarCapture";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { validateGuestName } from "../../lib/validation";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import { useMemo, useState } from "react";
-import { Text, View } from "react-native";
+import { Image, View } from "react-native";
 
 export default function GuestScreen() {
     const [name, setName] = useState("");
@@ -27,8 +27,16 @@ export default function GuestScreen() {
     };
 
     return (
-        <AuthScreenLayout>        
-        <View className="gap-6">
+        <AuthScreenLayout>    
+        <View className="mt-15 items-center" style={{ marginBottom: 100 }}>
+            <Image
+                accessibilityLabel="Logo de Sazon"
+                source={require("../../../assets/images/LogoSazonNegro.png")}
+                style={{ width: 400, height: 104 }}
+                resizeMode="contain"
+            />
+        </View>    
+        <View className="gap-4">
             <AvatarCapture photoUri={photoUri} onPhotoChange={setPhotoUri} />
 
             <Input
@@ -44,11 +52,6 @@ export default function GuestScreen() {
 
             <Button title="Continuar" disabled={!isFormValid} onPress={handleContinue} />
 
-            <Link href="/" asChild>
-            <Text className="text-center text-sm text-neutral-600 underline">
-                Volver al inicio
-            </Text>
-            </Link>
         </View>
         </AuthScreenLayout>
     );

@@ -13,7 +13,7 @@ export function Input({ label, error, className, rightElement, ...props }: Input
 
   return (
     <View className="gap-1.5">
-      <Text nativeID={`${label}-label`} className="text-sm font-medium text-neutral-700">
+      <Text nativeID={`${label}-label`} className="text-base font-semibold text-neutral-700">
         {label}
       </Text>
 
@@ -23,7 +23,7 @@ export function Input({ label, error, className, rightElement, ...props }: Input
             accessibilityLabel={label}
             aria-labelledby={`${label}-label`}
             placeholderTextColor="#A0A0A5"
-            className={`min-w-0 flex-1 px-4 py-3.5 text-base text-neutral-900 ${className ?? ""}`}
+            className={`min-w-0 flex-1 px-3 py-2.5 text-base text-neutral-900 ${className ?? ""}`}
             {...props}
           />
           {rightElement}
@@ -33,13 +33,13 @@ export function Input({ label, error, className, rightElement, ...props }: Input
           accessibilityLabel={label}
           aria-labelledby={`${label}-label`}
           placeholderTextColor="#A0A0A5"
-          className={`rounded-xl border bg-surface-light px-4 py-3.5 text-base text-neutral-900 ${borderClass} ${className ?? ""}`}
+          className={`rounded-xl border bg-surface-light px-3 py-2.5 text-base text-neutral-900 ${borderClass} ${className ?? ""}`}
           {...props}
         />
       )}
 
       {hasError ? (
-        <Text accessibilityRole="alert" className="text-sm text-danger">
+        <Text accessibilityRole="alert" className="text-base text-danger">
           {error}
         </Text>
       ) : null}
