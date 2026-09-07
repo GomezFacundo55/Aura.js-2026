@@ -2,8 +2,6 @@
 
 > Este README es un documento vivo: se irá actualizando y completando a medida que el equipo avance en el desarrollo del proyecto.
 
-**Integrantes:** Neiner, Maximiliano - Constanzo, Alejandro - Villegas, Octavio - Ferrero, Nicolás - Morelli, Augusto - Loredo, Alejandro
-
 ---
 
 ## 1. Justificación del stack elegido
@@ -31,18 +29,17 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 4. Fecha de finalización de la tarea
 5. Branch (si posee)
 
-
 ---
 
 ### Sprint 1 — Sábado 05 de septiembre
-**Alcance:** Requisitos 1,2,3,4, 5, 6 (Agregar empleado / Agregar plato / Agregar bebida Agregar mesa / Crear cliente registrado / Verificar ingreso del cliente registrado)
+**Alcance:** Requisitos 1, 2, 3, 4, 5, 6 (Agregar empleado / Agregar plato / Agregar bebida / Agregar mesa / Crear un cliente registrado / Verificar ingreso del cliente registrado)
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
 |---|---|---|---|---|
-| Gomez Facundo| 4 y 6  | 30/08 | | Gomez | 
-|Delgobbo Giuliani | 1 y 5|30/08 | | Delgobbo |
-| Enzo Jauregui| 2 y 3| 30/08| | Jauregui|
-| Emir Almonacid | BD | 30/08| | Almonacid|
+| Delgobbo Giuliana | Módulos 1 y 5 | 23/8 | 2/9 | Delgobbo |
+| Gómez Facundo | Módulos 4 y 6 | 30/8 | | Gomez |
+| Jauregui Enzo  | Módulo 2 y 3 | 30/8 | | Jauregui |
+| Almonacid Emir | Base de datos Supabase | 30/8 | | Almonacid |
 
 ---
 
@@ -51,9 +48,10 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
 |---|---|---|---|---|
-| | | | | |
-| | | | | |
-| | | | | |
+| Gomez Facundo| 4 y 6  | 30/08 | | Gomez | 
+|Delgobbo Giuliani | 1 y 5|30/08 | | Delgobbo |
+| Enzo Jauregui| 2 y 3| 30/08| | Jauregui|
+| Emir Almonacid | BD | 30/08| | Almonacid|
 
 ---
 
@@ -69,6 +67,17 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 ---
 
 ### Sprint 4 — Sábado 26 de septiembre
+**Alcance:** Requisitos 10, 11, 12 (Asignación de mesa / Listado de productos y consulta al mozo / Pedido del cliente)
+
+| Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
+|---|---|---|---|---|
+| | | | | |
+| | | | | |
+| | | | | |
+
+---
+
+### Sprint 5 — Sábado 03 de octubre
 **Alcance:** Requisitos 13, 14, 15 (Rechazo/confirmación del pedido por el mozo / Juegos y descuentos)
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
@@ -81,7 +90,7 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 ---
 
-### Sprint 5 — Sábado 03 de octubre
+### Sprint 6 — Sábado 10 de octubre
 **Alcance:** Requisitos 16, 17, 18 (Sector cocina / Sector bar / Aviso de pedido completo)
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
@@ -92,19 +101,8 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 ---
 
-### Sprint 7 — Sábado 10 de octubre
-**Alcance:** Requisitos 19, 20, 21 (Entrega del pedido / Encuesta / Solicitud de cuenta)
-
-| Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
-|---|---|---|---|---|
-| | | | | |
-| | | | | |
-| | | | | |
-
----
-
-### Sprint 8 — Sábado 17 de octubre
-**Alcance:** Requisito 22 (Confirmación de pago y liberación de mesa)
+### Sprint 7 — Sábado 17 de octubre
+**Alcance:** Requisitos 19, 20, 21, 22 (Entrega del pedido / Encuesta / Solicitud de cuenta / Confirmación de pago y liberación de mesa)
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
 |---|---|---|---|---|

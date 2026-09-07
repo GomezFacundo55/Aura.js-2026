@@ -10,9 +10,15 @@
     "ios": {
       "icon": "./assets/expo.icon"
     },
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#F5F5F6",
+      "translucent": false
+    },
     "android": {
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.Aura.js2026"
+      "package": "com.anonymous.Aura.js2026",
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "output": "static",
@@ -38,7 +44,22 @@
             "./assets/fonts/Poppins-SemiBold.ttf"
           ]
         }
-      ]
+      ],
+      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Aura necesita acceder a la cámara para escanear el QR del DNI y tomar tu foto de perfil.",
+          "barcodeScannerEnabled": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Aura necesita acceder a la cámara para tomar tu foto de perfil."
+        }
+      ],
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true,

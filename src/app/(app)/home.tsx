@@ -7,8 +7,6 @@ export default function HomeScreen() {
       <Text className="mt-3 text-base text-neutral-600">
         Acá vas a poder ver el menú del restaurante y hacer tu pedido.
       </Text>
-
-      {/* TODO: mostrar menú del restaurante (productos, categorías, etc.) */}
       <View className="mt-8 flex-1 items-center justify-center rounded-2xl border border-dashed border-neutral-400 bg-surface-light p-6">
         <Text className="text-center text-neutral-500">
           Espacio reservado para el menú del restaurante
