@@ -1,4 +1,5 @@
 import { clientesService } from '@/lib/clientesServicio';
+import { enviarMailCliente } from '@/servicesJ/emailService';
 //import { notificarNuevoClientePendiente, pedirPermisosNotificaciones } from '@/lib/notificaciones';
 import { supabase } from '@/lib/supabase';
 import type { Cliente } from '@/types/database';
@@ -42,9 +43,25 @@ export default function ClientesPendientesScreen() {
     };
   }, []);
 
-  const resolver = async (cliente: Cliente, estado: 'aprobado' | 'rechazado') => {
+    const resolver = async (cliente: Cliente, estado: 'aprobado' | 'rechazado') => {
     await clientesService.resolver(cliente.id, estado);
     setClientes((prev) => prev.filter((c) => c.id !== cliente.id));
+
+    if (!cliente.email) {
+      console.warn('El cliente no tiene email cargado, no se envía mail.');
+      return;
+    }
+
+    const { error } = await enviarMailCliente({
+      email: cliente.email,
+      nombres: cliente.nombres,
+      apellidos: cliente.apellidos,
+      estado,
+    });
+
+    if (error) {
+      console.warn('No se pudo enviar el mail al cliente:', error);
+    }
   };
 
   return (

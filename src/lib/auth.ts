@@ -36,8 +36,12 @@ export type UserProfile = {
   estado?: string | null;
 };
 
+
 export const PENDING_APPROVAL_MESSAGE =
   "Tu cuenta quedó pendiente de aprobación. Cuando un encargado la habilite vas a poder ingresar.";
+
+export const REJECTED_MESSAGE =
+  "Tu solicitud de registro no fue aprobada. Si creés que es un error, contactate con el local.";
 
 function supabaseErrorMessage(error: { message?: string } | null, fallback: string): string {
   const message = error?.message?.trim();
@@ -276,8 +280,13 @@ export async function resolveHomeRoute(): Promise<{
   }
 
   const estado = String(profile.estado ?? "").trim().toLowerCase();
+
   if (estado === "pendiente") {
     return { route: null, error: PENDING_APPROVAL_MESSAGE, pending: true };
+  }
+
+  if (estado === "rechazado") {
+    return { route: null, error: REJECTED_MESSAGE, pending: true };
   }
 
   const role = String(profile.perfil ?? "").trim().toLowerCase();
