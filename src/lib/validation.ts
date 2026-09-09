@@ -8,7 +8,8 @@ export type ProfileRole =
   | "mozo"
   | "cocinero"
   | "cantinero"
-  | "cliente_registrado";
+  | "cliente_registrado"
+  | "cliente_anonimo";
 
 export const PROFILE_ROLE_LABELS: Record<ProfileRole, string> = {
   dueño: "dueño",
@@ -18,6 +19,7 @@ export const PROFILE_ROLE_LABELS: Record<ProfileRole, string> = {
   cocinero: "cocinero",
   cantinero: "cantinero",
   cliente_registrado: "cliente_registrado",
+  cliente_anonimo: "cliente_anonimo",
 };
 
 /** Empleados que un dueño/supervisor puede dar de alta. */

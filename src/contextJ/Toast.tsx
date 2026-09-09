@@ -70,8 +70,8 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
             right: 20, 
             zIndex: 9999, 
             elevation: 10,
-          backgroundColor: '#cfc7c7' }}
-          className={`flex-row items-center bg-white p-4 rounded-2xl shadow-2xl border-l-8 ${currentStyle.borderClass}`}
+           }}
+          className={`flex-row items-center bg-surface-light/95 p-4 rounded-2xl shadow-2xl border-l-8 ${currentStyle.borderClass}`}
         >
           <Ionicons name={currentStyle.icon as any} size={32} color={currentStyle.color} />
 

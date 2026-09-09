@@ -92,6 +92,42 @@ async function insertProfile(row: {
   return { error: null };
 }
 
+export type AnonymousSignInInput = {
+  nombres: string;
+  photoUri: string | null;
+};
+
+export async function signInAnonymouslyWithProfile(
+  input: AnonymousSignInInput
+): Promise<{ error: string | null }> {
+  const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+
+  if (authError) {
+    return { error: supabaseErrorMessage(authError, "No pudimos iniciar sesión de invitado.") };
+  }
+
+  const userId = authData.user?.id;
+  if (!userId) {
+    return { error: "No pudimos obtener la sesión del invitado." };
+  }
+
+  let fotoUrl: string | null = null;
+  if (input.photoUri) {
+    fotoUrl = await uploadProfilePhoto(userId, input.photoUri);
+  }
+
+  return insertProfile({
+    id: userId,
+    nombres: input.nombres.trim(),
+    apellidos: "",
+    dni: "",
+    cuil: "",
+    perfil: "cliente_anonimo",
+    foto_url: fotoUrl,
+    estado: "aprobado",
+  });
+}
+
 export async function getMyProfile(): Promise<UserProfile | null> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   const userId = userData.user?.id;
