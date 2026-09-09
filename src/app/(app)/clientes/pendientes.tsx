@@ -1,14 +1,17 @@
-import { clientesService } from '@/lib/clientesServicio';
+import { Button } from '@/components/ui/Button';
+import { GradientBackground } from '@/components/ui/GradientBackground';
+import { clientesService, type Cliente } from '@/lib/clientesServicio';
 import { notificarNuevoClientePendiente, pedirPermisosNotificaciones } from '@/lib/notificaciones';
 import { supabase } from '@/lib/supabase';
-import type { Cliente } from '@/types/database';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, RefreshControl, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ClientesPendientesScreen() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [cargando, setCargando] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const cargarClientes = useCallback(async () => {
     setCargando(true);
@@ -26,10 +29,10 @@ export default function ClientesPendientesScreen() {
       .channel('clientes-pendientes')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'clientes' },
+        { event: 'INSERT', schema: 'public', table: 'profiles' },
         (payload) => {
-          const nuevo = payload.new as Cliente;
-          if (nuevo.estado === 'pendiente') {
+          const nuevo = payload.new as Cliente & { perfil: string };
+          if (nuevo.estado === 'pendiente' && nuevo.perfil === 'cliente_registrado') {
             setClientes((prev) => [...prev, nuevo]);
             notificarNuevoClientePendiente(`${nuevo.nombres} ${nuevo.apellidos}`);
           }
@@ -48,45 +51,47 @@ export default function ClientesPendientesScreen() {
   };
 
   return (
-    <FlatList
-      contentContainerStyle={styles.lista}
-      data={clientes}
-      keyExtractor={(item) => item.id}
-      refreshControl={<RefreshControl refreshing={cargando} onRefresh={cargarClientes} />}
-      ListEmptyComponent={<Text style={styles.vacio}>No hay clientes pendientes de aprobación</Text>}
-      renderItem={({ item }) => (
-        <View style={styles.card}>
-          <View style={styles.fotoContainer}>
-            <Image source={{ uri: item.foto_url }} style={styles.foto} resizeMode="cover" />
+    <View className="flex-1">
+      <GradientBackground />
+      <FlatList
+        className="flex-1"
+        contentContainerStyle={{ padding: 20, paddingTop: insets.top + 16, gap: 12, flexGrow: 1 }}
+        data={clientes}
+        keyExtractor={(item) => item.id}
+        refreshControl={<RefreshControl refreshing={cargando} onRefresh={cargarClientes} />}
+        ListHeaderComponent={
+          <Text className="mb-4 text-center text-lg font-bold text-neutral-900">
+            Clientes pendientes de aprobación
+          </Text>
+        }
+        ListEmptyComponent={
+          <View className="flex-1 items-center justify-center">
+            <Text className="text-center text-base text-neutral-700">
+              No hay clientes pendientes de aprobación
+            </Text>
           </View>
-          <View style={styles.info}>
-            <Text style={styles.nombre}>{item.apellidos}, {item.nombres}</Text>
-            <View style={styles.botonesRow}>
-              <Pressable style={[styles.boton, styles.botonAceptar]} onPress={() => resolver(item, 'aprobado')}>
-                <Text style={styles.botonTexto}>Aceptar</Text>
-              </Pressable>
-              <Pressable style={[styles.boton, styles.botonRechazar]} onPress={() => resolver(item, 'rechazado')}>
-                <Text style={styles.botonTexto}>Rechazar</Text>
-              </Pressable>
+        }
+        renderItem={({ item }) => (
+          <View className="flex-row items-center gap-4 rounded-2xl bg-surface-light p-3">
+            <View className="h-24 w-24 overflow-hidden rounded-full border-2 border-brand-400 bg-surface-muted">
+              <Image source={{ uri: item.foto_url }} className="h-full w-full" resizeMode="cover" />
+            </View>
+            <View className="flex-1 gap-3">
+              <Text className="text-base font-bold text-neutral-900">
+                {item.apellidos}, {item.nombres}
+              </Text>
+              <View className="flex-row gap-2">
+                <View className="flex-1">
+                  <Button title="Aceptar" className="bg-success" onPress={() => resolver(item, 'aprobado')} />
+                </View>
+                <View className="flex-1">
+                  <Button title="Rechazar" className="bg-danger" onPress={() => resolver(item, 'rechazado')} />
+                </View>
+              </View>
             </View>
           </View>
-        </View>
-      )}
-    />
+        )}
+      />
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  lista: { padding: 16 },
-  vacio: { textAlign: 'center', color: '#999', marginTop: 40 },
-  card: { flexDirection: 'row', gap: 14, backgroundColor: '#fafafa', borderRadius: 12, padding: 12, marginBottom: 12, alignItems: 'center' },
-  fotoContainer: { width: 90, height: 90, borderRadius: 45, overflow: 'hidden', backgroundColor: '#eee' },
-  foto: { width: '100%', height: '100%' },
-  info: { flex: 1 },
-  nombre: { fontSize: 16, fontWeight: '700', marginBottom: 10 },
-  botonesRow: { flexDirection: 'row', gap: 10 },
-  boton: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8 },
-  botonAceptar: { backgroundColor: '#2a7a2a' },
-  botonRechazar: { backgroundColor: '#b33' },
-  botonTexto: { color: '#fff', fontWeight: '700' },
-});

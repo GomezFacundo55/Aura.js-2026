@@ -1,18 +1,21 @@
+import { GradientBackground } from '@/components/ui/GradientBackground';
 import { mesasServicio } from '@/lib/mesasServicio';
 import type { Mesa, MesaDisponibilidad } from '@/types/database';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, Pressable, RefreshControl, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const ESTADOS: { label: string; value: MesaDisponibilidad; color: string }[] = [
-  { label: 'Vacía', value: 'vacia', color: '#2a7a2a' },
-  { label: 'Ocupada', value: 'ocupada', color: '#b33' },
-  { label: 'Reservada', value: 'reservada', color: '#b38f00' },
+const ESTADOS: { label: string; value: MesaDisponibilidad; activeClass: string; textClass: string; borderClass: string }[] = [
+  { label: 'Vacía', value: 'vacia', activeClass: 'bg-success', textClass: 'text-success', borderClass: 'border-success' },
+  { label: 'Ocupada', value: 'ocupada', activeClass: 'bg-danger', textClass: 'text-danger', borderClass: 'border-danger' },
+  { label: 'Reservada', value: 'reservada', activeClass: 'bg-brand-500', textClass: 'text-brand-600', borderClass: 'border-brand-400' },
 ];
 
 export default function ListadoMesasScreen() {
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [cargando, setCargando] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const cargarMesas = useCallback(async () => {
     setCargando(true);
@@ -29,48 +32,57 @@ export default function ListadoMesasScreen() {
   };
 
   return (
-    <FlatList
-      contentContainerStyle={styles.lista}
-      data={mesas}
-      keyExtractor={(item) => item.id}
-      refreshControl={<RefreshControl refreshing={cargando} onRefresh={cargarMesas} />}
-      ListEmptyComponent={<Text style={styles.vacio}>No hay mesas cargadas todavía</Text>}
-      renderItem={({ item }) => (
-        <View style={styles.card}>
-          <View style={styles.fotoContainer}>
-            <Image source={{ uri: item.foto_url }} style={styles.foto} resizeMode="cover" />
+    <View className="flex-1">
+      <GradientBackground />
+      <FlatList
+        className="flex-1"
+        contentContainerStyle={{ padding: 20, paddingTop: insets.top + 16, gap: 12, flexGrow: 1 }}
+        data={mesas}
+        keyExtractor={(item) => item.id}
+        refreshControl={<RefreshControl refreshing={cargando} onRefresh={cargarMesas} />}
+        ListHeaderComponent={
+          <Text className="mb-4 text-center text-lg font-bold text-neutral-900">
+            Listado de mesas
+          </Text>
+        }
+        ListEmptyComponent={
+          <View className="flex-1 items-center justify-center">
+            <Text className="text-center text-base text-neutral-700">
+              No hay mesas cargadas todavía
+            </Text>
           </View>
-          <View style={styles.info}>
-            <Text style={styles.numero}>Mesa {item.numero}</Text>
-            <Text style={styles.detalle}>{item.comensales} comensales · {item.tipo}</Text>
-            <View style={styles.estadosRow}>
-              {ESTADOS.map((e) => (
-                <Pressable
-                  key={e.value}
-                  onPress={() => cambiarDisponibilidad(item, e.value)}
-                  style={[styles.estadoChip, { borderColor: e.color }, item.disponibilidad === e.value && { backgroundColor: e.color }]}
-                >
-                  <Text style={[styles.estadoText, item.disponibilidad === e.value && { color: '#fff' }]}>{e.label}</Text>
-                </Pressable>
-              ))}
+        }
+        renderItem={({ item }) => (
+          <View className="flex-row gap-3 rounded-2xl bg-surface-light p-3">
+            <View className="h-20 w-20 overflow-hidden rounded-xl bg-surface-muted">
+              <Image source={{ uri: item.foto_url }} className="h-full w-full" resizeMode="cover" />
+            </View>
+            <View className="flex-1 justify-center gap-1">
+              <Text className="text-base font-bold text-neutral-900">Mesa {item.numero}</Text>
+              <Text className="text-sm text-neutral-600">
+                {item.comensales} comensales · {item.tipo}
+              </Text>
+              <View className="mt-1 flex-row flex-wrap gap-1.5">
+                {ESTADOS.map((e) => {
+                  const activo = item.disponibilidad === e.value;
+                  return (
+                    <Pressable
+                      key={e.value}
+                      accessibilityRole="button"
+                      onPress={() => cambiarDisponibilidad(item, e.value)}
+                      className={`rounded-full border px-2.5 py-1 ${e.borderClass} ${activo ? e.activeClass : 'bg-surface-light'}`}
+                    >
+                      <Text className={`text-xs font-semibold ${activo ? 'text-white' : e.textClass}`}>
+                        {e.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
           </View>
-        </View>
-      )}
-    />
+        )}
+      />
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  lista: { padding: 16 },
-  vacio: { textAlign: 'center', color: '#999', marginTop: 40 },
-  card: { flexDirection: 'row', gap: 12, backgroundColor: '#fafafa', borderRadius: 12, padding: 12, marginBottom: 12 },
-  fotoContainer: { width: 80, height: 80, borderRadius: 10, overflow: 'hidden', backgroundColor: '#eee' },
-  foto: { width: '100%', height: '100%' },
-  info: { flex: 1 },
-  numero: { fontSize: 16, fontWeight: '700' },
-  detalle: { color: '#666', marginTop: 2, marginBottom: 8 },
-  estadosRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
-  estadoChip: { borderWidth: 1, borderRadius: 16, paddingVertical: 4, paddingHorizontal: 10 },
-  estadoText: { fontSize: 12, fontWeight: '600' },
-});

@@ -1,11 +1,21 @@
 import { supabase } from '@/lib/supabase';
-import type { Cliente, ClienteEstado } from '@/types/database';
+import type { ClienteEstado } from '@/types/database';
+
+export type Cliente = {
+  id: string;
+  nombres: string;
+  apellidos: string;
+  foto_url: string;
+  estado: ClienteEstado;
+  created_at: string;
+};
 
 export const clientesService = {
   async listarPendientes(): Promise<Cliente[]> {
     const { data, error } = await supabase
-      .from('clientes')
-      .select('*')
+      .from('profiles')
+      .select('id, nombres, apellidos, foto_url, estado, created_at')
+      .eq('perfil', 'cliente_registrado')
       .eq('estado', 'pendiente')
       .order('created_at', { ascending: true });
 
@@ -15,7 +25,7 @@ export const clientesService = {
 
   async resolver(id: string, estado: ClienteEstado): Promise<void> {
     const { error } = await supabase
-      .from('clientes')
+      .from('profiles')
       .update({ estado })
       .eq('id', id);
 
