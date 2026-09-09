@@ -1,10 +1,14 @@
-import { Slot } from "expo-router";
-import { View } from "react-native";
+import { Stack } from "expo-router";
 
 export default function OnboardingLayout() {
   return (
-    <View style={{ flex: 1 }}>
-      <Slot />
-    </View>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { flex: 1, backgroundColor: "transparent" },
+        animation: "fade",
+        animationDuration: 180,
+      }}
+    />
   );
 }

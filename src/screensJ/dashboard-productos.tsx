@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   Image,
   ActivityIndicator,
@@ -37,6 +36,7 @@ export default function ProductDashboard() {
   const totalPaginas = Math.ceil(productos.length / ELEMENTOS_POR_PAGINA) || 1;
   const indiceInicio = (paginaActual - 1) * ELEMENTOS_POR_PAGINA;
   const productosVisibles = productos.slice(indiceInicio, indiceInicio + ELEMENTOS_POR_PAGINA);
+  const [mostrarModalDos, setMostrarModalDos] = useState(false);
 
   useEffect(() => {
     async function loadUserData(){
@@ -81,6 +81,12 @@ export default function ProductDashboard() {
     }
   }
 
+  const modalOut = () =>{
+    setTituloModal("Salir");
+    setMensajeModal("Desea salir?")
+    setMostrarModalDos(true);
+  }
+
   const cargarDatos = async (tabla: tabla) => {
       if(!tabla) return;
       const respuesta = await obtenerProductos(tabla);
@@ -112,6 +118,13 @@ export default function ProductDashboard() {
       params: { id: producto.id, cargo: cargoUsuario },
     });
   };
+
+  const details = (producto: IProductoPedido)=>{
+    router.push({
+      pathname: "/product-details",
+      params: { id: producto.id, cargo: cargoUsuario }
+    })
+  }
   const handleAction = (accion: 'eliminar' | 'editar', producto: IProductoPedido) => 
   {
     if(producto === null){
@@ -160,20 +173,20 @@ export default function ProductDashboard() {
   };
 
   return (
-    <View className="flex-1 bg-orange-400 p-4">
-      <View className="flex-row items-center justify-between mt-2 mb-3 bg-orange-500/30 p-2.5 rounded-2xl">
+    <View className="flex-1 p-4">
+      <View className="flex-row items-center justify-between mt-2 mb-0 bg-orange-500/30 p-2.5 rounded-2xl">
         <View className="flex-row items-center flex-1 mr-2">
           <TouchableOpacity
             activeOpacity={0.7}
-            onPress={logOut}
-            className="w-9 h-9 rounded-xl bg-red-500 items-center justify-center mr-3 shadow-sm"
+            onPress={modalOut}
+            className="w-9 h-9 rounded-xl bg-red-400 items-center justify-center mr-3 shadow-sm"
           >
             <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
           </TouchableOpacity>
 
           <View className="flex-1">
-            <Text className="text-white font-medium text-xs">Bienvenido/a,</Text>
-            <Text className="text-white font-bold text-base" numberOfLines={1}>
+            <Text className="text-dark font-medium text-xs">Bienvenido/a,</Text>
+            <Text className="text-dark font-bold text-base" numberOfLines={1}>
               {perfilUsuario ? `${perfilUsuario.nombres} ${perfilUsuario.apellidos}` : "Cargando..."}
             </Text>
           </View>
@@ -181,16 +194,16 @@ export default function ProductDashboard() {
 
         {cargoUsuario ? (
           <View className="bg-white/20 px-2.5 py-1 rounded-full">
-            <Text className="text-white text-xs font-semibold uppercase tracking-wider">
+            <Text className="text-dark text-xs font-semibold uppercase tracking-wider">
               {perfilUsuario? `${perfilUsuario.perfil}` : "Cargando..."}
             </Text>
           </View>
         ) : null}
       </View>
-  <View className="flex-1 bg-orange-400 p-4">
+  <View className="flex-1 p-4">
     <View className="flex-row items-center justify-between mb-4 mt-2">
       <View className="flex-1 pr-2">
-        <Text className="text-2xl font-bold text-black">
+        <Text className="text-xl font-bold text-black">
           Panel de Productos del {perfilUsuario? perfilUsuario.perfil : ""}
         </Text>
         <Text className="text-xs text-gray-600">Gestión de la carta</Text>
@@ -212,11 +225,7 @@ export default function ProductDashboard() {
       </View>
     ) : (
       <View className='flex-1'>
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 8 }}
-      >
+      
         {productos.length === 0 ? (
           <View className="py-20 items-center justify-center bg-white rounded-2xl border border-gray-200 mt-2">
             <Ionicons name="fast-food-outline" size={54} color="#9CA3AF" />
@@ -225,6 +234,7 @@ export default function ProductDashboard() {
             </Text>
           </View>
         ) : (
+          <>{
           productosVisibles.map((item) => (
             <View
               key={item.id}
@@ -247,6 +257,13 @@ export default function ProductDashboard() {
                     {item.nombre}
                   </Text>
                   <View className="flex-row items-center">
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => details(item)}
+                      className="w-7 h-7 rounded-lg bg-blue-50 items-center justify-center border border-blue-200 mr-1.5"
+                    >  
+                    <Ionicons name="information-circle-outline" size={14} color="#2563EB" />
+                    </TouchableOpacity>
                     <TouchableOpacity
                       activeOpacity={0.7}
                       onPress={() => handleAction('editar', item)}
@@ -283,44 +300,51 @@ export default function ProductDashboard() {
                 </View>
               </View>
             </View>
-          ))
-        )}
-      </ScrollView>
-    
-    {productos.length > ELEMENTOS_POR_PAGINA && (
-        <View className="flex-row items-center justify-between bg-orange-500/30 px-4 py-2.5 rounded-2xl mt-1 mb-2">
-          <TouchableOpacity
-            disabled={paginaActual === 1}
-            onPress={() => setPaginaActual((prev) => Math.max(prev - 1, 1))}
-            className={`w-9 h-9 rounded-xl items-center justify-center ${
-              paginaActual === 1 ? 'bg-white/10' : 'bg-white/40'
-            }`}
-          >
-            <Ionicons
-              name="chevron-back"
-              size={20}
-              color={paginaActual === 1 ? '#9CA3AF' : '#FFFFFF'}
-            />
-          </TouchableOpacity>
-
-          <Text className="text-white font-bold text-sm">
-            Página {paginaActual} de {totalPaginas}
+          ))}
+      {productosVisibles.length > 0 && productosVisibles.length <= 2 && (
+        <View className="py-6 items-center justify-center border-t border-dashed border-gray-300 mt-2">
+          <Ionicons name="checkmark-done-circle-outline" size={28} color="dark" />
+          <Text className="text-dark font-bold text-xs mt-1 text-center">
+            No hay más productos para mostrar
           </Text>
-
-          <TouchableOpacity
-            disabled={paginaActual === totalPaginas}
-            onPress={() => setPaginaActual((prev) => Math.min(prev + 1, totalPaginas))}
-            className={`w-9 h-9 rounded-xl items-center justify-center ${
-              paginaActual === totalPaginas ? 'bg-white/10' : 'bg-white/40'
-            }`}
-          >
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={paginaActual === totalPaginas ? '#9CA3AF' : '#FFFFFF'}
-            />
-          </TouchableOpacity>
         </View>
+      )}
+      </>
+    )}
+    {productos.length > ELEMENTOS_POR_PAGINA && (
+      <View className="flex-row items-center justify-between bg-orange-500/30 px-4 py-2.5 rounded-2xl mt-1 mb-2">
+        <TouchableOpacity
+          disabled={paginaActual === 1}
+          onPress={() => setPaginaActual((prev) => Math.max(prev - 1, 1))}
+          className={`w-9 h-9 rounded-xl items-center justify-center ${
+            paginaActual === totalPaginas ? 'bg-white/10' : 'bg-white/40'
+          }`}
+        >
+          <Ionicons
+            name="chevron-back"
+            size={20}
+            color={paginaActual === 1 ? '#9CA3AF' : '#FFFFFF'}
+          />
+        </TouchableOpacity>
+
+        <Text className="text-dark font-bold text-sm">
+          Página {paginaActual} de {totalPaginas}
+        </Text>
+
+        <TouchableOpacity
+          disabled={paginaActual === totalPaginas}
+          onPress={() => setPaginaActual((prev) => Math.min(prev + 1, totalPaginas))}
+          className={`w-9 h-9 rounded-xl items-center justify-center ${
+            paginaActual === totalPaginas ? 'bg-white/10' : 'bg-white/40'
+          }`}
+        >
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color={paginaActual === totalPaginas ? '#9CA3AF' : '#FFFFFF'}
+          />
+        </TouchableOpacity>
+      </View>
       )}
       </View>
     )}
@@ -336,6 +360,18 @@ export default function ProductDashboard() {
     onCancel={() => {
       setModalVisible(false);
       setProductoSeleccionado(null);
+    }}
+  />
+  <ConfirmModal
+    visible={mostrarModalDos}
+    title={tituloModal}
+    message={mensajeModal}
+    confirmText="Si"
+    cancelText="No"
+    action={false}
+    onConfirm={logOut}
+    onCancel={() => {
+      setMostrarModalDos(false);
     }}
   />
 </View>

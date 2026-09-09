@@ -89,7 +89,10 @@ export default function AltaEmpleadoScreen() {
       cuit: validateCuit(form.cuit),
       email: validateEmail(form.email),
       password: validateSignUpPassword(form.password),
-      passwordConfirm: validatePasswordConfirm(form.password, form.passwordConfirm),
+      passwordConfirm: validatePasswordConfirm(
+        form.password,
+        form.passwordConfirm,
+      ),
       perfil: validateEmployeeProfile(form.perfil),
     }),
     [form],
@@ -97,7 +100,10 @@ export default function AltaEmpleadoScreen() {
 
   const isFormValid = Object.values(errors).every((error) => error === null);
 
-  const updateField = <K extends keyof EmployeeForm>(key: K, value: EmployeeForm[K]) => {
+  const updateField = <K extends keyof EmployeeForm>(
+    key: K,
+    value: EmployeeForm[K],
+  ) => {
     setForm((current) => ({ ...current, [key]: value }));
   };
 
@@ -141,7 +147,10 @@ export default function AltaEmpleadoScreen() {
 
       router.replace("/(app)/manager-home");
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "No pudimos dar de alta al empleado.";
+      const message =
+        caught instanceof Error
+          ? caught.message
+          : "No pudimos dar de alta al empleado.";
       setFormError(message);
     } finally {
       setIsSubmitting(false);
@@ -174,16 +183,44 @@ export default function AltaEmpleadoScreen() {
 
   return (
     <AuthScreenLayout backHref="/(app)/manager-home">
-      <View className="gap-5">
-        <Text className="text-center text-xl font-bold text-neutral-900">Alta de empleado</Text>
-        <Text className="text-center text-sm text-neutral-600">
-          Solo supervisor o dueño pueden crear mozos o administradores.
+      <View className="gap-3">
+        <Text className="text-center text-lg font-bold text-neutral-900">
+          Alta de empleado
         </Text>
 
         <AvatarCapture
           photoUri={form.photoUri}
           onPhotoChange={(uri) => updateField("photoUri", uri)}
         />
+
+        
+        <View className="gap-2">
+          <Input
+            label="DNI"
+            placeholder="Escanee el DNI o ingrese los campos"
+            value={form.dni}
+            keyboardType="number-pad"
+            error={touched.dni ? errors.dni : null}
+            onBlur={() => markTouched("dni")}
+            onChangeText={(value) =>
+              updateField("dni", value.replace(/\D/g, ""))
+            }
+            rightElement={
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Escanear código del DNI"
+                className="px-2.5 py-2.5"
+                onPress={() => {
+                  setQrError(null);
+                  setQrScannerVisible(true);
+                }}
+              >
+                <Text className="text-sm font-semibold text-brand-600">QR</Text>
+              </Pressable>
+            }
+          />
+          <FormError message={qrError} onDismiss={() => setQrError(null)} />
+        </View>
 
         <Input
           label="Apellidos"
@@ -207,32 +244,6 @@ export default function AltaEmpleadoScreen() {
           onChangeText={(value) => updateField("nombres", value)}
         />
 
-        <View className="gap-2">
-          <Input
-            label="DNI"
-            placeholder="Ej: 12345678"
-            value={form.dni}
-            keyboardType="number-pad"
-            error={touched.dni ? errors.dni : null}
-            onBlur={() => markTouched("dni")}
-            onChangeText={(value) => updateField("dni", value.replace(/\D/g, ""))}
-            rightElement={
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Escanear código del DNI"
-                className="px-3 py-3.5"
-                onPress={() => {
-                  setQrError(null);
-                  setQrScannerVisible(true);
-                }}
-              >
-                <Text className="text-sm font-semibold text-brand-600">QR</Text>
-              </Pressable>
-            }
-          />
-          <FormError message={qrError} onDismiss={() => setQrError(null)} />
-        </View>
-
         <Input
           label="CUIT"
           placeholder="Ej: 20123456789"
@@ -240,7 +251,9 @@ export default function AltaEmpleadoScreen() {
           keyboardType="number-pad"
           error={touched.cuit ? errors.cuit : null}
           onBlur={() => markTouched("cuit")}
-          onChangeText={(value) => updateField("cuit", value.replace(/\D/g, ""))}
+          onChangeText={(value) =>
+            updateField("cuit", value.replace(/\D/g, ""))
+          }
         />
 
         <Input
@@ -280,7 +293,7 @@ export default function AltaEmpleadoScreen() {
           label="Perfil"
           value={form.perfil}
           options={[...EMPLOYEE_PROFILE_OPTIONS]}
-          placeholder="Seleccioná mozo o administrador"
+          placeholder="Seleccioná el perfil del empleado"
           error={touched.perfil ? errors.perfil : null}
           onChange={(perfil) => {
             updateField("perfil", perfil);
@@ -290,7 +303,11 @@ export default function AltaEmpleadoScreen() {
 
         <FormError message={formError} onDismiss={() => setFormError(null)} />
 
-        <Button title="Crear empleado" disabled={!isFormValid || isSubmitting} onPress={handleSubmit} />
+        <Button
+          title="Crear empleado"
+          disabled={!isFormValid || isSubmitting}
+          onPress={handleSubmit}
+        />
       </View>
 
       <QRScannerDNI

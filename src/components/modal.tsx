@@ -61,7 +61,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={onCancel}
-              className="flex-1 py-3 rounded-xl border border-orange-300 items-center justify-center"
+              className="flex-1 py-3 rounded-xl border border-orange items-center justify-center"
             >
               <Text className="text-gray-700 font-semibold text-sm">
                 {cancelText}

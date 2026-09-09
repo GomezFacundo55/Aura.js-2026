@@ -40,11 +40,11 @@ export function Button({
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled }}
       disabled={isDisabled}
-      className={`rounded-xl px-6 py-4 ${isDisabled ? styles.disabled : styles.base} ${className ?? ""}`}
+      className={`rounded-xl px-5 py-3 ${isDisabled ? `bg-surface-light/85 ${styles.disabled}` : styles.base} ${className ?? ""}`}
       {...props}
     >
       <Text
-        className={`text-center text-base font-semibold ${isDisabled ? "text-neutral-500" : styles.text}`}
+        className={`text-center text-base font-semibold ${isDisabled ? "text-brand-700" : styles.text}`}
       >
         {title}
       </Text>
