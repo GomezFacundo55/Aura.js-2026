@@ -6,24 +6,37 @@ import { validateGuestName } from "../../lib/validation";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Image, View } from "react-native";
+import { signInAnonymouslyWithProfile } from "@/lib/auth";
+import { useToast } from "@/contextJ/Toast";
+import { SoundService } from "@/servicesJ/soundService";
 
 export default function GuestScreen() {
+    const {showToast} = useToast();
     const [name, setName] = useState("");
     const [photoUri, setPhotoUri] = useState<string | null>(null);
     const [touched, setTouched] = useState(false);
 
     const nameError = useMemo(() => validateGuestName(name), [name]);
-    const isFormValid = nameError === null;
+    const isFormValid = nameError === null && photoUri !== null;
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
         setTouched(true);
 
         if (!isFormValid) {
         return;
         }
-
-        // TODO: guardar datos temporales del invitado (nombre, foto) en Supabase o almacenamiento local.
-        router.replace("/(app)/home");
+        try{
+            const { error } = await signInAnonymouslyWithProfile({nombres:name, photoUri:photoUri})
+            if(error){
+                console.log(error)
+                showToast('error', "Error al ingresar", error);
+                SoundService.reproducir('error');
+                return;
+            }
+            router.replace("/(app)/home");
+        } catch(er) {
+            showToast('error', 'Error al inesperado.', `${er}`)
+        }
     };
 
     return (

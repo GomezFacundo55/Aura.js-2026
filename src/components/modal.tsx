@@ -30,13 +30,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       animationType="fade"
       onRequestClose={onCancel}
     >
-      <Pressable
+      <TouchableOpacity
+      activeOpacity={0.5}
         onPress={onCancel}
-        className="flex-1 bg-black/60 items-center justify-center px-6"
+        className="flex-1 items-center justify-center px-6"
       >
         <Pressable
           onPress={(e) => e.stopPropagation()}
-          className="w-full max-w-sm bg-orange-200 rounded-3xl p-6 items-center shadow-2xl"
+          className="w-full max-w-sm bg-brand-100/95 rounded-3xl p-6 items-center shadow-2xl"
         >
           <View
             className={`w-14 h-14 rounded-full items-center justify-center mb-4 ${
@@ -81,7 +82,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             </TouchableOpacity>
           </View>
         </Pressable>
-      </Pressable>
+      </TouchableOpacity>
     </Modal>
   );
 };

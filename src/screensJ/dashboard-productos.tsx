@@ -212,7 +212,7 @@ export default function ProductDashboard() {
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={handleAddProduct}
-        className="flex-row items-center bg-green-600 px-3.5 py-2.5 rounded-xl shadow-sm"
+        className="flex-row items-center bg-brand-500 px-3.5 py-2.5 rounded-xl shadow-sm"
       >
         <Ionicons name="add-circle-outline" size={18} color="#FFFFFF" />
         <Text className="text-white font-semibold text-sm ml-1.5">Agregar</Text>

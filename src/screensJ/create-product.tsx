@@ -7,6 +7,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Pressable,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -237,13 +238,12 @@ export default function CreateProduct() {
         <Text className="text-2xl font-bold text-gray-800 mb-0.5">Datos del Producto</Text>
         <Text className="text-sm text-gray-500">Completar los detalles del producto.</Text>
       </View>
-      <TouchableOpacity
-        activeOpacity={0.7}
+      <Pressable
         onPress={mostrarModalDos}
-        className="w-10 h-10 rounded-full bg-orange-300 border border-transparent items-center justify-center mr-3 shadow-sm"
+        className={`w-10 h-10 rounded-full bg-brand-500 border border-transparent items-center justify-center mr-3 shadow-sm`}
       >
-        <Ionicons name="arrow-back" size={20} color="#1F2937" />
-      </TouchableOpacity>
+        <Ionicons name="arrow-back" size={20} color="white" />
+      </Pressable>
     </View>
 
       <View className="mb-4">
@@ -313,19 +313,17 @@ export default function CreateProduct() {
       </View>
 
       <TouchableOpacity
-        activeOpacity={0.8}
+        activeOpacity={0.5}
         onPress={modalConfirm}
         disabled={loading}
-        className={`w-full py-4 mt-20 rounded-xl flex-row items-center justify-center shadow-md ${
-          loading ? 'bg-green-300' : 'bg-green-600'
-        }`}
+        className={`w-full py-4 mt-20 rounded-xl flex-row items-center justify-center shadow-md bg-brand-500`}
       >
         {loading ? (
           <ActivityIndicator color="#FFFFFF" />
         ) : (
           <>
-            <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
-            <Text className="text-white font-bold text-base ml-2">{product ? 'Actualizar' : 'Guardar'} Producto</Text>
+            <Ionicons name="checkmark-circle-outline" size={20} color="white" />
+            <Text className="text-surface-light/85 font-bold text-base ml-2">{product ? 'Actualizar' : 'Guardar'} Producto</Text>
           </>
         )}
       </TouchableOpacity>
