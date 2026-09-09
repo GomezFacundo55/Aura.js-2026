@@ -1,6 +1,16 @@
 import { supabase } from "@/lib/supabase";
 import { enviarMailCliente } from "@/servicesJ/emailService";
-import type { Cliente, ClienteEstado } from "@/types/database";
+import type { ClienteEstado } from "@/types/database";
+
+export type Cliente = {
+  id: string;
+  nombres: string;
+  apellidos: string;
+  email?: string | null;
+  foto_url: string;
+  estado: ClienteEstado;
+  created_at: string;
+};
 
 export const clientesService = {
   async listarPendientes(): Promise<Cliente[]> {
