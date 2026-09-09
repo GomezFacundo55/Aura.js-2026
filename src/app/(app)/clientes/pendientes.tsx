@@ -1,5 +1,5 @@
 import { clientesService } from '@/lib/clientesServicio';
-import { notificarNuevoClientePendiente, pedirPermisosNotificaciones } from '@/lib/notificaciones';
+//import { notificarNuevoClientePendiente, pedirPermisosNotificaciones } from '@/lib/notificaciones';
 import { supabase } from '@/lib/supabase';
 import type { Cliente } from '@/types/database';
 import { useFocusEffect } from 'expo-router';
@@ -20,18 +20,18 @@ export default function ClientesPendientesScreen() {
   useFocusEffect(useCallback(() => { cargarClientes(); }, [cargarClientes]));
 
   useEffect(() => {
-    pedirPermisosNotificaciones();
+    //pedirPermisosNotificaciones();
 
     const canal = supabase
       .channel('clientes-pendientes')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'clientes' },
+        { event: 'INSERT', schema: 'public', table: 'profiles' },
         (payload) => {
-          const nuevo = payload.new as Cliente;
-          if (nuevo.estado === 'pendiente') {
+          const nuevo = payload.new as Cliente & { perfil: string };
+          if (nuevo.perfil === 'cliente_registrado' && nuevo.estado === 'pendiente') {
             setClientes((prev) => [...prev, nuevo]);
-            notificarNuevoClientePendiente(`${nuevo.nombres} ${nuevo.apellidos}`);
+            //notificarNuevoClientePendiente(`${nuevo.nombres} ${nuevo.apellidos}`);
           }
         }
       )

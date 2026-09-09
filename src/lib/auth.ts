@@ -2,15 +2,14 @@ import { supabase } from "@/lib/supabase";
 import {
   canAssignRole,
   EMPLOYEE_PROFILE_OPTIONS,
-  isManagerRole,
   isEmployeeRole,
+  isManagerRole,
   PUBLIC_SIGNUP_ROLE,
   type ProfileRole,
 } from "@/lib/validation";
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import type { Href } from "expo-router";
-import { Platform } from "react-native";
 
 export type SignUpProfileInput = {
   email: string;
@@ -74,6 +73,7 @@ async function insertProfile(row: {
   cuil: string;
   perfil: ProfileRole;
   foto_url: string | null;
+  email: string | null;
 }): Promise<{ error: string | null }> {
   const { data, error } = await supabase.from("profiles").insert(row).select("id");
 
@@ -149,6 +149,7 @@ export async function signUpWithProfile(input: SignUpProfileInput): Promise<{ er
     cuil: input.cuil,
     perfil,
     foto_url: fotoUrl,
+    email: input.email.trim()
   });
 }
 
@@ -223,6 +224,7 @@ export async function createEmployeeAccount(
     cuil: input.cuil,
     perfil: input.perfil,
     foto_url: fotoUrl,
+    email: input.email.trim()
   });
 
   // signUp puede dejar la sesión del empleado: volvemos a la del supervisor/dueño.

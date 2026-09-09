@@ -1,24 +1,39 @@
-import { supabase } from '@/lib/supabase';
-import type { Cliente, ClienteEstado } from '@/types/database';
+import { supabase } from "@/lib/supabase";
+import { enviarMailCliente } from "@/servicesJ/emailService";
+import type { Cliente, ClienteEstado } from "@/types/database";
 
 export const clientesService = {
   async listarPendientes(): Promise<Cliente[]> {
     const { data, error } = await supabase
-      .from('clientes')
-      .select('*')
-      .eq('estado', 'pendiente')
-      .order('created_at', { ascending: true });
+      .from("profiles")
+      .select("id, nombres, apellidos, email, foto_url, estado, created_at")
+      .eq("perfil", "cliente_registrado")
+      .eq("estado", "pendiente")
+      .order("created_at", { ascending: true });
 
     if (error) throw error;
     return data as Cliente[];
   },
 
   async resolver(id: string, estado: ClienteEstado): Promise<void> {
-    const { error } = await supabase
-      .from('clientes')
-      .update({ estado })
-      .eq('id', id);
+    const { data: cliente, error: fetchError } = await supabase
+      .from("profiles")
+      .select("nombres, apellidos, email")
+      .eq("id", id)
+      .single();
 
+    if (fetchError) throw fetchError;
+
+    const { error } = await supabase.from("profiles").update({ estado }).eq("id", id);
     if (error) throw error;
+
+    if (cliente?.email) {
+      await enviarMailCliente({
+        email: cliente.email,
+        nombres: cliente.nombres,
+        apellidos: cliente.apellidos,
+        estado: estado as "aprobado" | "rechazado",
+      });
+    }
   },
 };
