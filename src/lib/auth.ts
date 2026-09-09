@@ -2,8 +2,8 @@ import { supabase } from "@/lib/supabase";
 import {
   canAssignRole,
   EMPLOYEE_PROFILE_OPTIONS,
-  isManagerRole,
   isEmployeeRole,
+  isManagerRole,
   PUBLIC_SIGNUP_ROLE,
   type ProfileRole,
 } from "@/lib/validation";
@@ -36,8 +36,12 @@ export type UserProfile = {
   estado?: string | null;
 };
 
+
 export const PENDING_APPROVAL_MESSAGE =
   "Tu cuenta quedó pendiente de aprobación. Cuando un encargado la habilite vas a poder ingresar.";
+
+export const REJECTED_MESSAGE =
+  "Tu solicitud de registro no fue aprobada. Si creés que es un error, contactate con el local.";
 
 function supabaseErrorMessage(error: { message?: string } | null, fallback: string): string {
   const message = error?.message?.trim();
@@ -77,6 +81,7 @@ async function insertProfile(row: {
   cuil?: string;
   perfil: ProfileRole;
   foto_url: string | null;
+  email: string | null;
   estado?: "pendiente" | "aprobado";
 }): Promise<{ error: string | null }> {
   const { data, error } = await supabase.from("profiles").insert(row).select("id");
@@ -181,7 +186,7 @@ export async function signUpWithProfile(input: SignUpProfileInput): Promise<{ er
   }
 
   // Insertamos aunque no haya session: RLS está desactivado y el user.id ya existe.
-  return insertProfile({
+    return insertProfile({
     id: userId,
     nombres: input.nombres.trim(),
     apellidos: input.apellidos.trim(),
@@ -189,6 +194,7 @@ export async function signUpWithProfile(input: SignUpProfileInput): Promise<{ er
     cuil: input.cuil?.trim() || undefined,
     perfil,
     foto_url: fotoUrl,
+    email: input.email.trim(),
     estado: "pendiente",
   });
 }
@@ -264,6 +270,7 @@ export async function createEmployeeAccount(
     cuil: input.cuil?.trim() || undefined,
     perfil: input.perfil,
     foto_url: fotoUrl,
+    email: input.email.trim()
   });
 
   // signUp puede dejar la sesión del empleado: volvemos a la del supervisor/dueño.
@@ -309,8 +316,13 @@ export async function resolveHomeRoute(): Promise<{
   }
 
   const estado = String(profile.estado ?? "").trim().toLowerCase();
+
   if (estado === "pendiente") {
     return { route: null, error: PENDING_APPROVAL_MESSAGE, pending: true };
+  }
+
+  if (estado === "rechazado") {
+    return { route: null, error: REJECTED_MESSAGE, pending: true };
   }
 
   const role = String(profile.perfil ?? "").trim().toLowerCase();

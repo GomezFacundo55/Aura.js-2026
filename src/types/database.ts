@@ -17,6 +17,7 @@ export interface Cliente {
   id: string;
   nombres: string;
   apellidos: string;
+  email: string | null;
   foto_url: string;
   estado: ClienteEstado;
   created_at: string;

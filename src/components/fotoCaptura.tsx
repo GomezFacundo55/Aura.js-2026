@@ -1,68 +1,78 @@
-import * as ImagePicker from 'expo-image-picker';
-import { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import * as ImagePicker from "expo-image-picker";
+import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
+import { Image, Pressable, Text, View } from "react-native";
 
-type Props = {
-  uri: string | null;
-  onChange: (uri: string) => void;
-  size?: number;
-  label?: string;
+type FotoCapturaProps = {
+  label: string;
+  photoUri: string | null;
+  onPhotoChange: (uri: string | null) => void;
+  error?: string | null;
 };
 
-export function fotoCaptura({ uri, onChange, size = 220, label = 'Foto' }: Props) {
-  const [error, setError] = useState<string | null>(null);
+export function FotoCaptura({ label, photoUri, onPhotoChange, error }: FotoCapturaProps) {
+  const [permissionMessage, setPermissionMessage] = useState<string | null>(null);
 
-  const tomarFoto = async () => {
-    setError(null);
-    const permiso = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permiso.granted) {
-      setError('Se necesita permiso de cámara para continuar');
+  const handleTakePhoto = async () => {
+    setPermissionMessage(null);
+
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (!permission.granted) {
+      setPermissionMessage(
+        "No pudimos acceder a la cámara. Activá el permiso en la configuración del dispositivo para tomar la foto."
+      );
       return;
     }
-    const resultado = await ImagePicker.launchCameraAsync({
-      quality: 0.7,
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
+      quality: 0.8,
     });
-    if (!resultado.canceled && resultado.assets?.[0]?.uri) {
-      onChange(resultado.assets[0].uri);
+
+    if (!result.canceled && result.assets[0]?.uri) {
+      onPhotoChange(result.assets[0].uri);
     }
   };
 
+  const displayError = error ?? permissionMessage;
+
   return (
-    <View style={styles.wrap}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={[styles.container, { width: size, height: size }]}>
-        {uri ? (
-          <Image source={{ uri }} style={styles.image} resizeMode="cover" />
+    <View className="items-center gap-1.5">
+      <Text nativeID="foto-captura-label" className="text-base font-medium text-neutral-700">
+        {label}
+      </Text>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        aria-labelledby="foto-captura-label"
+        className="h-56 w-56 items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-brand-400 bg-surface-light"
+        onPress={handleTakePhoto}
+      >
+        {photoUri ? (
+          <Image source={{ uri: photoUri }} className="h-full w-full" resizeMode="cover" />
         ) : (
-          <Text style={styles.placeholder}>Sin foto</Text>
+          <View className="items-center gap-2">
+            <Ionicons name="camera-outline" size={40} color="#FF7A4D" />
+            <Text className="text-sm font-medium text-brand-600">Tomar foto</Text>
+          </View>
         )}
-      </View>
-      <Pressable style={styles.button} onPress={tomarFoto}>
-        <Text style={styles.buttonText}>{uri ? 'Volver a tomar foto' : 'Tomar foto'}</Text>
       </Pressable>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      {photoUri ? (
+        <Pressable accessibilityRole="button" onPress={handleTakePhoto}>
+          <Text className="text-sm font-semibold text-brand-600">Volver a tomar foto</Text>
+        </Pressable>
+      ) : null}
+
+      {displayError ? (
+        <Text accessibilityRole="alert" className="text-center text-sm text-danger">
+          {displayError}
+        </Text>
+      ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', marginVertical: 12 },
-  label: { fontSize: 14, fontWeight: '600', marginBottom: 8 },
-  container: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#d0d0d0',
-    backgroundColor: '#f5f5f5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    alignSelf: 'center',
-  },
-  image: { width: '100%', height: '100%' },
-  placeholder: { color: '#999' },
-  button: { marginTop: 10, backgroundColor: '#222', paddingVertical: 10, paddingHorizontal: 18, borderRadius: 8 },
-  buttonText: { color: '#fff', fontWeight: '600' },
-  error: { color: '#d33', marginTop: 6, fontSize: 12 },
-});
