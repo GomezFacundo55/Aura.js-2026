@@ -1,8 +1,8 @@
 import { GradientBackground } from "@/components/ui/GradientBackground";
-import {  Stack } from "expo-router";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
-import { useEffect, useState  } from "react";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../../global.css";
@@ -41,17 +41,18 @@ export default function RootLayout() {
       }
     }
 
-
     loadAssets();
 
     return () => {
       isMounted = false;
     };
-    }, []);
+  }, []);
 
   const appIsReady = fontsLoaded && assetsLoaded;
 
-
+  // Ocultamos el splash NATIVO (el de Expo, previo a que corra JS) apenas
+  // tenemos fuentes — a partir de acá el splash animado (CustomSplashScreen)
+  // toma el control visual.
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
@@ -59,10 +60,6 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
-
-  if (mostrarSplash) {
-    return <CustomSplashScreen onFinish={() => setMostrarSplash(false)} />;
-  }
 
   return (
     <SafeAreaProvider>
@@ -91,6 +88,19 @@ export default function RootLayout() {
             />
           </Stack>
         </View>
+
+        {/*
+          El Stack de arriba se monta SIEMPRE, en paralelo con el splash.
+          Así, cuando el splash termina su animación y se retira, el login
+          ya tuvo tiempo de montarse y pintarse por debajo — sin el "pop-in"
+          de inputs/logo apareciendo tarde.
+        */}
+        {mostrarSplash && (
+          <CustomSplashScreen
+            appIsReady={appIsReady}
+            onFinish={() => setMostrarSplash(false)}
+          />
+        )}
       </ToastProvider>
     </SafeAreaProvider>
   );
