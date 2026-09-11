@@ -118,13 +118,13 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 | # | Nombre / Descripción | Categoría | Pantalla / Módulo asociado | Ruta / Archivo | Vista previa |
 |---|---|---|---|---|---|
-| 1 | Ícono de la app | Ícono | - | `assets/icon.png` | ![Splash Icon](https://i.ibb.co/KzF1wn8X/splash-icon.png) |
-| 2 | Logo principal | Logo | - | `assets/logo.png` | ![Logo](https://i.ibb.co/S40PN8VX/Logo.png) |
-| 3 | | Splash / Presentación | | | ![Splash Screen](https://i.ibb.co/LdmzYF9z/Splash-Screen.png) |
-| 4 | | Formulario Login | Pantalla | | ![Formulario Login](https://i.ibb.co/mrX3NkKT/Login.png) |
-| 5 | | Formulario Registro | Pantalla | | ![Formulario Login](https://i.ibb.co/Gf3dnjWD/Registro.png) |
-| 6 | Landing Page | Pantalla | HomeScreen | `assets/images/Landing-Page.png` | ![Landing Page](https://i.postimg.cc/9Q7B64wJ/Landing-Page.png) |
-| 7 | Ingreso Invitado | Pantalla | Pantalla | | ![Ingreso Invitado](https://i.ibb.co/6cMPTwSk/Login-Invitado.png) |
+| 1 | Ícono de la app | Ícono | - | `assets/icon.png` | ![Splash Icon](https://i.ibb.co/Xrt791xz/splash-icon.png) |
+| 2 | Logo principal | Logo | - | `assets/logo.png` | ![Logo](https://cdn.phototourl.com/free/2026-09-11-cebe99f9-b98f-498a-a9c4-c6c6fb62cd7b.png) |
+| 3 | | Splash / Presentación | | | ![Splash Screen](https://www.image2url.com/r2/default/gifs/1789167070964-6194ee5b-9498-4bd6-8142-40de15d9a669.gif) |
+| 4 | | Formulario Login | Formulario | | ![Formulario Login](https://cdn.phototourl.com/free/2026-09-11-ca24603f-a209-4c1b-b1a7-b2fdca244365.jpg) |
+| 5 | | Formulario Registro | Formulario | | ![Formulario Login](https://cdn.phototourl.com/free/2026-09-11-1cd1193a-0383-4d9a-ae25-f73c051f2915.jpg) |
+| 6 | Alta Empleado | Pantalla | Formulario | | ![Alta Empleado](https://cdn.phototourl.com/free/2026-09-11-12efc4fd-5ff4-4e22-afcc-d8258469c634.jpg) |
+| 7 | Ingreso Invitado | Pantalla | Pantalla | | ![Ingreso Invitado](https://cdn.phototourl.com/free/2026-09-11-66db2395-fcbc-4977-9c0a-2d63e530ffd6.jpg) |
 | 8 | Agregar Plato | Listados | Listados | | ![Agregar Plato](https://i.ibb.co/9kdwTVHL/Captura-de-pantalla-2026-09-11-162154.png) |
 | 9 | Agregar Bebida | Listados | Listados | | ![Agregar Bebida](https://i.ibb.co/Y7n5LnBx/Captura-de-pantalla-2026-09-11-162534.png) |
 | 10 | Manager Home | Pantalla | Pantalla | | ![Manager Home](https://i.ibb.co/yc8h6CLz/Manager-Home.png) |
