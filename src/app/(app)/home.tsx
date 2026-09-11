@@ -19,6 +19,7 @@ export default function HomeScreen() {
   const [enListaDeEspera, setEnListaDeEspera] = useState<boolean>(false);
   const [esperaId, setEsperaId] = useState<string | null>(null);
   const [mostrarModal, setMostrarModal] = useState<boolean>(false);
+  const [enEspera, setEnEspera] = useState<boolean>(false);
   const QR_INGRESO = "INGRESO_LOCAL";
 
   useEffect(() => {
@@ -198,7 +199,7 @@ export default function HomeScreen() {
               className="w-24 h-24 rounded-full border-4 border-white"
               resizeMode="cover"
             />
-            <View className="absolute bottom-1 right-1 w-6 h-6 bg-emerald-500 rounded-full border-2 border-white items-center justify-center">
+            <View className="absolute bottom-1 right-1 w-6 h-6 bg-orange-500 rounded-full border-2 border-white items-center justify-center">
               <Ionicons name="checkmark" size={14} color="#FFF" />
             </View>
           </View>
@@ -305,7 +306,7 @@ export default function HomeScreen() {
                 <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
               )}
               {enListaDeEspera && (
-                <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+                <Ionicons name="checkmark-circle" size={18} color="#cc6414" />
               )}
             </TouchableOpacity>
           </View>
@@ -355,7 +356,7 @@ export default function HomeScreen() {
               disabled={qrEscaneado}
               className={`px-6 py-3.5 rounded-2xl flex-row items-center shadow-md ${
                 qrEscaneado
-                  ? "bg-emerald-600 shadow-emerald-600/30 opacity-90"
+                  ? "bg-brand-600 shadow-brand-600/30 opacity-90"
                   : "bg-[#FF6B00] shadow-orange-500/40"
               }`}
             >
