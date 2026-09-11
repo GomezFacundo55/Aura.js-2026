@@ -5,7 +5,9 @@ const TABLA = "lista_espera";
 
 export async function obtenerListaDeEspera() {
   try {
-    const { data, error } = await supabase.from(TABLA).select("*");
+    const { data, error } = await supabase.from(TABLA)
+        .select("*")
+        .order("created_at", {ascending: true});
 
     if (error) {
       return {
@@ -17,7 +19,7 @@ export async function obtenerListaDeEspera() {
 
     return {
       exito: true,
-      datos: data,
+      datos: data as IListaDeEspera[],
       error: null,
     };
   } catch (err: any) {
@@ -190,7 +192,7 @@ export async function actualizarEspera(
   }
 }
 
-export async function eliminarProducto(id: string) {
+export async function eliminarEspera(id: string) {
   try {
     const { error } = await supabase.from(TABLA).delete().eq("id", id);
 
