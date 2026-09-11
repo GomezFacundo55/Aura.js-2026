@@ -1,14 +1,21 @@
 import { GradientBackground } from "@/components/ui/GradientBackground";
-import { SplashScreen, Stack } from "expo-router";
+import {  Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
-import { useEffect } from "react";
+import { useEffect, useState  } from "react";
 import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../../global.css";
 import { ToastProvider } from "../contextJ/Toast";
+import * as SplashScreen from "expo-splash-screen";
+import CustomSplashScreen from "../components/CustomSplashScreen";
+import { Asset } from "expo-asset";
 
 SplashScreen.preventAutoHideAsync();
+
+const LOGIN_IMAGES = [
+  require("../../assets/images/LogoSazonNegro.png"),
+];
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -18,6 +25,33 @@ export default function RootLayout() {
     "Poppins-Bold": require("../../assets/fonts/Poppins-Bold.ttf"),
   });
 
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
+  const [mostrarSplash, setMostrarSplash] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadAssets() {
+      try {
+        await Asset.loadAsync(LOGIN_IMAGES);
+      } catch (error) {
+        console.warn("Error precargando assets de login:", error);
+      } finally {
+        if (isMounted) setAssetsLoaded(true);
+      }
+    }
+
+
+    loadAssets();
+
+    return () => {
+      isMounted = false;
+    };
+    }, []);
+
+  const appIsReady = fontsLoaded && assetsLoaded;
+
+
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
@@ -25,6 +59,10 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
+
+  if (mostrarSplash) {
+    return <CustomSplashScreen onFinish={() => setMostrarSplash(false)} />;
+  }
 
   return (
     <SafeAreaProvider>
