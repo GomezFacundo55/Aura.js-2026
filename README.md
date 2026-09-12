@@ -126,7 +126,7 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 | 6 | Landing Page | Pantalla | HomeScreen | `assets/images/Landing-Page.png` | ![Landing Page](https://i.postimg.cc/9Q7B64wJ/Landing-Page.png) |
 | 7 | Ingreso Invitado | Pantalla | Pantalla | | ![Ingreso Invitado](https://i.ibb.co/6cMPTwSk/Login-Invitado.png) |
 | 8 | Agregar Plato | Listados | Listados | | ![Agregar Plato](https://i.ibb.co/9kdwTVHL/Captura-de-pantalla-2026-09-11-162154.png) |
-| 9 | Agregar Bebida | Listados | Listados | | ![Agregar Bebida](https://i.ibb.co/Y7n5LnBx/Captura-de-pantalla-2026-09-11-162534.png) |
+| 9 | Agregar Bebida | Listados | Listados | | ![Agregar Bebida](https://i.ibb.co/DHxxS2L7/Captura-de-pantalla-2026-09-12-085918.png) |
 | 10 | Manager Home | Pantalla | Pantalla | | ![Manager Home](https://i.ibb.co/twD9HqpV/Whats-App-Image-2026-09-12-at-08-30-30-3.jpg) |
 | 11 | Agregar Mesa | Pantalla | Pantalla | | ![Agregar Mesa](https://i.ibb.co/Z1XNRgPK/Whats-App-Image-2026-09-12-at-08-30-30-1.jpg) |
 | 12 | Listado Mesas | Listados | Listados | | ![Agregar Mesa](https://i.ibb.co/qFV8xwgt/Whats-App-Image-2026-09-12-at-08-30-30-2.jpg) |
