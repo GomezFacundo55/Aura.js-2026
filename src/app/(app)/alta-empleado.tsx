@@ -23,6 +23,7 @@ import {
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { SuccessModal } from "@/components/ui/SuccessModal";
 
 type EmployeeForm = {
   apellidos: string;
@@ -67,6 +68,7 @@ export default function AltaEmpleadoScreen() {
   const [qrError, setQrError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     const checkRole = async () => {
@@ -145,7 +147,12 @@ export default function AltaEmpleadoScreen() {
         return;
       }
 
-      router.replace("/(app)/manager-home");
+      if (error) {
+        setFormError(error);
+        return;
+      }
+
+      setShowSuccess(true);
     } catch (caught) {
       const message =
         caught instanceof Error
@@ -317,6 +324,15 @@ export default function AltaEmpleadoScreen() {
         onError={(message) => {
           setQrError(message);
           setQrScannerVisible(false);
+        }}
+      />
+
+      <SuccessModal
+        visible={showSuccess}
+        message="Empleado registrado con éxito"
+        onHide={() => {
+          setShowSuccess(false);
+          router.replace("/(app)/manager-home");
         }}
       />
     </AuthScreenLayout>
