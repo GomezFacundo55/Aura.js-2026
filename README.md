@@ -127,9 +127,9 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 | 7 | Ingreso Invitado | Pantalla | Pantalla | | ![Ingreso Invitado](https://i.ibb.co/6cMPTwSk/Login-Invitado.png) |
 | 8 | Agregar Plato | Listados | Listados | | ![Agregar Plato](https://i.ibb.co/9kdwTVHL/Captura-de-pantalla-2026-09-11-162154.png) |
 | 9 | Agregar Bebida | Listados | Listados | | ![Agregar Bebida](https://i.ibb.co/Y7n5LnBx/Captura-de-pantalla-2026-09-11-162534.png) |
-| 10 | Manager Home | Pantalla | Pantalla | | ![Manager Home](https://i.ibb.co/yc8h6CLz/Manager-Home.png) |
-| 11 | Agregar Mesa | Pantalla | Pantalla | | ![Agregar Mesa](https://i.ibb.co/Xx8XKjqR/Agregar-Mesa.png) |
-| 12 | Listado Mesas | Listados | Listados | | ![Agregar Mesa](https://i.ibb.co/pBvchprp/Listado-Mesas.png) |
+| 10 | Manager Home | Pantalla | Pantalla | | ![Manager Home](https://i.ibb.co/twD9HqpV/Whats-App-Image-2026-09-12-at-08-30-30-3.jpg) |
+| 11 | Agregar Mesa | Pantalla | Pantalla | | ![Agregar Mesa](https://i.ibb.co/Z1XNRgPK/Whats-App-Image-2026-09-12-at-08-30-30-1.jpg) |
+| 12 | Listado Mesas | Listados | Listados | | ![Agregar Mesa](https://i.ibb.co/qFV8xwgt/Whats-App-Image-2026-09-12-at-08-30-30-2.jpg) |
 | 13 | Home Cliente | Pantalla | Pantalla | | ![Home Cliente](https://i.ibb.co/4wDKhSjn/Captura-de-pantalla-2026-09-11-164245.png) |
 | 12 | Home Metre | Pantalla | Pantalla | | ![Home Metre](https://i.ibb.co/yBfPMN3c/Captura-de-pantalla-2026-09-11-164659.png) |
 | 12 | Qr Ingreso | Pantalla | Pantalla | | ![Qr Ingreso](https://i.ibb.co/XxnPKH7z/Whats-App-Image-2026-09-08-at-22-29-03.jpg) |
