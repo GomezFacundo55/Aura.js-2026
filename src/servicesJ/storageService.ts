@@ -1,7 +1,6 @@
 // servicesJ/storageService.ts
 import { supabase } from '@/lib/supabase'
 import { File } from 'expo-file-system';
-import { decode } from 'base64-arraybuffer';
 import { tabla } from './productService';
 
 

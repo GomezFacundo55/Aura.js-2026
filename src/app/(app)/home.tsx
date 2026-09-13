@@ -1,13 +1,24 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { TouchableOpacity, View, Text, Image, ActivityIndicator } from "react-native";
+import {
+  TouchableOpacity,
+  View,
+  Text,
+  Image,
+  ActivityIndicator,
+} from "react-native";
 import { getMyProfile, signOut, type UserProfile } from "@/lib/auth";
 import { useToast } from "../../contextJ/Toast";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { SoundService } from "@/servicesJ/soundService";
 import QrScannerModal from "@/components/ui/QRScanner";
-import { crearUnaEspera, consultarEstadoEspera, consultarClienteEnListaDeEspera } from "@/servicesJ/listaDeEsperaService";
+import {
+  crearUnaEspera,
+  consultarEstadoEspera,
+  consultarClienteEnListaDeEspera,
+} from "@/servicesJ/listaDeEsperaService";
 import { ConfirmModal } from "@/components/modal";
+import { supabase } from "@/lib/supabase";
 
 export default function HomeScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -23,13 +34,46 @@ export default function HomeScreen() {
   const QR_INGRESO = "INGRESO_LOCAL";
 
   useEffect(() => {
-    cargaDatosIniciales()
+    cargaDatosIniciales();
+    if (!profile?.id) return;
+
+    const canalEspera = supabase
+      .channel(`espera-cliente-${profile.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "lista_espera",
+          filter: `cliente_id=eq.${profile.id}`,
+        },
+        async (payload) => {
+          const registroActualizado = payload.new;
+
+          if (
+            registroActualizado.estado === "asignado" &&
+            registroActualizado.mesa_asignada_id
+          ) {
+            await SoundService.reproducir("exito");
+            showToast(
+              "success",
+              "¡Mesa asignada!",
+              "El metre te asignó una mesa. Ya podés ingresar.",
+            );
+            setEnListaDeEspera(true);
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(canalEspera);
+    };
   }, []);
 
   const cargaDatosIniciales = async () => {
     try {
       const perfil = await getMyProfile();
-      if(!perfil){
+      if (!perfil) {
         router.replace("/log-in");
         return;
       }
@@ -37,7 +81,9 @@ export default function HomeScreen() {
       setProfile(perfil);
 
       if (perfil?.id) {
-        const { exito, datos } = await consultarClienteEnListaDeEspera(perfil.id);
+        const { exito, datos } = await consultarClienteEnListaDeEspera(
+          perfil.id,
+        );
 
         if (exito && datos) {
           setQrEscaneado(true);
@@ -51,7 +97,7 @@ export default function HomeScreen() {
     } finally {
       setCargando(false);
     }
-  }
+  };
 
   const onScanPress = () => {
     setScannerVisible(true);
@@ -181,7 +227,9 @@ export default function HomeScreen() {
       <View className="flex-row items-center p-2">
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={ () => { setMostrarModal(true) } }
+          onPress={() => {
+            setMostrarModal(true);
+          }}
           className="w-9 h-9 rounded-xl bg-red-500 items-center justify-center mr-3 shadow-sm"
         >
           <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
@@ -228,7 +276,7 @@ export default function HomeScreen() {
             {qrEscaneado
               ? enListaDeEspera
                 ? "Ya estás en la lista. El metre te notificará cuando tu mesa esté lista."
-                : "Confirmaste tu ingreso al salón. Podés elegir una opción:"
+                : ""
               : "Al ingresar al local, escaneá el QR ubicado en la entrada para activar las opciones de atención."}
           </Text>
 
@@ -374,17 +422,17 @@ export default function HomeScreen() {
         )}
       </View>
       <ConfirmModal
-      visible={mostrarModal}
-      title="Confirmar acción."
-      message="¿Desea salir?"
-      confirmText="Si"
-      cancelText="No"
-      action={false}
-      onConfirm={logOut}
-      onCancel={() => {
-        setMostrarModal(false);
-    }}
-  />
+        visible={mostrarModal}
+        title="Confirmar acción."
+        message="¿Desea salir?"
+        confirmText="Si"
+        cancelText="No"
+        action={false}
+        onConfirm={logOut}
+        onCancel={() => {
+          setMostrarModal(false);
+        }}
+      />
     </View>
   );
 }
