@@ -23,7 +23,7 @@ export function SelectPicker({
 
   return (
     <View className="gap-1.5">
-      <Text nativeID={`${label}-label`} className="text-base font-medium text-neutral-700">
+      <Text nativeID={`${label}-label`} className="text-base font-semibold text-neutral-700">
         {label}
       </Text>
 

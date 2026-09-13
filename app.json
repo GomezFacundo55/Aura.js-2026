@@ -18,7 +18,7 @@
     "android": {
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.Aura.js2026",
-      "softwareKeyboardLayoutMode": "resize"
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "output": "static",
@@ -29,10 +29,14 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#D93A24",
+          "backgroundColor": "#FF9C7A",
           "image": "./assets/images/splash-icon.png",
-          "resizeMode": "contain"
+          "resizeMode": "contain", 
+          "imageWidth": 200
         }
+      ],
+      [
+        "expo-navigation-bar", { "enforceContrast": false, "style": "light" }
       ],
       [
         "expo-font",
