@@ -12,7 +12,7 @@ type SuccessModalProps = {
 export function SuccessModal({
     visible,
     message,
-    durationMs = 2000,
+    durationMs = 4000,
     onHide,
     }: SuccessModalProps) {
     useEffect(() => {

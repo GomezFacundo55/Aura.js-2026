@@ -17,6 +17,7 @@ import {
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { SuccessModal } from "@/components/ui/SuccessModal";
 
 type SignUpForm = {
   apellidos: string;
@@ -54,6 +55,7 @@ export default function SignUpScreen() {
   const [qrError, setQrError] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const errors = useMemo(
     () => ({
@@ -107,14 +109,8 @@ export default function SignUpScreen() {
         return;
       }
 
-      const { route, pending } = await resolveHomeRoute();
-      if (pending || !route) {
-        await signOut();
-        router.replace({ pathname: "/(auth)/log-in", params: { pendiente: "1" } });
-        return;
-      }
-
-      router.replace(route);
+      await signOut(); 
+      setShowSuccess(true);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "No pudimos completar el registro.";
       setAuthError(message);
@@ -150,7 +146,7 @@ export default function SignUpScreen() {
 
   return (
     <AuthScreenLayout>
-      <View className="gap-3">
+      <View className="gap-3.5">
         <AvatarCapture
           photoUri={form.photoUri}
           onPhotoChange={(uri) => updateField("photoUri", uri)}
@@ -159,6 +155,7 @@ export default function SignUpScreen() {
         <View>
           <Input
               label="DNI"
+              key="dni"
               placeholder="Escanee el DNI o ingrese los campos"
               value={form.dni}
               keyboardType="number-pad"
@@ -184,6 +181,7 @@ export default function SignUpScreen() {
 
         <Input
           label="Apellidos"
+          key="apellidos"
           placeholder="Ej: Pérez"
           value={form.apellidos}
           autoCapitalize="words"
@@ -195,6 +193,7 @@ export default function SignUpScreen() {
 
         <Input
           label="Nombres"
+          key="nombres"
           placeholder="Ej: María"
           value={form.nombres}
           autoCapitalize="words"
@@ -206,6 +205,7 @@ export default function SignUpScreen() {
 
         <Input
           label="Correo electrónico"
+          key="correo"
           placeholder="nombre@ejemplo.com"
           value={form.email}
           keyboardType="email-address"
@@ -219,6 +219,7 @@ export default function SignUpScreen() {
 
         <PasswordInput
           label="Clave"
+          key="clave"
           placeholder="Mínimo 8 caracteres"
           value={form.password}
           autoComplete="new-password"
@@ -229,6 +230,7 @@ export default function SignUpScreen() {
 
         <PasswordInput
           label="Confirmar clave"
+          key="claveconfirm"
           placeholder="Repetí tu clave"
           value={form.passwordConfirm}
           autoComplete="new-password"
@@ -239,7 +241,7 @@ export default function SignUpScreen() {
 
         <FormError message={authError} onDismiss={() => setAuthError(null)} />
 
-        <Button title="Registrarme" disabled={!isFormValid || isSubmitting} onPress={handleSubmit} />
+        <Button title="Registrarme" className="mt-3" disabled={!isFormValid || isSubmitting} onPress={handleSubmit} />
       </View>
 
       <QRScannerDNI
@@ -251,6 +253,16 @@ export default function SignUpScreen() {
           setQrScannerVisible(false);
         }}
       />
+
+      <SuccessModal
+        visible={showSuccess}
+        message="Registro pendiente de aprobación"
+        onHide={() => {
+          setShowSuccess(false);
+          router.replace("/(auth)/log-in");
+        }}
+      />
+
     </AuthScreenLayout>
   );
 }

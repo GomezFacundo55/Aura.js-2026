@@ -190,47 +190,67 @@ export default function AltaEmpleadoScreen() {
 
   return (
     <AuthScreenLayout backHref="/(app)/manager-home">
-      <View className="gap-3">
-        <Text className="text-center text-lg font-bold text-neutral-900">
-          Alta de empleado
-        </Text>
+      <View style={{gap:6}}>
 
         <AvatarCapture
           photoUri={form.photoUri}
           onPhotoChange={(uri) => updateField("photoUri", uri)}
         />
 
-        
-        <View className="gap-2">
-          <Input
-            label="DNI"
-            placeholder="Escanee el DNI o ingrese los campos"
-            value={form.dni}
-            keyboardType="number-pad"
-            error={touched.dni ? errors.dni : null}
-            onBlur={() => markTouched("dni")}
-            onChangeText={(value) =>
-              updateField("dni", value.replace(/\D/g, ""))
-            }
-            rightElement={
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Escanear código del DNI"
-                className="px-2.5 py-2.5"
-                onPress={() => {
-                  setQrError(null);
-                  setQrScannerVisible(true);
-                }}
-              >
-                <Text className="text-sm font-semibold text-brand-600">QR</Text>
-              </Pressable>
-            }
-          />
-          <FormError message={qrError} onDismiss={() => setQrError(null)} />
+        <View className="flex-row gap-3">
+          <View className="flex-1 gap-2">
+            <Input
+              label="DNI"
+              key="dni"
+              importantForAutofill="no"
+              placeholder="Escanee el DNI"
+              value={form.dni}
+              keyboardType="number-pad"
+              error={touched.dni ? errors.dni : null}
+              onBlur={() => markTouched("dni")}
+              onChangeText={(value) =>
+                updateField("dni", value.replace(/\D/g, ""))
+              }
+              rightElement={
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Escanear código del DNI"
+                  className="px-2.5 py-2.5"
+                  onPress={() => {
+                    setQrError(null);
+                    setQrScannerVisible(true);
+                  }}
+                >
+                  <Text className="text-sm font-semibold text-brand-600">QR</Text>
+                </Pressable>
+              }
+            />
+          </View>
+
+          <View className="flex-1">
+            <Input
+              label="CUIT"
+              key="cuit"
+              importantForAutofill="no"
+              placeholder="Ej: 20123456789"
+              value={form.cuit}
+              keyboardType="number-pad"
+              error={touched.cuit ? errors.cuit : null}
+              onBlur={() => markTouched("cuit")}
+              onChangeText={(value) =>
+                updateField("cuit", value.replace(/\D/g, ""))
+              }
+            />
+          </View>
         </View>
 
+<FormError message={qrError} onDismiss={() => setQrError(null)} />
+
         <Input
+
           label="Apellidos"
+          key="apellidos"
+          importantForAutofill="no"
           placeholder="Ej: Pérez"
           value={form.apellidos}
           autoCapitalize="words"
@@ -242,6 +262,8 @@ export default function AltaEmpleadoScreen() {
 
         <Input
           label="Nombres"
+          key="nombres"
+          importantForAutofill="no"
           placeholder="Ej: María"
           value={form.nombres}
           autoCapitalize="words"
@@ -252,19 +274,9 @@ export default function AltaEmpleadoScreen() {
         />
 
         <Input
-          label="CUIT"
-          placeholder="Ej: 20123456789"
-          value={form.cuit}
-          keyboardType="number-pad"
-          error={touched.cuit ? errors.cuit : null}
-          onBlur={() => markTouched("cuit")}
-          onChangeText={(value) =>
-            updateField("cuit", value.replace(/\D/g, ""))
-          }
-        />
-
-        <Input
           label="Correo electrónico"
+          key="correo"
+          importantForAutofill="no"
           placeholder="nombre@ejemplo.com"
           value={form.email}
           keyboardType="email-address"
@@ -278,6 +290,7 @@ export default function AltaEmpleadoScreen() {
 
         <PasswordInput
           label="Clave"
+          key="clave"
           placeholder="Mínimo 8 caracteres"
           value={form.password}
           autoComplete="new-password"
@@ -288,6 +301,7 @@ export default function AltaEmpleadoScreen() {
 
         <PasswordInput
           label="Confirmar clave"
+          key="claveconfirm"
           placeholder="Repetí tu clave"
           value={form.passwordConfirm}
           autoComplete="new-password"
@@ -311,6 +325,7 @@ export default function AltaEmpleadoScreen() {
         <FormError message={formError} onDismiss={() => setFormError(null)} />
 
         <Button
+          className="mt-2"
           title="Crear empleado"
           disabled={!isFormValid || isSubmitting}
           onPress={handleSubmit}
