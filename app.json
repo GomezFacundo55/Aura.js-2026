@@ -18,7 +18,7 @@
     "android": {
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.Aura.js2026",
-      "softwareKeyboardLayoutMode": "resize"
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "output": "static",

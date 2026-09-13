@@ -44,7 +44,7 @@ export function AuthScreenLayout({
         {showBack ? (
           <Pressable
             onPress={() => router.replace(backHref)}
-            className={`mt-1 w-10 h-10 rounded-full bg-brand-500 border border-transparent items-center justify-center mr-3 shadow-sm`}
+            className={`-mt-5 w-10 h-10 rounded-full bg-brand-500 border border-transparent items-center justify-center mr-3 shadow-sm`}
           >
             <Ionicons name="arrow-back" size={20} color="white" />
           </Pressable>

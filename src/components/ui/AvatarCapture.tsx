@@ -40,12 +40,12 @@ export function AvatarCapture({ photoUri, onPhotoChange, error }: AvatarCaptureP
   const displayError = error ?? permissionMessage;
 
   return (
-    <View className="items-center gap-1.5">
+    <View className="items-center -mt-5 mb-3">
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Tomar foto de perfil"
         aria-labelledby="guest-photo-label"
-        className="h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-brand-400 bg-surface-light"
+        className="h-40 w-40 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-brand-400 bg-surface-light"
         onPress={handleTakePhoto}
       >
         {photoUri ? (
