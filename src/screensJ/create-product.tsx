@@ -21,6 +21,7 @@ import { crearProducto, obtenerUnProducto, actualizarProducto, verificarNombreEx
 import { IProductFormData } from '@/interfaces/IProductoForm';
 import { IProductoPedido } from '@/interfaces/IProductoPedido';
 import { uploadProductImages } from '../servicesJ/storageService';
+import { ModalImage } from '@/components/modalImage';
 
 
 export default function CreateProduct() {
@@ -38,6 +39,8 @@ export default function CreateProduct() {
   const tablaSeleccionada: tabla = cargo;
   const [isEditing, setIsEditing] = useState(Boolean(id));
   const [product, setProduct] = useState<IProductoPedido | null>(null);
+  const [modalFotoVisible, setModalFotoVisible] = useState(false);
+  const [indiceSeleccionado, setIndiceSeleccionado] = useState<number | null>(null);
 
   useEffect(() => {
     if (isEditing) {
@@ -72,25 +75,22 @@ export default function CreateProduct() {
   }
 
   const handlePickImage = (index: number) => {
-    Alert.alert(
-      'Seleccionar Foto',
-      '¿De dónde querés obtener la imagen?',
-      [
-        {
-          text: 'Cámara',
-          onPress: () => openPicker(index, 'camera'),
-        },
-        {
-          text: 'Galería',
-          onPress: () => openPicker(index, 'gallery'),
-        },
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-      ],
-      { cancelable: true }
-    );
+    setIndiceSeleccionado(index);
+    setModalFotoVisible(true);
+  };
+
+  const handleCameraChoice = () => {
+    setModalFotoVisible(false);
+    if (indiceSeleccionado !== null) {
+      openPicker(indiceSeleccionado, 'camera');
+    }
+  };
+
+  const handleGalleryChoice = () => {
+    setModalFotoVisible(false);
+    if (indiceSeleccionado !== null) {
+      openPicker(indiceSeleccionado, 'gallery');
+    }
   };
 
   const openPicker = async (index: number, source: ImageSourceOption) => {
@@ -346,7 +346,13 @@ export default function CreateProduct() {
         action={false}
         onConfirm={redirectToDashboard}
         onCancel={() => { setModalDosVisible(false); }}
-          />
+      />
+      <ModalImage
+        visible={modalFotoVisible}
+        onSelectCamera={handleCameraChoice}
+        onSelectGallery={handleGalleryChoice}
+        onCancel={() => setModalFotoVisible(false)}
+      />
     </ScrollView>
   );
 }

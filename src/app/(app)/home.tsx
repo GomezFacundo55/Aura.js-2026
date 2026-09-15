@@ -3,7 +3,8 @@ import { TouchableOpacity, View, Text, Image, ActivityIndicator, ScrollView } fr
 import { getMyProfile, signOut, type UserProfile } from "@/lib/auth";
 import { useToast } from "../../contextJ/Toast";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import { SoundService } from "@/servicesJ/soundService";
 import QrScannerModal from "@/components/ui/QRScanner";
 import { crearUnaEspera, consultarClienteEnListaDeEspera } from "@/servicesJ/listaDeEsperaService";
@@ -45,6 +46,7 @@ export default function HomeScreen() {
     try {
       const perfil = await getMyProfile();
       if (!perfil) {
+      if (!perfil) {
         router.replace("/log-in");
         return;
       }
@@ -53,6 +55,11 @@ export default function HomeScreen() {
       if (perfil?.id) {
         const { exito, datos } = await consultarClienteEnListaDeEspera(perfil.id);
         if (exito && datos) {
+          if(datos.estado == "asignado"){
+            setMesaHabilitada(true);
+            setMesaAsignadaId(datos.mesa_asignada_id);
+            setNumeroMesaAsignada(datos.numero_mesa);
+          }
           setQrEscaneado(true);
           setEnListaDeEspera(true);
           setEsperaId(datos.id);
@@ -138,7 +145,8 @@ export default function HomeScreen() {
       await SoundService.reproducir("error");
       showToast("error", "Error", "No se pudo vincular la mesa. Reintentá.");
     }
-  };
+  }
+  
 
   const handleQrScanned = async (data: string) => {
     setScannerVisible(false);

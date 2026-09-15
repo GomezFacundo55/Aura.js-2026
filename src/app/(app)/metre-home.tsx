@@ -9,7 +9,8 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { getMyProfile, signOut, type UserProfile } from "@/lib/auth";
 import { useToast } from "../../contextJ/Toast";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState, useCallback } from "react";
+import { useFocusEffect } from "expo-router";
 import { ConfirmModal } from "@/components/modal";
 import { obtenerListaDeEspera, eliminarEspera } from "@/servicesJ/listaDeEsperaService";
 import { SoundService } from "@/servicesJ/soundService";
@@ -35,10 +36,11 @@ export default function App() {
     indiceInicio + elementosPorPagina,
   );
 
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
     inicializar();
     const canalEspera = supabase
-      .channel('cambios-lista-espera')
+      .channel('cambios-lista-espera-metre')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'lista_espera' },
@@ -54,7 +56,8 @@ export default function App() {
     return () => {
       supabase.removeChannel(canalEspera);
     };
-  }, []);
+    }, [])
+  );
 
   const inicializar = async () => {
     setCargando(true);
@@ -93,7 +96,8 @@ export default function App() {
       await SoundService.reproducir("error");
     }
     if (exito && datos) {
-      setListaDeEspera(datos);
+      const datosFiltrados = datos.filter((item)=> item.estado === "en_espera")
+      setListaDeEspera(datosFiltrados);
     }
   };
   const logOut = async () => {

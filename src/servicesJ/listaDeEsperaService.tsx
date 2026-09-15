@@ -53,7 +53,7 @@ export async function consultarClienteEnListaDeEspera(id_cliente: string){
     try {
     const { data, error } = await supabase
       .from(TABLA)
-      .select("id, estado, mesa_asignada_id")
+      .select("id, estado, mesa_asignada_id, numero_mesa")
       .eq("cliente_id", id_cliente)
       .in("estado", ["en_espera", "asignado"])
       .order("created_at", { ascending: false })
@@ -150,6 +150,7 @@ export async function crearUnaEspera(cliente_id: string): Promise<{
 export async function actualizarEspera(
   id: string,
   mesa_asignada_id: string,
+  numero_mesa: number
 ): Promise<{
   exito: boolean;
   datos: IListaDeEspera | null;
@@ -161,6 +162,7 @@ export async function actualizarEspera(
       .update({
         estado: "asignado",
         mesa_asignada_id,
+        numero_mesa
       })
       .eq("id", id)
       .select()
