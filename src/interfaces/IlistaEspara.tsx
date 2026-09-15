@@ -5,5 +5,6 @@ export interface IListaDeEspera{
     cliente_id: string,
     estado: EstadoListaEspera;
     mesa_asignada_id: string | null,
+    numero_mesa: number | null,
     created_at?: string;
 }

@@ -9,17 +9,20 @@ import {
 import { getMyProfile, signOut, type UserProfile } from "@/lib/auth";
 import { useToast } from "../../contextJ/Toast";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import { SoundService } from "@/servicesJ/soundService";
 import QrScannerModal from "@/components/ui/QRScanner";
 import {
   crearUnaEspera,
-  consultarEstadoEspera,
   consultarClienteEnListaDeEspera,
 } from "@/servicesJ/listaDeEsperaService";
 import { ConfirmModal } from "@/components/modal";
 import { supabase } from "@/lib/supabase";
-
+export interface IDatosQrMesa{
+  numero: number,
+  id_mesa: string,
+}
 export default function HomeScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const { showToast } = useToast();
@@ -27,48 +30,68 @@ export default function HomeScreen() {
   const [cargando, setCargando] = useState<boolean>(true);
   const [qrEscaneado, setQrEscaneado] = useState<boolean>(false);
   const [scannerVisible, setScannerVisible] = useState<boolean>(false);
+  const [scannerMesaVisible, setScannerMesaVisible] = useState<boolean>(false);
   const [enListaDeEspera, setEnListaDeEspera] = useState<boolean>(false);
   const [esperaId, setEsperaId] = useState<string | null>(null);
   const [mostrarModal, setMostrarModal] = useState<boolean>(false);
-  const [enEspera, setEnEspera] = useState<boolean>(false);
+  const [mesaHabilitada, setMesaHabilitada] = useState<boolean>(false);
+  const [qrMesaEscaneado, setQrMesaEscaneado] = useState<boolean>(false);
+  const [datosQrMesa, setDatosQrMesa] = useState<IDatosQrMesa | null>(null);
+  const [mesaAsignadaId, setMesaAsignadaId] = useState<string | null>(null);
+  const [numeroMesaAsignada, setNumeroMesaAsignada] = useState<string | null>(null);
   const QR_INGRESO = "INGRESO_LOCAL";
 
-  useEffect(() => {
-    cargaDatosIniciales();
-    if (!profile?.id) return;
+  useFocusEffect(
+    useCallback(() => {
+      let canalEspera: any = null;
 
-    const canalEspera = supabase
-      .channel(`espera-cliente-${profile.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "lista_espera",
-          filter: `cliente_id=eq.${profile.id}`,
-        },
-        async (payload) => {
-          const registroActualizado = payload.new;
+      const sincronizarYEscuchar = async () => {
+        await cargaDatosIniciales(); 
+        if (!profile?.id) return;
 
-          if (
-            registroActualizado.estado === "asignado" &&
-            registroActualizado.mesa_asignada_id
-          ) {
-            await SoundService.reproducir("exito");
-            showToast(
-              "success",
-              "¡Mesa asignada!",
-              "El metre te asignó una mesa. Ya podés ingresar.",
-            );
-            setEnListaDeEspera(true);
-          }
-        },
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(canalEspera);
-    };
-  }, []);
+        canalEspera = supabase
+          .channel(`espera-cliente-${profile.id}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "lista_espera",
+              filter: `cliente_id=eq.${profile.id}`,
+            },
+            async (payload) => {
+              const registroActualizado = payload.new;
+
+              if (
+                registroActualizado.estado === "asignado" &&
+                registroActualizado.mesa_asignada_id &&
+                registroActualizado.numero_mesa
+              ) {
+                setMesaAsignadaId(registroActualizado.mesa_asignada_id);
+                setNumeroMesaAsignada(registroActualizado.numero_mesa);
+                setMesaHabilitada(true);
+                await SoundService.reproducir("exito");
+                showToast(
+                  "success",
+                  "¡Mesa asignada!",
+                  "El metre te asignó una mesa. Ya podés ingresar.",
+                );
+                setEnListaDeEspera(true);
+              }
+            }
+          )
+          .subscribe();
+      };
+
+      sincronizarYEscuchar();
+
+      return () => {
+        if (canalEspera) {
+          supabase.removeChannel(canalEspera);
+        }
+      };
+    }, [profile?.id]) 
+  );
 
   const cargaDatosIniciales = async () => {
     try {
@@ -86,6 +109,11 @@ export default function HomeScreen() {
         );
 
         if (exito && datos) {
+          if(datos.estado == "asignado"){
+            setMesaHabilitada(true);
+            setMesaAsignadaId(datos.mesa_asignada_id);
+            setNumeroMesaAsignada(datos.numero_mesa);
+          }
           setQrEscaneado(true);
           setEnListaDeEspera(true);
           setEsperaId(datos.id);
@@ -97,10 +125,6 @@ export default function HomeScreen() {
     } finally {
       setCargando(false);
     }
-  };
-
-  const onScanPress = () => {
-    setScannerVisible(true);
   };
 
   const onEncuestasPress = () => {
@@ -119,7 +143,6 @@ export default function HomeScreen() {
       );
       SoundService.reproducir("error");
     } else {
-      console.log(datos);
       setEnListaDeEspera(true);
       setEsperaId(datos.id);
       SoundService.reproducir("exito");
@@ -128,35 +151,51 @@ export default function HomeScreen() {
   };
 
   const checkAprobacionListaEspera = async () => {
-    if (!esperaId) {
-      showToast("error", "Error", "No se encontró un turno activo.");
-      return;
-    }
-    const { exito, datos, error } = await consultarEstadoEspera(esperaId);
-
-    if (error || !datos) {
-      await SoundService.reproducir("error");
-      showToast("error", "Error", "No se pudo verificar el turno.");
-      return;
-    }
-
-    if (datos.estado === "asignado" && datos.mesa_asignada_id) {
-      await SoundService.reproducir("exito");
-      showToast("success", "¡Mesa asignada!", "Accediendo a tu mesa...");
-
-      router.push({
-        pathname: "/mesa-home",
-        params: { mesaId: datos.mesa_asignada_id, cliente_id: profile?.id },
-      });
+    if(mesaHabilitada){
+      setScannerMesaVisible(true);
     } else {
-      await SoundService.reproducir("error");
-      showToast(
-        "info",
-        "Aguarde",
-        "Aún no se le ha asignado una mesa. Por favor espere.",
-      );
+      showToast("info", "Aguarde", "Aún no se le ha asignado una mesa. Por favor espere.");
     }
   };
+
+  const handleQrScannedMesa = async (data: string) => {
+    setScannerMesaVisible(false);
+    try{
+      try{
+        const parsed = JSON.parse(data);
+        if(parsed.mesaId === mesaAsignadaId){
+          
+          setDatosQrMesa({id_mesa: parsed.mesaId, numero: parsed.numero})
+          SoundService.reproducir("exito");
+          router.push({
+            pathname: "/mesa-home",
+            params: { 
+              mesaId: parsed.mesaId, 
+              cliente_id: profile?.id, 
+            },
+          });
+        } else {
+          SoundService.reproducir("error");
+          showToast(
+            "error",
+            "Código inválido",
+            "El QR escaneado no es el de la mesa asignada a usted.",
+          );
+        }
+      }catch(e){
+        SoundService.reproducir("error");
+        showToast(
+            "error",
+            "Error",
+            "El al escanear el Qr",
+          );
+      }
+    }catch(error){
+      console.log(error);
+      showToast("error", "Error", "Ocurrió un error al procesar el código.");
+    }
+  }
+  
 
   const handleQrScanned = async (data: string) => {
     setScannerVisible(false);
@@ -222,6 +261,12 @@ export default function HomeScreen() {
         onClose={() => setScannerVisible(false)}
         onScanned={handleQrScanned}
         title="Ingreso al Local"
+      />
+      <QrScannerModal
+        visible={scannerMesaVisible}
+        onClose={() => setScannerMesaVisible(false)}
+        onScanned={handleQrScannedMesa}
+        title="Ingreso a su mesa"
       />
 
       <View className="flex-row items-center p-2">
@@ -361,14 +406,14 @@ export default function HomeScreen() {
         </View>
 
         {enListaDeEspera ? (
-          <View className="bg-[#FFF4E6] rounded-3xl p-4 flex-row items-center justify-between border border-amber-300 shadow-sm">
+          <View className="bg-[#FFF4E6] rounded-3xl p-3 flex-row items-center justify-between border border-amber-300 shadow-sm">
             <View className="flex-row items-center pl-1 flex-1 mr-2">
               <View>
                 <Text className="text-[10px] font-bold tracking-widest text-[#B45309] uppercase">
-                  Turno solicitado
+                  {datosQrMesa ? "" : `Turno solicitado`}
                 </Text>
                 <Text className="text-sm font-black text-[#1E2342]">
-                  Acceder a mesas
+                  Accede a tu mesa ({`${numeroMesaAsignada}`})
                 </Text>
               </View>
             </View>
@@ -384,7 +429,7 @@ export default function HomeScreen() {
                 color="white"
                 style={{ marginRight: 4 }}
               />
-              <Text className="text-white font-bold text-xs">Ir a mesas</Text>
+              <Text className="text-white font-bold text-xs">Escanear Qr</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -399,7 +444,7 @@ export default function HomeScreen() {
             </View>
 
             <TouchableOpacity
-              onPress={onScanPress}
+              onPress={()=>{setScannerVisible(true)}}
               activeOpacity={0.85}
               disabled={qrEscaneado}
               className={`px-6 py-3.5 rounded-2xl flex-row items-center shadow-md ${

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -6,18 +6,19 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+
 import { StatusBar } from "expo-status-bar";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Mesa, MesaTipo, MesaDisponibilidad } from "@/types/database";
 import { actualizarEspera } from "@/servicesJ/listaDeEsperaService";
 import { mesasServicio } from "@/lib/mesasServicio";
 import { useToast } from "@/contextJ/Toast";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
 
 export default function AsignarMesaScreen() {
   const { showToast } = useToast();
-  
+  const router = useRouter();
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [cargando, setCargando] = useState<boolean>(false);
   const { id, estado } = useLocalSearchParams<{ id: string, estado: string }>();
@@ -38,7 +39,8 @@ export default function AsignarMesaScreen() {
     try {
       setCargando(true);
       const datosMesas = await mesasServicio.listar();
-      setMesas(datosMesas);
+      const datosFiltrados = datosMesas.filter((mesa)=>mesa.disponibilidad === "vacia");
+      setMesas(datosFiltrados);
     } catch (error) {
       showToast("error", "Error", "No se pudo cargar la lista de mesas")
     } finally {
@@ -93,9 +95,9 @@ export default function AsignarMesaScreen() {
 
   const asignarMesa = async (mesa: Mesa) => {
     if(mesa && mesa.disponibilidad === "vacia" && id){
-        ///esto es el punto 10
         mesasServicio.actualizarDisponibilidad(mesa.id, "ocupada");
-        actualizarEspera(id, mesa.id);
+        actualizarEspera(id, mesa.id, mesa.numero);
+        router.back();
     }
   }
 
