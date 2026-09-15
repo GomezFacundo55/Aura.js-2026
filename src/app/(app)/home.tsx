@@ -1,44 +1,57 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { TouchableOpacity, View, Text, Image, ActivityIndicator } from "react-native";
+import { TouchableOpacity, View, Text, Image, ActivityIndicator, ScrollView } from "react-native";
 import { getMyProfile, signOut, type UserProfile } from "@/lib/auth";
 import { useToast } from "../../contextJ/Toast";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { SoundService } from "@/servicesJ/soundService";
 import QrScannerModal from "@/components/ui/QRScanner";
-import { crearUnaEspera, consultarEstadoEspera, consultarClienteEnListaDeEspera } from "@/servicesJ/listaDeEsperaService";
+import { crearUnaEspera, consultarClienteEnListaDeEspera } from "@/servicesJ/listaDeEsperaService";
 import { ConfirmModal } from "@/components/modal";
+import { useMesaActual } from "@/hooks/useMesaActual";
+
+type ScanMode = "ingreso" | "mesa";
 
 export default function HomeScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const { showToast } = useToast();
   const router = useRouter();
   const [cargando, setCargando] = useState<boolean>(true);
+
   const [qrEscaneado, setQrEscaneado] = useState<boolean>(false);
   const [scannerVisible, setScannerVisible] = useState<boolean>(false);
+  const [scanMode, setScanMode] = useState<ScanMode>("ingreso");
+
   const [enListaDeEspera, setEnListaDeEspera] = useState<boolean>(false);
   const [esperaId, setEsperaId] = useState<string | null>(null);
   const [mostrarModal, setMostrarModal] = useState<boolean>(false);
-  const [enEspera, setEnEspera] = useState<boolean>(false);
+
+  // NUEVO: distingue "el metre ya me asignó mesa (DB)" de "ya escaneé el QR físico de esa mesa"
+  const [mesaVinculada, setMesaVinculada] = useState<boolean>(false);
+
+  const { mesa, tieneMesa } = useMesaActual(profile?.id); // tieneMesa = asignación existe en DB
+
   const QR_INGRESO = "INGRESO_LOCAL";
 
+  // Determina en qué paso del flujo está el cliente
+  const paso: "ingreso" | "espera" | "escanear_mesa" | "vinculado" =
+    !qrEscaneado ? "ingreso" : !tieneMesa ? "espera" : !mesaVinculada ? "escanear_mesa" : "vinculado";
+
   useEffect(() => {
-    cargaDatosIniciales()
+    cargaDatosIniciales();
   }, []);
 
   const cargaDatosIniciales = async () => {
     try {
       const perfil = await getMyProfile();
-      if(!perfil){
+      if (!perfil) {
         router.replace("/log-in");
         return;
       }
-
       setProfile(perfil);
 
       if (perfil?.id) {
         const { exito, datos } = await consultarClienteEnListaDeEspera(perfil.id);
-
         if (exito && datos) {
           setQrEscaneado(true);
           setEnListaDeEspera(true);
@@ -51,98 +64,89 @@ export default function HomeScreen() {
     } finally {
       setCargando(false);
     }
-  }
+  };
 
   const onScanPress = () => {
+    // La card de escaneo se reutiliza: decide el modo según el paso actual
+    setScanMode(paso === "escanear_mesa" ? "mesa" : "ingreso");
     setScannerVisible(true);
   };
 
   const onEncuestasPress = () => {
-    //aun hay que hacer lo de las encuestas. esto es un recordatorio......
     if (!qrEscaneado) return;
+    // TODO: navegar a la pantalla de encuestas
   };
 
   const onListaEsperaPress = async () => {
     if (!qrEscaneado || profile === null) return;
     const { exito, datos, error } = await crearUnaEspera(profile.id);
     if (error || !datos) {
-      showToast(
-        "error",
-        "Error al unirse a la lista de espera",
-        error || "No se pudo registrar",
-      );
+      showToast("error", "Error al unirse a la lista de espera", error || "No se pudo registrar");
       SoundService.reproducir("error");
     } else {
-      console.log(datos);
       setEnListaDeEspera(true);
       setEsperaId(datos.id);
       SoundService.reproducir("exito");
-      showToast("success", "¡Listo!", "Usted se añadio a la lista de espera.");
+      showToast("success", "¡Listo!", "Usted se añadió a la lista de espera.");
     }
   };
 
-  const checkAprobacionListaEspera = async () => {
-    if (!esperaId) {
-      showToast("error", "Error", "No se encontró un turno activo.");
-      return;
-    }
-    const { exito, datos, error } = await consultarEstadoEspera(esperaId);
-
-    if (error || !datos) {
-      await SoundService.reproducir("error");
-      showToast("error", "Error", "No se pudo verificar el turno.");
-      return;
+  const handleIngresoQr = async (data: string) => {
+    let esValido = false;
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed.tipo === QR_INGRESO) esValido = true;
+    } catch {
+      if (data.trim().toUpperCase() === QR_INGRESO) esValido = true;
     }
 
-    if (datos.estado === "asignado" && datos.mesa_asignada_id) {
+    if (esValido) {
+      setQrEscaneado(true);
       await SoundService.reproducir("exito");
-      showToast("success", "¡Mesa asignada!", "Accediendo a tu mesa...");
-
-      router.push({
-        pathname: "/mesa-home",
-        params: { mesaId: datos.mesa_asignada_id, cliente_id: profile?.id },
-      });
+      showToast("success", "¡Bienvenido!", "Ingreso al local validado correctamente.");
     } else {
       await SoundService.reproducir("error");
-      showToast(
-        "info",
-        "Aguarde",
-        "Aún no se le ha asignado una mesa. Por favor espere.",
-      );
+      showToast("error", "Código inválido", "El QR escaneado no es el de ingreso al local.");
+    }
+  };
+
+  const handleMesaQr = async (data: string) => {
+    if (!mesa || !profile) return;
+
+    let mesaIdEscaneada: string | null = null;
+    try {
+      const parsed = JSON.parse(data);
+      mesaIdEscaneada = parsed.mesaId ?? parsed.id ?? null;
+    } catch {
+      mesaIdEscaneada = data.trim();
+    }
+
+    // Punto 10: el cliente NO puede vincularse a una mesa distinta de la asignada
+    if (mesaIdEscaneada !== mesa.id) {
+      await SoundService.reproducir("error");
+      showToast("error", "Mesa incorrecta", "Este QR no corresponde a tu mesa asignada.");
+      return;
+    }
+
+    try {
+      // TODO: persistir el vínculo cliente-mesa en la DB
+      // await vincularClienteAMesa(profile.id, mesa.id);
+      setMesaVinculada(true);
+      await SoundService.reproducir("exito");
+      showToast("success", "¡Mesa vinculada!", `Ya podés ver el menú y consultar al mozo.`);
+    } catch (e) {
+      await SoundService.reproducir("error");
+      showToast("error", "Error", "No se pudo vincular la mesa. Reintentá.");
     }
   };
 
   const handleQrScanned = async (data: string) => {
     setScannerVisible(false);
     try {
-      let esValido = false;
-
-      try {
-        const parsed = JSON.parse(data);
-        if (parsed.tipo === QR_INGRESO) {
-          esValido = true;
-        }
-      } catch {
-        if (data.trim().toUpperCase() === QR_INGRESO) {
-          esValido = true;
-        }
-      }
-
-      if (esValido) {
-        setQrEscaneado(true);
-        await SoundService.reproducir("exito");
-        showToast(
-          "success",
-          "¡Bienvenido!",
-          "Ingreso al local validado correctamente.",
-        );
+      if (scanMode === "ingreso") {
+        await handleIngresoQr(data);
       } else {
-        await SoundService.reproducir("error");
-        showToast(
-          "error",
-          "Código inválido",
-          "El QR escaneado no es el de ingreso al local.",
-        );
+        await handleMesaQr(data);
       }
     } catch (e) {
       showToast("error", "Error", "Ocurrió un error al procesar el código.");
@@ -154,10 +158,8 @@ export default function HomeScreen() {
     if (error) {
       await SoundService.reproducir("error");
       showToast("error", "Error", "Error al cerrar sesión");
-    } else {
-      if (profile !== null) {
-        router.replace("/log-in");
-      }
+    } else if (profile !== null) {
+      router.replace("/log-in");
     }
   };
 
@@ -175,216 +177,182 @@ export default function HomeScreen() {
         visible={scannerVisible}
         onClose={() => setScannerVisible(false)}
         onScanned={handleQrScanned}
-        title="Ingreso al Local"
+        title={scanMode === "ingreso" ? "Ingreso al Local" : "Escaneá el QR de tu mesa"}
       />
 
-      <View className="flex-row items-center p-2">
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={ () => { setMostrarModal(true) } }
-          className="w-9 h-9 rounded-xl bg-red-500 items-center justify-center mr-3 shadow-sm"
-        >
-          <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
-        </TouchableOpacity>
-        <Text className="text-2xl font-bold text-neutral-900">
-          Bienvenido a Foodly
-        </Text>
-      </View>
-
-      <View className="flex-1 p-5">
-        <View className="bg-[#FFF4E6] rounded-3xl p-2 items-center mb-4 shadow-sm border border-white/60">
-          <View className="relative">
-            <Image
-              source={{ uri: profile?.foto_url || "https://placehold.co/150" }}
-              className="w-24 h-24 rounded-full border-4 border-white"
-              resizeMode="cover"
-            />
-            <View className="absolute bottom-1 right-1 w-6 h-6 bg-orange-500 rounded-full border-2 border-white items-center justify-center">
-              <Ionicons name="checkmark" size={14} color="#FFF" />
-            </View>
-          </View>
-
-          <Text className="text-xl font-black text-[#1E2342] mt-3">
-            ¡Hola, {profile?.nombres}!
-          </Text>
-        </View>
-
-        <View className="bg-[#FFF4E6] rounded-3xl p-6 mb-4 items-center border border-white/60 shadow-sm">
-          <View className="w-12 h-12 bg-white/80 rounded-2xl items-center justify-center mb-3">
-            <Ionicons
-              name={qrEscaneado ? "restaurant-outline" : "qr-code-outline"}
-              size={28}
-              color="#FF6B00"
-            />
-          </View>
-
-          <Text className="text-lg font-black text-[#1E2342] text-center mb-2">
-            {qrEscaneado
-              ? "Opciones del local habilitadas"
-              : "Escaneá el código QR del local"}
-          </Text>
-
-          <Text className="text-xs text-[#7A6C5E] text-center leading-5 px-2 mb-4">
-            {qrEscaneado
-              ? enListaDeEspera
-                ? "Ya estás en la lista. El metre te notificará cuando tu mesa esté lista."
-                : "Confirmaste tu ingreso al salón. Podés elegir una opción:"
-              : "Al ingresar al local, escaneá el QR ubicado en la entrada para activar las opciones de atención."}
-          </Text>
-
-          <View className="w-full h-[1px] bg-[#F0DFC8] my-1" />
-
-          <View className="w-full mt-3 space-y-2.5">
-            <TouchableOpacity
-              activeOpacity={qrEscaneado ? 0.7 : 1}
-              onPress={onEncuestasPress}
-              disabled={!qrEscaneado}
-              className={`flex-row items-center p-3 rounded-2xl border ${
-                qrEscaneado
-                  ? "bg-white border-orange-200 shadow-sm"
-                  : "bg-white/40 border-transparent opacity-50"
-              }`}
-            >
-              <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
-                <MaterialCommunityIcons
-                  name="clipboard-text-outline"
-                  size={20}
-                  color="#FF6B00"
-                />
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm font-bold text-[#1E2342]">
-                  Visualizar encuestas
-                </Text>
-                <Text className="text-[11px] text-[#8A7B6D]">
-                  Respondé y accedé a beneficios exclusivos
-                </Text>
-              </View>
-              {qrEscaneado && (
-                <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={qrEscaneado && !enListaDeEspera ? 0.7 : 1}
-              onPress={onListaEsperaPress}
-              disabled={!qrEscaneado || enListaDeEspera}
-              className={`flex-row items-center p-3 rounded-2xl border ${
-                enListaDeEspera
-                  ? "bg-amber-50 border-amber-200 opacity-90 shadow-sm"
-                  : qrEscaneado
-                    ? "bg-white border-orange-200 shadow-sm"
-                    : "bg-white/40 border-transparent opacity-50"
-              }`}
-            >
-              <View
-                className={`w-9 h-9 rounded-xl items-center justify-center mr-3 ${enListaDeEspera ? "bg-amber-200" : "bg-orange-100"}`}
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <View className="flex-1 p-5">
+          {/* Card de saludo — siempre visible */}
+          <View className="bg-[#FFF4E6] rounded-3xl p-2 items-center mb-4 shadow-sm border border-white/60">
+          
+            <View className="ml-87 -mb-7">
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setMostrarModal(true)}
+                className="w-9 h-9 rounded-xl bg-red-500 items-center justify-center mr-3 shadow-sm"
               >
-                <MaterialCommunityIcons
-                  name={
-                    enListaDeEspera
-                      ? "clock-check-outline"
-                      : "account-clock-outline"
-                  }
-                  size={20}
-                  color={enListaDeEspera ? "#B45309" : "#FF6B00"}
-                />
+                <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+            <View className="relative">
+              <Image
+                source={{ uri: profile?.foto_url || "https://placehold.co/150" }}
+                className="w-30 h-30 rounded-full border-4 border-white"
+                resizeMode="cover"
+              />
+              <View className="absolute bottom-1 right-1 w-6 h-6 bg-orange-500 rounded-full border-2 border-white items-center justify-center">
+                <Ionicons name="checkmark" size={14} color="#FFF" />
               </View>
-              <View className="flex-1">
-                <Text className="text-sm font-bold text-[#1E2342]">
-                  {enListaDeEspera
-                    ? "En espera de asignación"
-                    : "Lista de espera"}
+            </View>
+            <Text className="text-2xl font-black text-[#1E2342] mt-3">¡Hola, {profile?.nombres}!</Text>
+          </View>
+
+          {/* Card de opciones (encuestas + estado de mesa) — visible desde que se escanea el QR de ingreso */}
+          {qrEscaneado && (
+            <View className="bg-[#FFF4E6] rounded-3xl p-6 mb-4 items-center border border-white/60 shadow-sm">
+              <View className="w-12 h-12 bg-white/80 rounded-2xl items-center justify-center mb-3">
+                <Ionicons name="restaurant-outline" size={28} color="#FF6B00" />
+              </View>
+              <Text className="text-xl font-black text-[#1E2342] text-center mb-2">
+                Opciones del local habilitadas
+              </Text>
+              <View className="w-full h-[1px] bg-[#F0DFC8] my-1" />
+
+              <View className="w-full mt-3 space-y-2.5">
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={onEncuestasPress}
+                  className="flex-row items-center mb-2 p-3 rounded-2xl border bg-white border-orange-200 shadow-sm"
+                >
+                  <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
+                    <MaterialCommunityIcons name="clipboard-text-outline" size={20} color="#FF6B00" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-lg font-bold text-[#1E2342]">Ver encuestas</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
+                </TouchableOpacity>
+
+                {/* Fila de estado de mesa: cambia según el paso, sin agregar cards extra */}
+                <TouchableOpacity
+                  activeOpacity={!enListaDeEspera ? 0.7 : 1}
+                  onPress={onListaEsperaPress}
+                  disabled={enListaDeEspera}
+                  className={`flex-row items-center p-3 rounded-2xl border ${
+                    tieneMesa || enListaDeEspera
+                      ? "bg-brand-400 border-amber-200 opacity-90 shadow-sm"
+                      : "bg-white border-orange-200 shadow-sm"
+                  }`}
+                >
+                  <View className={`w-9 h-9 rounded-xl items-center justify-center mr-3 overflow-hidden ${tieneMesa || enListaDeEspera ? "bg-black" : "bg-orange-100"}`}>
+                    <MaterialCommunityIcons
+                        name={tieneMesa ? "table-chair" : enListaDeEspera ? "clock-check-outline" : "account-clock-outline"}
+                        size={20}
+                        color={tieneMesa || enListaDeEspera ? "#FFFFFF" : "#FF6B00"}
+                      />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-lg font-bold text-[#1E2342]">
+                      {tieneMesa ? `Mesa ${mesa?.numero} - asignada` : enListaDeEspera ? "En espera de asignación" : "Lista de espera"}
+                    </Text>
+                    <Text className={`text-[13px] font-semibold ${tieneMesa ? "text-white" : "text-[#8A7B6D]"}`}>
+                      {tieneMesa
+                        ? "Escaneá el QR de tu mesa"
+                        : enListaDeEspera
+                          ? "Anotado. Esperando al metre"
+                          : "Anotate para que te asignen una mesa"}
+                    </Text>
+                  </View>
+                  {!enListaDeEspera && !tieneMesa && <Ionicons name="chevron-forward" size={18} color="#FF6B00" />}
+                  {(enListaDeEspera || tieneMesa) && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={18}
+                      color={tieneMesa ? "#FFFFFF" : "#cc6414"}
+                    />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Card de escaneo — reutilizada: ingreso al local (CASO A) o QR de mesa (CASO C) */}
+          {(paso === "ingreso" || paso === "escanear_mesa") && (
+            <View className="bg-[#FFF4E6] rounded-3xl mt-10 pt-15 pb-15 pl-5 pr-5 flex-row items-center justify-between border border-white/60 shadow-sm">
+              <View className="pl-2">
+                <Text className="text-[11px] font-bold tracking-widest text-[#9E8B79] uppercase">
+                  {paso === "ingreso" ? "Ingreso al local" : "Tu mesa"}
                 </Text>
-                <Text className="text-[11px] text-[#8A7B6D]">
-                  {enListaDeEspera
-                    ? "Anotado. Esperando al metre"
-                    : "Anotate para que te asignen una mesa"}
+                <Text className="text-2xl font-black text-[#1E2342]">
+                  {paso === "ingreso" ? "Cámara lista" : `Mesa ${mesa?.numero}`}
                 </Text>
               </View>
-              {qrEscaneado && !enListaDeEspera && (
+
+              <TouchableOpacity
+                onPress={onScanPress}
+                activeOpacity={0.85}
+                className="px-6 py-3.5 rounded-2xl flex-row items-center shadow-md bg-[#FF6B00] shadow-orange-500/40"
+              >
+                <Ionicons name="camera" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+                <Text className="text-white font-bold text-base">Escanear QR</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Card de acceso a mesa — visible una vez vinculado a la mesa (CASO C) */}
+          {mesaVinculada && (
+          <View className="bg-[#FFF4E6] rounded-3xl p-6 mb-4 items-center border border-white/60 shadow-sm">
+
+            <Text className="text-2xl font-black text-[#1E2342] text-center mb-1">
+              Mesa {mesa?.numero}
+            </Text>
+
+            <View className="w-full h-[1px] bg-[#F0DFC8] my-1" />
+
+            <View className="w-full mt-3 p-1space-y-2.5">
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => router.push({ pathname: "/menu", params: { mesaId: mesa?.id } })}
+                className="flex-row items-center p-3 mb-2 rounded-2xl border bg-white border-orange-200 shadow-sm"
+              >
+                <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
+                  <MaterialCommunityIcons name="silverware-fork-knife" size={20} color="#FF6B00" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-lg font-bold text-[#1E2342]">Ver menú</Text>
+                </View>
                 <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
-              )}
-              {enListaDeEspera && (
-                <Ionicons name="checkmark-circle" size={18} color="#cc6414" />
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
+              </TouchableOpacity>
 
-        {enListaDeEspera ? (
-          <View className="bg-[#FFF4E6] rounded-3xl p-4 flex-row items-center justify-between border border-amber-300 shadow-sm">
-            <View className="flex-row items-center pl-1 flex-1 mr-2">
-              <View>
-                <Text className="text-[10px] font-bold tracking-widest text-[#B45309] uppercase">
-                  Turno solicitado
-                </Text>
-                <Text className="text-sm font-black text-[#1E2342]">
-                  Acceder a mesas
-                </Text>
-              </View>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => router.push({ pathname: "/chat", params: { mesaId: mesa?.id } })}
+                className="flex-row items-center p-3 rounded-2xl border bg-white border-orange-200 shadow-sm"
+              >
+                <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
+                  <MaterialCommunityIcons name="chat-outline" size={20} color="#FF6B00" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-lg font-bold text-[#1E2342]">Chateá con el mozo</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
+              </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-              onPress={checkAprobacionListaEspera}
-              activeOpacity={0.8}
-              className="bg-brand-500 px-4 py-2.5 rounded-2xl flex-row items-center"
-            >
-              <Ionicons
-                name="list-circle-outline"
-                size={16}
-                color="white"
-                style={{ marginRight: 4 }}
-              />
-              <Text className="text-white font-bold text-xs">Ir a mesas</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View className="bg-[#FFF4E6] rounded-3xl p-4 flex-row items-center justify-between border border-white/60 shadow-sm">
-            <View className="pl-2">
-              <Text className="text-[10px] font-bold tracking-widest text-[#9E8B79] uppercase">
-                Ingreso al local
-              </Text>
-              <Text className="text-base font-black text-[#1E2342]">
-                {qrEscaneado ? "Ingreso validado" : "Cámara lista"}
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              onPress={onScanPress}
-              activeOpacity={0.85}
-              disabled={qrEscaneado}
-              className={`px-6 py-3.5 rounded-2xl flex-row items-center shadow-md ${
-                qrEscaneado
-                  ? "bg-brand-600 shadow-brand-600/30 opacity-90"
-                  : "bg-[#FF6B00] shadow-orange-500/40"
-              }`}
-            >
-              <Ionicons
-                name={qrEscaneado ? "checkmark-circle" : "camera"}
-                size={18}
-                color="#FFFFFF"
-                style={{ marginRight: 6 }}
-              />
-              <Text className="text-white font-bold text-base">
-                {qrEscaneado ? "Escaneado" : "Escanear QR"}
-              </Text>
-            </TouchableOpacity>
           </View>
         )}
-      </View>
+        </View>
+      </ScrollView>
+
       <ConfirmModal
-      visible={mostrarModal}
-      title="Confirmar acción."
-      message="¿Desea salir?"
-      confirmText="Si"
-      cancelText="No"
-      action={false}
-      onConfirm={logOut}
-      onCancel={() => {
-        setMostrarModal(false);
-    }}
-  />
+        visible={mostrarModal}
+        title="Confirmar acción."
+        message="¿Desea salir?"
+        confirmText="Si"
+        cancelText="No"
+        action={false}
+        onConfirm={logOut}
+        onCancel={() => setMostrarModal(false)}
+      />
     </View>
   );
 }
