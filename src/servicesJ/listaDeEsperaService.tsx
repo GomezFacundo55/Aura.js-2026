@@ -1,5 +1,6 @@
 import { supabase } from "./supabaseConexion";
 import { EstadoListaEspera, IListaDeEspera } from "@/interfaces/IlistaEspara";
+import { mesasServicio } from '@/lib/mesasServicio'; // ajustá el path según donde lo tengas
 
 const TABLA = "lista_espera";
 
@@ -210,3 +211,20 @@ export async function eliminarEspera(id: string) {
     };
   }
 }
+
+export const vincularClienteAMesa = async (clienteId: string, mesaId: string) => {
+  const { data, error } = await supabase
+    .from('lista_espera')
+    .update({ estado: 'vinculado' })
+    .eq('cliente_id', clienteId)
+    .eq('mesa_asignada_id', mesaId)   // si el QR no es el de su mesa, no matchea ninguna fila
+    .eq('estado', 'asignado')
+    .select('id')
+    .maybeSingle();
+
+  if (error) return { exito: false, error: error.message };
+  if (!data) return { exito: false, error: 'Este QR no corresponde a tu mesa asignada.' };
+
+  await mesasServicio.actualizarDisponibilidad(mesaId, 'ocupada');
+  return { exito: true, datos: data };
+};

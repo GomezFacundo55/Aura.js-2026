@@ -39,8 +39,16 @@ export default function App() {
   useFocusEffect(
     useCallback(() => {
     inicializar();
+    const topic = 'cambios-lista-espera-metre';
+    const canalExistente = supabase
+      .getChannels()
+      .find((c) => c.topic === `realtime:${topic}`);
+    if (canalExistente) {
+      supabase.removeChannel(canalExistente);
+    }
+
     const canalEspera = supabase
-      .channel('cambios-lista-espera-metre')
+      .channel(topic)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'lista_espera' },

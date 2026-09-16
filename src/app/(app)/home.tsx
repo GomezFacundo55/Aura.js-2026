@@ -6,9 +6,10 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { SoundService } from "@/servicesJ/soundService";
 import QrScannerModal from "@/components/ui/QRScanner";
-import { crearUnaEspera, consultarClienteEnListaDeEspera } from "@/servicesJ/listaDeEsperaService";
 import { ConfirmModal } from "@/components/modal";
 import { useMesaActual } from "@/hooks/useMesaActual";
+import { crearUnaEspera, consultarClienteEnListaDeEspera, vincularClienteAMesa } from "@/servicesJ/listaDeEsperaService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type ScanMode = "ingreso" | "mesa";
 
@@ -27,9 +28,9 @@ export default function HomeScreen() {
   const [mostrarModal, setMostrarModal] = useState<boolean>(false);
 
   // NUEVO: distingue "el metre ya me asignó mesa (DB)" de "ya escaneé el QR físico de esa mesa"
-  const [mesaVinculada, setMesaVinculada] = useState<boolean>(false);
+  const { mesa, tieneMesa, mesaVinculada, refetch } = useMesaActual(profile?.id);
 
-  const { mesa, tieneMesa } = useMesaActual(profile?.id); // tieneMesa = asignación existe en DB
+  const keyIngreso = (clienteId: string) => `ingreso_${clienteId}`;
 
   const QR_INGRESO = "INGRESO_LOCAL";
 
@@ -41,6 +42,12 @@ export default function HomeScreen() {
     cargaDatosIniciales();
   }, []);
 
+  useEffect(() => {
+    if (tieneMesa && !qrEscaneado) {
+      setQrEscaneado(true);
+    }
+  }, [tieneMesa, qrEscaneado]);
+
   const cargaDatosIniciales = async () => {
     try {
       const perfil = await getMyProfile();
@@ -51,11 +58,17 @@ export default function HomeScreen() {
       setProfile(perfil);
 
       if (perfil?.id) {
-        const { exito, datos } = await consultarClienteEnListaDeEspera(perfil.id);
+        const [{ exito, datos }, ingresoGuardado] = await Promise.all([
+          consultarClienteEnListaDeEspera(perfil.id),
+          AsyncStorage.getItem(keyIngreso(perfil.id)),
+        ]);
+
         if (exito && datos) {
           setQrEscaneado(true);
           setEnListaDeEspera(true);
           setEsperaId(datos.id);
+        } else if (ingresoGuardado !== null) {
+          setQrEscaneado(true);
         }
       }
     } catch (err) {
@@ -102,6 +115,9 @@ export default function HomeScreen() {
 
     if (esValido) {
       setQrEscaneado(true);
+      if (profile) {
+        await AsyncStorage.setItem(keyIngreso(profile.id), "1");
+      }
       await SoundService.reproducir("exito");
       showToast("success", "¡Bienvenido!", "Ingreso al local validado correctamente.");
     } else {
@@ -121,23 +137,22 @@ export default function HomeScreen() {
       mesaIdEscaneada = data.trim();
     }
 
-    // Punto 10: el cliente NO puede vincularse a una mesa distinta de la asignada
     if (mesaIdEscaneada !== mesa.id) {
       await SoundService.reproducir("error");
       showToast("error", "Mesa incorrecta", "Este QR no corresponde a tu mesa asignada.");
       return;
     }
 
-    try {
-      // TODO: persistir el vínculo cliente-mesa en la DB
-      // await vincularClienteAMesa(profile.id, mesa.id);
-      setMesaVinculada(true);
-      await SoundService.reproducir("exito");
-      showToast("success", "¡Mesa vinculada!", `Ya podés ver el menú y consultar al mozo.`);
-    } catch (e) {
+    const { exito, error } = await vincularClienteAMesa(profile.id, mesa.id);
+    if (!exito) {
       await SoundService.reproducir("error");
-      showToast("error", "Error", "No se pudo vincular la mesa. Reintentá.");
+      showToast("error", "Error", error || "No se pudo vincular la mesa. Reintentá.");
+      return;
     }
+
+    await refetch();
+    await SoundService.reproducir("exito");
+    showToast("success", "¡Mesa vinculada!", "Ya podés ver el menú y consultar al mozo.");
   };
 
   const handleQrScanned = async (data: string) => {
@@ -180,7 +195,7 @@ export default function HomeScreen() {
         title={scanMode === "ingreso" ? "Ingreso al Local" : "Escaneá el QR de tu mesa"}
       />
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }} >
         <View className="flex-1 p-5">
           {/* Card de saludo — siempre visible */}
           <View className="bg-[#FFF4E6] rounded-3xl p-2 items-center mb-4 shadow-sm border border-white/60">
@@ -239,17 +254,27 @@ export default function HomeScreen() {
                   onPress={onListaEsperaPress}
                   disabled={enListaDeEspera}
                   className={`flex-row items-center p-3 rounded-2xl border ${
-                    tieneMesa || enListaDeEspera
+                    tieneMesa
                       ? "bg-brand-400 border-amber-200 opacity-90 shadow-sm"
-                      : "bg-white border-orange-200 shadow-sm"
+                      : enListaDeEspera
+                        ? "bg-brand-100 border-amber-200 opacity-90 shadow-sm"
+                        : "bg-white border-orange-200 shadow-sm"
                   }`}
                 >
-                  <View className={`w-9 h-9 rounded-xl items-center justify-center mr-3 overflow-hidden ${tieneMesa || enListaDeEspera ? "bg-black" : "bg-orange-100"}`}>
+                  <View
+                    className={`w-9 h-9 rounded-xl items-center justify-center mr-3 overflow-hidden ${
+                      tieneMesa
+                        ? "bg-black"
+                        : enListaDeEspera
+                          ? "bg-orange-300"
+                          : "bg-orange-100"
+                    }`}
+                  > 
                     <MaterialCommunityIcons
-                        name={tieneMesa ? "table-chair" : enListaDeEspera ? "clock-check-outline" : "account-clock-outline"}
-                        size={20}
-                        color={tieneMesa || enListaDeEspera ? "#FFFFFF" : "#FF6B00"}
-                      />
+                      name={tieneMesa ? "table-chair" : enListaDeEspera ? "clock-check-outline" : "account-clock-outline"}
+                      size={20}
+                      color={tieneMesa ? "#FFFFFF" : enListaDeEspera ? "#B45309" : "#FF6B00"}
+                    />
                   </View>
                   <View className="flex-1">
                     <Text className="text-lg font-bold text-[#1E2342]">
@@ -278,7 +303,7 @@ export default function HomeScreen() {
 
           {/* Card de escaneo — reutilizada: ingreso al local (CASO A) o QR de mesa (CASO C) */}
           {(paso === "ingreso" || paso === "escanear_mesa") && (
-            <View className="bg-[#FFF4E6] rounded-3xl mt-10 pt-15 pb-15 pl-5 pr-5 flex-row items-center justify-between border border-white/60 shadow-sm">
+            <View className="bg-[#FFF4E6] rounded-3xl pt-16 pb-16 pl-5 pr-5 flex-1 items-center justify-between border border-white/60 shadow-sm">
               <View className="pl-2">
                 <Text className="text-[11px] font-bold tracking-widest text-[#9E8B79] uppercase">
                   {paso === "ingreso" ? "Ingreso al local" : "Tu mesa"}
