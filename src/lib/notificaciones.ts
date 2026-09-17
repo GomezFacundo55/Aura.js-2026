@@ -53,3 +53,31 @@ export async function notificarNuevoClientePendiente(nombreCompleto: string) {
     console.warn('No se pudo enviar la notificación local:', error);
   }
 }
+
+export async function notificarNuevoMensajeChat(titulo: string, cuerpo: string) {
+  const Notifications = cargarNotifications();
+  if (!Notifications) return;
+
+  try {
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('chat-messages', {
+        name: 'Mensajes del Chat',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF6B00',
+      });
+    }
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: titulo,
+        body: cuerpo,
+        sound: true,
+        channelId: Platform.OS === 'android' ? 'chat-messages' : undefined,
+      },
+      trigger: null,
+    });
+  } catch (error) {
+    console.warn('No se pudo enviar la notificación de chat:', error);
+  }
+}
