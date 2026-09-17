@@ -4,8 +4,9 @@ import type { Mesa, MesaDisponibilidad } from '@/types/database';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Modal, Pressable, RefreshControl, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ConfirmModal } from '@/components/modal';
 
 const CONFIG_ESTADOS: Record<MesaDisponibilidad, { label: string; bgClass: string; textClass: string; icon: keyof typeof Ionicons.glyphMap }> = {
   vacia: { label: 'Vacía', bgClass: 'bg-emerald-100 border-emerald-200', textClass: 'text-emerald-800', icon: 'checkmark-circle' },
@@ -18,6 +19,8 @@ const ORDEN_ESTADOS: MesaDisponibilidad[] = ['vacia', 'ocupada', 'reservada'];
 export default function ListadoMesasScreen() {
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [cargando, setCargando] = useState(false);
+  const [mesaAEliminar, setMesaAEliminar] = useState<Mesa | null>(null);
+  const [eliminando, setEliminando] = useState(false);
   const insets = useSafeAreaInsets();
 
   const cargarMesas = useCallback(async () => {
@@ -29,13 +32,26 @@ export default function ListadoMesasScreen() {
 
   useFocusEffect(useCallback(() => { cargarMesas(); }, [cargarMesas]));
 
-  // Alterna al siguiente estado secuencialmente al tocar la píldora
   const rotarEstado = async (mesa: Mesa) => {
     const idxActual = ORDEN_ESTADOS.indexOf(mesa.disponibilidad);
     const siguienteEstado = ORDEN_ESTADOS[(idxActual + 1) % ORDEN_ESTADOS.length];
 
     await mesasServicio.actualizarDisponibilidad(mesa.id, siguienteEstado);
     setMesas((prev) => prev.map((m) => (m.id === mesa.id ? { ...m, disponibilidad: siguienteEstado } : m)));
+  };
+
+  const confirmarEliminar = async () => {
+    if (!mesaAEliminar) return;
+    setEliminando(true);
+    try {
+      await mesasServicio.eliminar(mesaAEliminar.id);
+      setMesas((prev) => prev.filter((m) => m.id !== mesaAEliminar.id));
+      setMesaAEliminar(null);
+    } catch (error) {
+      console.warn('No se pudo eliminar la mesa:', error);
+    } finally {
+      setEliminando(false);
+    }
   };
 
   return (
@@ -97,15 +113,21 @@ export default function ListadoMesasScreen() {
           return (
             <View className="flex-1 rounded-2xl bg-surface-light p-3 border border-neutral-400/10 shadow-sm justify-between">
               <View>
-                {/* Imagen y Número de Mesa */}
                 <View className="relative h-28 w-full overflow-hidden rounded-xl bg-surface-muted mb-3">
                   <Image source={{ uri: item.foto_url }} className="h-full w-full" resizeMode="cover" />
                   <View className="absolute top-2 left-2 rounded-md bg-surface-dark/80 px-2.5 py-1 backdrop-blur-md">
                     <Text className="text-xs font-bold text-white">Mesa {item.numero}</Text>
                   </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Eliminar mesa ${item.numero}`}
+                    onPress={() => setMesaAEliminar(item)}
+                    className="absolute top-2 right-2 h-7 w-7 items-center justify-center rounded-full bg-surface-dark/80 active:bg-rose-600"
+                  >
+                    <Ionicons name="close" size={16} color="#FFFFFF" />
+                  </Pressable>
                 </View>
 
-                {/* Detalles de la mesa */}
                 <View className="mb-3">
                   <Text className="text-sm font-bold text-neutral-900 capitalize">
                     {item.tipo}
@@ -119,12 +141,11 @@ export default function ListadoMesasScreen() {
                 </View>
               </View>
 
-              {/* Botón Píldora de Estado Inteligente (Sin amontonamientos) */}
               <View className="border-t border-neutral-400/10 pt-2.5">
                 <Text className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">
                   Estado (Tocar p/ cambiar)
                 </Text>
-                
+
                 <Pressable
                   accessibilityRole="button"
                   onPress={() => rotarEstado(item)}
@@ -143,6 +164,17 @@ export default function ListadoMesasScreen() {
           );
         }}
       />
+
+      <ConfirmModal
+  visible={!!mesaAEliminar}
+  title={`¿Eliminar mesa ${mesaAEliminar?.numero ?? ''}?`}
+  message="Esta acción no se puede deshacer."
+  confirmText={eliminando ? 'Eliminando...' : 'Eliminar'}
+  cancelText="Cancelar"
+  action
+  onConfirm={confirmarEliminar}
+  onCancel={() => setMesaAEliminar(null)}
+/>
     </View>
   );
 }
