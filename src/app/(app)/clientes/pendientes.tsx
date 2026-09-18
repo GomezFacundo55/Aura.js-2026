@@ -26,8 +26,16 @@ export default function ClientesPendientesScreen() {
   useEffect(() => {
     //pedirPermisosNotificaciones();
 
+    const topic = 'clientes-pendientes';
+    const canalExistente = supabase
+      .getChannels()
+      .find((c) => c.topic === `realtime:${topic}`);
+    if (canalExistente) {
+      supabase.removeChannel(canalExistente);
+    }
+
     const canal = supabase
-      .channel('clientes-pendientes')
+      .channel(topic)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'profiles' },

@@ -1,42 +1,98 @@
 import { createContext, useContext, useState, useRef, ReactNode } from 'react';
-import { Animated, Text, View } from 'react-native';
+import { Animated, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 // tipos
-type ToastType = 'success' | 'error' | 'info';
+export type ToastType = 'success' | 'error' | 'info';
+
+export interface ToastOptions {
+  onPress?: () => void;
+}
 
 interface ToastContextData {
-  showToast: (type: ToastType, title: string, message?: string) => void;
+  showToast: (
+    type: ToastType,
+    title: string,
+    message?: string,
+    options?: ToastOptions
+  ) => void;
 }
 
 const ToastContext = createContext<ToastContextData | undefined>(undefined);
 
 // Proveedor
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
-  const [toast, setToast] = useState({ 
-    visible: false, 
-    type: 'info' as ToastType, 
-    title: '', message: '' });
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    type: ToastType;
+    title: string;
+    message: string;
+    onPress?: () => void;
+  }>({
+    visible: false,
+    type: 'info',
+    title: '',
+    message: '',
+  });
 
   // Animacion para que caiga desde arriba
   const translateY = useRef(new Animated.Value(-150)).current;
+  const currentAnimation = useRef<Animated.CompositeAnimation | null>(null);
 
-  const showToast = (type: ToastType, title: string, message?: string) => {
+  const ocultarToast = (callback?: () => void) => {
+    if (currentAnimation.current) {
+      currentAnimation.current.stop();
+    }
+    Animated.timing(translateY, {
+      toValue: -150,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      setToast((prev) => ({ ...prev, visible: false, onPress: undefined }));
+      if (callback) callback();
+    });
+  };
+
+  const showToast = (
+    type: ToastType,
+    title: string,
+    message?: string,
+    options?: ToastOptions
+  ) => {
     // vibracion segun el tipo
     if (type === 'success') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     else if (type === 'error') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    // Seteo textos
-    setToast({ visible: true, type, title, message: message || '' });
+    if (currentAnimation.current) {
+      currentAnimation.current.stop();
+    }
 
-    // Esta secuencia dura 3 segundos
-    Animated.sequence([
+    // Seteo textos y callback
+    setToast({
+      visible: true,
+      type,
+      title,
+      message: message || '',
+      onPress: options?.onPress,
+    });
+
+    translateY.setValue(-150);
+
+    // Esta secuencia dura 3.5 segundos en total
+    const anim = Animated.sequence([
       Animated.timing(translateY, { toValue: 50, duration: 300, useNativeDriver: true }),
-      Animated.delay(3000),
-      Animated.timing(translateY, { toValue: -150, duration: 300, useNativeDriver: true })
-    ]).start(() => setToast({ ...toast, visible: false }));
+      Animated.delay(3500),
+      Animated.timing(translateY, { toValue: -150, duration: 300, useNativeDriver: true }),
+    ]);
+
+    currentAnimation.current = anim;
+    anim.start(({ finished }) => {
+      if (finished) {
+        setToast((prev) => ({ ...prev, visible: false, onPress: undefined }));
+      }
+    });
   };
 
   // Diccionario de colores 
@@ -71,20 +127,28 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
             zIndex: 9999, 
             elevation: 10,
            }}
-          className={`flex-row items-center bg-surface-light/95 p-4 rounded-2xl shadow-2xl border-l-8 ${currentStyle.borderClass}`}
         >
-          <Ionicons name={currentStyle.icon as any} size={32} color={currentStyle.color} />
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => {
+              const cb = toast.onPress;
+              ocultarToast(cb);
+            }}
+            className={`flex-row items-center bg-surface-light/95 p-4 rounded-2xl shadow-2xl border-l-8 ${currentStyle.borderClass}`}
+          >
+            <Ionicons name={currentStyle.icon as any} size={32} color={currentStyle.color} />
 
-          <View className="ml-3 flex-1">
-            <Text className="font-bold text-dark text-[15px] uppercase tracking-tight">
-              {toast.title}
-            </Text>
-            {toast.message ? (
-              <Text className="text-dark/70 font-medium text-[13px] mt-0.5 leading-tight">
-                {toast.message}
+            <View className="ml-3 flex-1">
+              <Text className="font-bold text-dark text-[15px] uppercase tracking-tight">
+                {toast.title}
               </Text>
-            ) : null}
-          </View>
+              {toast.message ? (
+                <Text className="text-dark/70 font-medium text-[13px] mt-0.5 leading-tight">
+                  {toast.message}
+                </Text>
+              ) : null}
+            </View>
+          </TouchableOpacity>
         </Animated.View>
       )}
     </ToastContext.Provider>

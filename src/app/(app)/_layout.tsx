@@ -1,9 +1,13 @@
-import { getMyProfile, signOut } from "@/lib/auth";
+import { getMyProfile, signOut, type UserProfile } from "@/lib/auth";
 import { Stack, router, useNavigation } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useChatNotifications } from "@/hooks/useChatNotifications";
 
 export default function AppLayout() {
   const navigation = useNavigation();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useChatNotifications(profile);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("beforeRemove", (e) => {
@@ -16,8 +20,9 @@ export default function AppLayout() {
   }, [navigation]);
 
   useEffect(() => {
-    getMyProfile().then(async (profile) => {
-      if (String(profile?.estado ?? "").trim().toLowerCase() !== "pendiente") {
+    getMyProfile().then(async (p) => {
+      setProfile(p);
+      if (String(p?.estado ?? "").trim().toLowerCase() !== "pendiente") {
         return;
       }
 
