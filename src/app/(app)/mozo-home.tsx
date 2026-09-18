@@ -13,7 +13,7 @@ import { getMyProfile, signOut, type UserProfile } from '@/lib/auth';
 import { useToast } from '../../contextJ/Toast';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SoundService } from '@/servicesJ/soundService';
-import { obtenerPedidosPendientes, rechazarPedido, confirmarPedido } from '@/servicesJ/pedidosServicio';
+import { obtenerPedidosPendientes, rechazarPedido, confirmarPedido } from '@/servicesJ/pedidoService';
 
 interface PedidoPendiente {
   id: string;

@@ -36,29 +36,26 @@ function LargeActionCard({
     <Link href={href as any} asChild>
       <TouchableOpacity
         activeOpacity={0.8}
-        className={`flex-1 min-h-[140px] rounded-lg p-5 justify-between shadow-sm active:scale-[0.98] transition-all ${bgClass} ${
+        className={`flex-1 rounded-lg p-3 justify-between shadow-sm active:scale-[0.98] transition-all ${bgClass} ${
           fullWidth ? "w-full" : "w-[48%]"
         }`}
       >
         <View className="flex-row items-center justify-between">
-          <View className="h-12 w-12 items-center justify-center rounded-md bg-white/20 backdrop-blur-md">
-            <Ionicons name={iconName} size={26} color={iconColor} />
+          <View className="h-15 w-15 items-center justify-center rounded-md bg-white/20 backdrop-blur-md">
+            <Ionicons name={iconName} size={30} color={iconColor} />
           </View>
           {badge ? (
-            <View className="bg-brand-500 px-3 py-1 rounded-full shadow-sm">
-              <Text className="text-xs font-bold text-white uppercase tracking-wider">
+            <View className="bg-brand-500 px-2 py-0.5 rounded-full shadow-sm">
+              <Text className="text-[10px] font-bold text-white uppercase tracking-wider">
                 {badge}
               </Text>
             </View>
           ) : null}
         </View>
 
-        <View className="mt-4">
+        <View className="mt-2">
           <Text className={`text-xl font-bold leading-tight ${textClass}`}>
             {title}
-          </Text>
-          <Text className={`mt-1 text-xs font-medium ${subtextClass}`}>
-            {subtitle}
           </Text>
         </View>
       </TouchableOpacity>
@@ -88,7 +85,7 @@ export default function HomeScreen() {
 
   return (
     <AuthScreenLayout showBack={false}>
-      <View className="flex-1 justify-between pb-4">
+      <View className="flex-1 justify-between pb-1">
         {/* Encabezado compacto */}
         <View className="flex-row items-center justify-between py-2 border-b border-neutral-400/20 mb-4">
           <View className="flex-row items-center gap-3">
@@ -132,43 +129,56 @@ export default function HomeScreen() {
               fullWidth
             />
 
-            {/* Fila 2: Dos botones grandes en paralelo */}
-            <View className="flex-1 flex-row gap-3">
-              <LargeActionCard
-                href="/(app)/alta-empleado"
-                title="Alta de Empleado"
-                subtitle="Registrar nuevo personal"
-                iconName="person-add-outline"
-                bgClass="bg-brand-50"
-                textClass="text-brand-900"
-                subtextClass="text-brand-700"
-                iconColor="#D93A24"
-              />
-
-              <LargeActionCard
-                href="/mesas/nueva"
-                title="Agregar Mesa"
-                subtitle="Crear nuevo espacio"
-                iconName="add-circle-outline"
-                bgClass="bg-brand-500"
-                textClass="text-white"
-                subtextClass="text-brand-100"
-                iconColor="#FFFFFF"
-              />
-            </View>
-
-            {/* Tarjeta 3: Ver Listado de Mesas */}
+          {/* Fila 2: Dos botones grandes en paralelo */}
+          <View className="flex-1 flex-row gap-2">
             <LargeActionCard
-              href="/mesas"
-              title="Ver Listado de Mesas"
-              subtitle="Monitoreo de estado y ocupación en tiempo real"
-              iconName="grid-outline"
-              bgClass="bg-surface-muted border border-neutral-400/20"
-              textClass="text-neutral-900"
-              subtextClass="text-neutral-600"
-              iconColor="#1C1C1E"
-              fullWidth
+              href="/(app)/alta-empleado"
+              title="Alta de Empleado"
+              subtitle="Registrar nuevo personal"
+              iconName="person-add-outline"
+              bgClass="bg-brand-50"
+              textClass="text-brand-900"
+              subtextClass="text-brand-700"
+              iconColor="#D93A24"
             />
+
+            <LargeActionCard
+              href="/mesas/nueva"
+              title="Agregar Mesa"
+              subtitle="Crear nuevo espacio"
+              iconName="add-circle-outline"
+              bgClass="bg-brand-500"
+              textClass="text-white"
+              subtextClass="text-brand-100"
+              iconColor="#FFFFFF"
+            />
+          </View>
+
+          {/* Tarjeta 3: Ver Listado de Mesas */}
+          <LargeActionCard
+            href="/mesas"
+            title="Ver Listado de Mesas"
+            subtitle="Monitoreo de estado y ocupación en tiempo real"
+            iconName="grid-outline"
+            bgClass="bg-surface-muted border border-neutral-400/20"
+            textClass="text-neutral-900"
+            subtextClass="text-neutral-600"
+            iconColor="#1C1C1E"
+            fullWidth
+          />
+
+          {/* Tarjeta 4: Chat con clientes */}
+          <LargeActionCard
+            href="/(app)/chat"
+            title="Sala de Chat"
+            subtitle="Responder consultas de clientes en tiempo real"
+            iconName="chatbubbles-outline"
+            bgClass="bg-brand-50"
+            textClass="text-brand-900"
+            subtextClass="text-brand-700"
+            iconColor="#D93A24"
+            fullWidth
+          />
           </View>
         )}
       </View>

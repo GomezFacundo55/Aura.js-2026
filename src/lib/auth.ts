@@ -129,6 +129,7 @@ export async function signInAnonymouslyWithProfile(
     cuil: "",
     perfil: "cliente_anonimo",
     foto_url: fotoUrl,
+    email: null,
     estado: "aprobado",
   });
 }
