@@ -134,10 +134,10 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 | 13 | Home Cliente | Pantalla | Pantalla | | ![Home Cliente](https://i.ibb.co/4wDKhSjn/Captura-de-pantalla-2026-09-11-164245.png) |
 | 14 | Home Metre | Pantalla | Pantalla | | ![Home Metre](https://i.ibb.co/yBfPMN3c/Captura-de-pantalla-2026-09-11-164659.png) |
 | 15 | Qr Ingreso | Pantalla | Pantalla | | ![Qr Ingreso](https://i.ibb.co/XxnPKH7z/Whats-App-Image-2026-09-08-at-22-29-03.jpg) |
-| 16 | Qr Mesa | Pantalla | Pantalla | | ![Qr Mesa 14](https://i.ibb.co/BKttKQRd/Whats-App-Image-2026-09-18-at-22-29-22.jpg) |
-| 17 | Qr Mesa | Pantalla | Pantalla | | ![Qr Mesa 15](https://i.ibb.co/KjsY0CLv/Whats-App-Image-2026-09-18-at-22-19-08.jpg) |
-| 18 | Qr Mesa | Pantalla | Pantalla | | ![Qr Mesa 16](https://i.ibb.co/pB8VYCZp/Captura-de-pantalla-2026-09-18-224902.png) |
-| 18 | Qr Mesa | Pantalla | Pantalla | | ![Qr Mesa 17](https://i.ibb.co/gFTrH37m/Captura-de-pantalla-2026-09-18-224428.png) |
+| 16 | Qr Mesa 14 | Pantalla | Pantalla | | ![Qr Mesa 14](https://i.ibb.co/BKttKQRd/Whats-App-Image-2026-09-18-at-22-29-22.jpg) |
+| 17 | Qr Mesa 15 | Pantalla | Pantalla | | ![Qr Mesa 15](https://i.ibb.co/KjsY0CLv/Whats-App-Image-2026-09-18-at-22-19-08.jpg) |
+| 18 | Qr Mesa 16 | Pantalla | Pantalla | | ![Qr Mesa 16](https://i.ibb.co/pB8VYCZp/Captura-de-pantalla-2026-09-18-224902.png) |
+| 18 | Qr Mesa 17 | Pantalla | Pantalla | | ![Qr Mesa 17](https://i.ibb.co/gFTrH37m/Captura-de-pantalla-2026-09-18-224428.png) |
 
 **Categorías:**
 - Íconos (app, botones, controles)
