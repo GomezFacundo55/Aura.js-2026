@@ -17,6 +17,9 @@ import { SoundService } from "@/servicesJ/soundService";
 import { IListaDeEspera } from "@/interfaces/IlistaEspara";
 import { supabase } from "@/lib/supabase";
 
+
+type ModalMode = "salir" | "eliminar";
+
 export default function App() {
   const [perfilUsuario, setPerfilUsuario] = useState<UserProfile | null>(null);
   const { showToast } = useToast();
@@ -25,6 +28,8 @@ export default function App() {
   const [mostrarModal, setMostrarModal] = useState<boolean>(false);
   const [cargando, setCargando] = useState<boolean>(false);
   const [cargoUsuario, setCargoUsuario] = useState<string | null>(null);
+  const [esperaSeleccionada, setEsperaSeleccionada] = useState<IListaDeEspera | null>(null);
+  const [modoModal, setModoModal] = useState<ModalMode>("salir");
 
   const [paginaActual, setPaginaActual] = useState<number>(1);
   const elementosPorPagina = 3;
@@ -96,6 +101,15 @@ export default function App() {
       setCargando(false);
     }
   }
+  
+  const ejecutarAccionModal = () => {
+    if (modoModal === "eliminar") {
+      handleEliminarCliente();
+    } else {
+      logOut();
+    }
+    setMostrarModal(false);
+  };
 
   const cargarListaDeEspera = async () => {
     const { exito, datos, error } = await obtenerListaDeEspera();
@@ -124,8 +138,9 @@ export default function App() {
     });
   };
 
-  const handleEliminarCliente = async (item: IListaDeEspera) => {
-    const { error } = await eliminarEspera(item.id);
+  const handleEliminarCliente = async () => {
+    if (!esperaSeleccionada) return;
+    const { error } = await eliminarEspera(esperaSeleccionada.id);
     if(error){
       showToast('error', "Error", error);
       await SoundService.reproducir("error");
@@ -145,7 +160,10 @@ export default function App() {
         <View className="flex-row items-center flex-1 mr-2">
           <TouchableOpacity
             activeOpacity={0.7}
-            onPress={() => setMostrarModal(true)}
+            onPress={() => {
+              setModoModal("salir");
+              setMostrarModal(true);
+            }}
             className="w-10 h-10 rounded-xl bg-red-500 items-center justify-center mr-3 shadow-sm"
           >
             <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
@@ -276,7 +294,11 @@ export default function App() {
 
                   <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={() => handleEliminarCliente(item)}
+                    onPress={() => { 
+                      setEsperaSeleccionada(item);
+                      setModoModal("eliminar"); 
+                      setMostrarModal(true);
+                    }}
                     className="w-10 h-10 bg-red-50 border border-red-200 rounded-xl items-center justify-center"
                   >
                     <Ionicons name="trash-outline" size={17} color="#DC2626" />
@@ -331,12 +353,19 @@ export default function App() {
       <ConfirmModal
         visible={mostrarModal}
         title="Confirmar acción."
-        message="¿Desea salir?"
+        message={
+          modoModal === "eliminar"
+            ? "¿Desea eliminar a este cliente de la lista de espera?"
+            : "¿Desea cerrar sesión?"
+        }
         confirmText="Sí"
         cancelText="No"
         action={false}
-        onConfirm={logOut}
-        onCancel={() => setMostrarModal(false)}
+        onConfirm={ejecutarAccionModal}
+        onCancel={() => {
+          setMostrarModal(false);
+          setEsperaSeleccionada(null);
+        }}
       />
     </View>
   );
