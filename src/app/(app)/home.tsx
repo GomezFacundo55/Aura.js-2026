@@ -2,8 +2,8 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { TouchableOpacity, View, Text, Image, ActivityIndicator, ScrollView } from "react-native";
 import { getMyProfile, signOut, type UserProfile } from "@/lib/auth";
 import { useToast } from "../../contextJ/Toast";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { SoundService } from "@/servicesJ/soundService";
 import QrScannerModal from "@/components/ui/QRScanner";
 import { ConfirmModal } from "@/components/modal";
@@ -11,6 +11,7 @@ import { useMesaActual } from "@/hooks/useMesaActual";
 import { crearUnaEspera, consultarClienteEnListaDeEspera, vincularClienteAMesa } from "@/servicesJ/listaDeEsperaService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { supabase } from "@/lib/supabase";
 
 type ScanMode = "ingreso" | "mesa";
 
@@ -27,7 +28,9 @@ export default function HomeScreen() {
 
   const [enListaDeEspera, setEnListaDeEspera] = useState<boolean>(false);
   const [esperaId, setEsperaId] = useState<string | null>(null);
+  const [mesaHabilitada, setMesaHabilitada] = useState<boolean>(false);
   const [mostrarModal, setMostrarModal] = useState<boolean>(false);
+  
 
   // NUEVO: distingue "el metre ya me asignó mesa (DB)" de "ya escaneé el QR físico de esa mesa"
   const { mesa, tieneMesa, mesaVinculada, refetch } = useMesaActual(profile?.id);
@@ -43,9 +46,66 @@ export default function HomeScreen() {
   const esCasoA = paso === "ingreso";
   const esCasoB = paso === "espera";
 
-  useEffect(() => {
-    cargaDatosIniciales();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let canalEspera: any = null;
+
+      const inicializarPantalla = async () => {
+        await cargaDatosIniciales();
+        
+        const perfilActual = await getMyProfile();
+        if (!perfilActual?.id) return;
+
+        const nombreCanal = `espera-cliente-${perfilActual.id}`;
+
+        const canalExistente = supabase
+          .getChannels()
+          .find((c) => c.topic === `realtime:${nombreCanal}`);
+        
+        if (canalExistente) {
+          supabase.removeChannel(canalExistente);
+        }
+
+        canalEspera = supabase
+          .channel(nombreCanal)
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "lista_espera",
+              filter: `cliente_id=eq.${perfilActual.id}`,
+            },
+            async (payload) => {
+              const registroActualizado = payload.new as any;
+
+              if (
+                registroActualizado.estado === "asignado" &&
+                registroActualizado.mesa_asignada_id
+              ) {
+                setMesaHabilitada(true);
+                await SoundService.reproducir("exito");
+                showToast(
+                  "success",
+                  "¡Mesa asignada!",
+                  "El metre te asignó una mesa. Ya podés ingresar.",
+                );
+                await refetch();
+              }
+            }
+          )
+          .subscribe();
+      };
+
+      inicializarPantalla();
+
+      return () => {
+        if (canalEspera) {
+          supabase.removeChannel(canalEspera);
+        }
+      };
+    }, [])
+  );
 
   useEffect(() => {
     if (tieneMesa && !qrEscaneado) {
@@ -69,6 +129,9 @@ export default function HomeScreen() {
         ]);
 
         if (exito && datos) {
+          if(datos.estado == "asignado" || "vinculado"){
+            setMesaHabilitada(true);
+          }
           setQrEscaneado(true);
           setEnListaDeEspera(true);
           setEsperaId(datos.id);
@@ -96,7 +159,7 @@ export default function HomeScreen() {
   };
 
   const onListaEsperaPress = async () => {
-    if (!qrEscaneado || profile === null) return;
+    if (!qrEscaneado || profile === null || mesaHabilitada === true) return;
     const { exito, datos, error } = await crearUnaEspera(profile.id);
     if (error || !datos) {
       showToast("error", "Error al unirse a la lista de espera", error || "No se pudo registrar");
@@ -266,11 +329,10 @@ export default function HomeScreen() {
 
                   {/* Fila de estado de mesa: cambia según el paso, sin agregar cards extra */}
                   <TouchableOpacity
-                    activeOpacity={!enListaDeEspera ? 0.7 : 1}
                     onPress={onListaEsperaPress}
-                    disabled={enListaDeEspera}
+                    disabled={enListaDeEspera || mesaHabilitada || tieneMesa}
                     className={`flex-row items-center p-3 rounded-2xl border ${
-                      tieneMesa
+                       mesaHabilitada || tieneMesa
                         ? "bg-brand-400 border-amber-200 opacity-90 shadow-sm"
                         : enListaDeEspera
                           ? "bg-brand-100 border-amber-200 opacity-90 shadow-sm"
