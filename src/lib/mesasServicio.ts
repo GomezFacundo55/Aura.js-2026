@@ -62,4 +62,12 @@ export const mesasServicio = {
 
     if (error) throw error;
   },
+  async eliminar(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('mesas')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  },
 };

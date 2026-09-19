@@ -179,10 +179,10 @@ export default function ClientesPendientesScreen() {
                   disabled={estaProcesando}
                   accessibilityRole="button"
                   onPress={() => resolver(item, 'aprobado')}
-                  className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-2.5 active:bg-emerald-700 active:scale-[0.98]"
+                  className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border-2 border-emerald-600 bg-emerald-50 py-2.5 active:bg-emerald-100 active:scale-[0.98]"
                 >
-                  <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" />
-                  <Text className="text-xs font-bold text-white">Aprobar</Text>
+                  <Ionicons name="checkmark-circle" size={16} color="#059669" />
+                  <Text className="text-xs font-bold text-emerald-700">Aprobar</Text>
                 </Pressable>
 
                 <Pressable

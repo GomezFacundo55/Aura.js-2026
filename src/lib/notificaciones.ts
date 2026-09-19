@@ -54,6 +54,23 @@ export async function notificarNuevoClientePendiente(nombreCompleto: string) {
   }
 }
 
+export async function notificarNuevoPedido(mensaje: string) {
+  const Notifications = cargarNotifications();
+  if (!Notifications) return;
+
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Nuevo pedido confirmado',
+        body: mensaje,
+      },
+      trigger: null,
+    });
+  } catch (error) {
+    console.warn('No se pudo enviar la notificación local:', error);
+  }
+}
+
 export async function notificarNuevoMensajeChat(titulo: string, cuerpo: string) {
   const Notifications = cargarNotifications();
   if (!Notifications) return;

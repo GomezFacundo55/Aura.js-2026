@@ -13,7 +13,7 @@ import { getMyProfile, signOut, type UserProfile } from '@/lib/auth';
 import { useToast } from '../../contextJ/Toast';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SoundService } from '@/servicesJ/soundService';
-import { obtenerPedidosPendientes, rechazarPedido } from '@/servicesJ/pedidoService';
+import { obtenerPedidosPendientes, rechazarPedido, confirmarPedido } from '@/servicesJ/pedidoService';
 
 interface PedidoPendiente {
   id: string;
@@ -40,6 +40,7 @@ export default function MozoHome() {
   const [pedidoARechazar, setPedidoARechazar] = useState<PedidoPendiente | null>(null);
   const [motivo, setMotivo] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [confirmandoId, setConfirmandoId] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -101,6 +102,21 @@ export default function MozoHome() {
     setEnviando(false);
   };
 
+  const handleConfirmar = async (pedido: PedidoPendiente) => {
+    setConfirmandoId(pedido.id);
+    const { exito, error } = await confirmarPedido(pedido.id);
+
+    if (exito) {
+      await SoundService.reproducir('exito');
+      showToast('success', 'Pedido confirmado', 'Se derivó a cocina y bar.');
+      await cargarPedidos();
+    } else {
+      await SoundService.reproducir('error');
+      showToast('error', 'Error', error || 'No se pudo confirmar el pedido.');
+    }
+    setConfirmandoId(null);
+  };
+
   if (cargando) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -149,53 +165,70 @@ export default function MozoHome() {
             </Text>
           </View>
         ) : (
-          pedidos.map((pedido) => (
-            <View
-              key={pedido.id}
-              className="bg-orange-100 rounded-2xl p-4 mb-3 border border-orange-200 shadow-sm"
-            >
-              <View className="flex-row items-center justify-between mb-2">
-                <Text className="font-bold text-gray-900 text-base">
-                  Mesa {pedido.mesas?.numero ?? '-'}
-                </Text>
-                <View className="bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full flex-row items-center">
-                  <Ionicons name="time-outline" size={13} color="#D97706" />
-                  <Text className="text-amber-700 text-xs font-semibold ml-1">
-                    {pedido.tiempo_estimado_min} min aprox.
+          pedidos.map((pedido) => {
+            const confirmando = confirmandoId === pedido.id;
+            return (
+              <View
+                key={pedido.id}
+                className="bg-orange-100 rounded-2xl p-4 mb-3 border border-orange-200 shadow-sm"
+              >
+                <View className="flex-row items-center justify-between mb-2">
+                  <Text className="font-bold text-gray-900 text-base">
+                    Mesa {pedido.mesas?.numero ?? '-'}
                   </Text>
+                  <View className="bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full flex-row items-center">
+                    <Ionicons name="time-outline" size={13} color="#D97706" />
+                    <Text className="text-amber-700 text-xs font-semibold ml-1">
+                      {pedido.tiempo_estimado_min} min aprox.
+                    </Text>
+                  </View>
+                </View>
+
+                {pedido.pedido_items.map((item) => (
+                  <View key={item.id} className="flex-row justify-between mb-1">
+                    <Text className="text-gray-700 text-xs flex-1" numberOfLines={1}>
+                      {item.cantidad}x {item.nombre_producto}
+                    </Text>
+                    <Text className="text-gray-700 text-xs font-semibold">
+                      ${(item.precio_unitario * item.cantidad).toLocaleString('es-AR')}
+                    </Text>
+                  </View>
+                ))}
+
+                <View className="h-px bg-orange-200 my-2" />
+
+                <View className="flex-row items-center justify-between">
+                  <Text className="font-extrabold text-gray-900 text-base">
+                    Total: ${pedido.importe_total.toLocaleString('es-AR')}
+                  </Text>
+
+                  <View className="flex-row gap-2">
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      disabled={confirmando}
+                      onPress={() => abrirModalRechazo(pedido)}
+                      className="bg-red-500 px-4 py-2 rounded-xl"
+                    >
+                      <Text className="text-white font-bold text-xs">Rechazar</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      disabled={confirmando}
+                      onPress={() => handleConfirmar(pedido)}
+                      className={`px-4 py-2 rounded-xl ${confirmando ? 'bg-emerald-300' : 'bg-emerald-600'}`}
+                    >
+                      {confirmando ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                      ) : (
+                        <Text className="text-white font-bold text-xs">Confirmar</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
-
-              {pedido.pedido_items.map((item) => (
-                <View key={item.id} className="flex-row justify-between mb-1">
-                  <Text className="text-gray-700 text-xs flex-1" numberOfLines={1}>
-                    {item.cantidad}x {item.nombre_producto}
-                  </Text>
-                  <Text className="text-gray-700 text-xs font-semibold">
-                    ${(item.precio_unitario * item.cantidad).toLocaleString('es-AR')}
-                  </Text>
-                </View>
-              ))}
-
-              <View className="h-px bg-orange-200 my-2" />
-
-              <View className="flex-row items-center justify-between">
-                <Text className="font-extrabold text-gray-900 text-base">
-                  Total: ${pedido.importe_total.toLocaleString('es-AR')}
-                </Text>
-
-                <View className="flex-row gap-2">
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => abrirModalRechazo(pedido)}
-                    className="bg-red-500 px-4 py-2 rounded-xl"
-                  >
-                    <Text className="text-white font-bold text-xs">Rechazar</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          ))
+            );
+          })
         )}
         <View className="h-6" />
       </ScrollView>

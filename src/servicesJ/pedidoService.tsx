@@ -153,3 +153,21 @@ export async function rechazarPedido(pedidoId: string, motivo: string) {
     return { exito: false, datos: null, error: err.message || 'Error al rechazar el pedido' };
   }
 }
+export async function confirmarPedido(pedidoId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('pedidos')
+      .update({ estado: 'confirmado' })
+      .eq('id', pedidoId)
+      .select()
+      .single();
+
+    if (error) {
+      return { exito: false, datos: null, error: error.message };
+    }
+
+    return { exito: true, datos: data as Pedido, error: null };
+  } catch (err: any) {
+    return { exito: false, datos: null, error: err.message || 'Error al confirmar el pedido' };
+  }
+}
