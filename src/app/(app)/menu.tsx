@@ -221,13 +221,26 @@ export default function MenuScreen() {
         )}
 
         {pedido && ["confirmado", "en_preparacion", "listo"].includes(pedido.estado) && (
-          <View className="mx-5 mb-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex-row items-center">
-            <Ionicons name="checkmark-circle-outline" size={18} color="#059669" />
-            <Text className="ml-2 text-xs font-bold text-emerald-700 flex-1">
-              Pedido confirmado. Te avisamos cuando esté listo.
-            </Text>
-          </View>
-        )}
+  <View className="mx-5 mb-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-200">
+    <View className="flex-row items-center mb-2">
+      <Ionicons name="checkmark-circle-outline" size={18} color="#059669" />
+      <Text className="ml-2 text-xs font-bold text-emerald-700 flex-1">
+        Pedido confirmado. Te avisamos cuando esté listo.
+      </Text>
+    </View>
+
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={() =>
+        router.push({ pathname: '/juegos', params: { pedidoId: pedido.id } })
+      }
+      className="flex-row items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5"
+    >
+      <Ionicons name="game-controller-outline" size={16} color="#FFFFFF" />
+      <Text className="text-white font-bold text-xs">Jugar y ganar descuento</Text>
+    </TouchableOpacity>
+  </View>
+)}
 
         {/* Tabs */}
         <View className="px-5 mb-4">
