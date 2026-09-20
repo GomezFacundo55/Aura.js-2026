@@ -228,17 +228,6 @@ export default function MenuScreen() {
         Pedido confirmado. Te avisamos cuando esté listo.
       </Text>
     </View>
-
-    <TouchableOpacity
-      activeOpacity={0.85}
-      onPress={() =>
-        router.push({ pathname: '/juegos', params: { pedidoId: pedido.id } })
-      }
-      className="flex-row items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5"
-    >
-      <Ionicons name="game-controller-outline" size={16} color="#FFFFFF" />
-      <Text className="text-white font-bold text-xs">Jugar y ganar descuento</Text>
-    </TouchableOpacity>
   </View>
 )}
 
