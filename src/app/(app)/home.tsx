@@ -8,6 +8,7 @@ import { SoundService } from "@/servicesJ/soundService";
 import QrScannerModal from "@/components/ui/QRScanner";
 import { ConfirmModal } from "@/components/modal";
 import { useMesaActual } from "@/hooks/useMesaActual";
+import { usePedidoActivo } from "@/hooks/usePedidoActivo";
 import { crearUnaEspera, consultarClienteEnListaDeEspera, vincularClienteAMesa } from "@/servicesJ/listaDeEsperaService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -32,14 +33,17 @@ export default function HomeScreen() {
   const [mostrarModal, setMostrarModal] = useState<boolean>(false);
   
 
-  // NUEVO: distingue "el metre ya me asignó mesa (DB)" de "ya escaneé el QR físico de esa mesa"
   const { mesa, tieneMesa, mesaVinculada, refetch } = useMesaActual(profile?.id);
+  const { pedido: pedidoActivo } = usePedidoActivo(mesa?.id);
+
+  const pedidoConfirmado = !!pedidoActivo && pedidoActivo.estado !== 'pendiente' && pedidoActivo.estado !== 'rechazado';
+  const esClienteRegistrado = profile?.perfil === 'cliente_registrado';
+  const puedeJugar = pedidoConfirmado && esClienteRegistrado;
 
   const keyIngreso = (clienteId: string) => `ingreso_${clienteId}`;
 
   const QR_INGRESO = "INGRESO_LOCAL";
 
-  // Determina en qué paso del flujo está el cliente
   const paso: "ingreso" | "espera" | "escanear_mesa" | "vinculado" =
     !qrEscaneado ? "ingreso" : !tieneMesa ? "espera" : !mesaVinculada ? "escanear_mesa" : "vinculado";
 
@@ -129,7 +133,8 @@ export default function HomeScreen() {
         ]);
 
         if (exito && datos) {
-          if(datos.estado == "asignado" || "vinculado"){
+          // Corrección aplicada aquí:
+          if (datos.estado === "asignado" || datos.estado === "vinculado") {
             setMesaHabilitada(true);
           }
           setQrEscaneado(true);
@@ -148,14 +153,12 @@ export default function HomeScreen() {
   };
 
   const onScanPress = () => {
-    // La card de escaneo se reutiliza: decide el modo según el paso actual
     setScanMode(paso === "escanear_mesa" ? "mesa" : "ingreso");
     setScannerVisible(true);
   };
 
   const onEncuestasPress = () => {
     if (!qrEscaneado) return;
-    // TODO: navegar a la pantalla de encuestas
   };
 
   const onListaEsperaPress = async () => {
@@ -273,7 +276,6 @@ export default function HomeScreen() {
         }}
       >
         <View className="flex-1 px-5">
-          {/* Card de saludo — siempre visible */}
           <View className="bg-[#FFF4E6] rounded-3xl p-4 items-center mb-4 shadow-sm border border-white/60 relative">
             <TouchableOpacity
               activeOpacity={0.7}
@@ -296,7 +298,6 @@ export default function HomeScreen() {
             <Text className="text-2xl font-black text-[#1E2342] mt-2.5">¡Hola, {profile?.nombres}!</Text>
           </View>
 
-          {/* Card de opciones (encuestas + estado de mesa) — visible desde que se escanea el QR de ingreso */}
           {qrEscaneado && (
             <View
               className={`bg-[#FFF4E6] rounded-3xl p-6 border border-white/60 shadow-sm ${
@@ -327,7 +328,23 @@ export default function HomeScreen() {
                     <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
                   </TouchableOpacity>
 
-                  {/* Fila de estado de mesa: cambia según el paso, sin agregar cards extra */}
+                  {puedeJugar && (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => router.push({ pathname: "/juegos", params: { mesaId: mesa?.id } })}
+                      className="flex-row items-center mb-2 p-3 rounded-2xl border bg-white border-orange-200 shadow-sm"
+                    >
+                      <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
+                        <MaterialCommunityIcons name="gamepad-variant-outline" size={20} color="#FF6B00" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-lg font-bold text-[#1E2342]">Juegos y descuentos</Text>
+                        <Text className="text-xs text-[#8A7B6D]">Ganá hasta 20% de descuento</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
+                    </TouchableOpacity>
+                  )}
+
                   <TouchableOpacity
                     onPress={onListaEsperaPress}
                     disabled={enListaDeEspera || mesaHabilitada || tieneMesa}
@@ -378,7 +395,6 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              {/* Información expandida en CASO B: ocupa el largo disponible de forma armónica */}
               {esCasoB && (
                 <View
                   className={`w-full mt-6 p-4 rounded-2xl border items-center ${
@@ -413,7 +429,6 @@ export default function HomeScreen() {
             </View>
           )}
 
-          {/* Card de escaneo — reutilizada: ingreso al local (CASO A) o QR de mesa (CASO C) */}
           {(paso === "ingreso" || paso === "escanear_mesa") && (
             <View className="bg-[#FFF4E6] rounded-3xl p-6 flex-1 items-center justify-between border border-white/60 shadow-sm mb-2">
               <View className="w-full items-center">
@@ -453,7 +468,6 @@ export default function HomeScreen() {
             </View>
           )}
 
-          {/* Card de acceso a mesa — visible una vez vinculado a la mesa (CASO C) */}
           {mesaVinculada && (
             <View className="bg-[#FFF4E6] rounded-3xl p-6 mb-2 items-center border border-white/60 shadow-sm flex-1 justify-between">
               <View className="w-full items-center">
