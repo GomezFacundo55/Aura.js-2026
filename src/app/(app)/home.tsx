@@ -163,7 +163,7 @@ export default function HomeScreen() {
 
   const onListaEsperaPress = async () => {
     if (!qrEscaneado || profile === null || mesaHabilitada === true) return;
-    const { exito, datos, error } = await crearUnaEspera(profile.id);
+    const { exito, datos, error } = await crearUnaEspera(profile.id, `${profile.nombres} ${profile.apellidos}`);
     if (error || !datos) {
       showToast("error", "Error al unirse a la lista de espera", error || "No se pudo registrar");
       SoundService.reproducir("error");
