@@ -48,21 +48,22 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
 |---|---|---|---|---|
-| Gomez Facundo|   |  | | Gomez | 
-|Delgobbo Giuliani | | | | Delgobbo |
-| Enzo Jauregui| | | | Jauregui|
-| Emir Almonacid |  | | | Almonacid|
+| Delgobbo Giuliana | Splash Dinamica y Estatica | 5/9 | 12/9 | Delgobbo |
+| Gómez Facundo | Módulos 4 | 5/9 | 12/9| Gomez |
+| Jauregui Enzo  | Módulo 2, 3 y 9 | 5/9 | 12/9  | Jauregui |
+| Almonacid Emir | Modulo 7 y 8 | 5/9 | 12/9  | Almonacid |
 
 ---
 
 ### Sprint 3 — Sábado 19 de septiembre
-**Alcance:** Requisitos 10, 11, 12 (Asignación de mesa / Listado de productos y consulta al mozo / Pedido del cliente)
+**Alcance:** Requisitos 10, 11, 12, 13 y 14 (Asignación de mesa / Listado de productos y consulta al mozo / Pedido del cliente)
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
 |---|---|---|---|---|
-| | | | | |
-| | | | | |
-| | | | | |
+| Delgobbo Giuliana | Modulo 11 | 12/9 | 19/9 | Delgobbo |
+| Gómez Facundo | Módulos 14 | 12/9 | 19/9 | Gomez |
+| Jauregui Enzo  | Módulo 10 | 12/9 | 19/9 | Jauregui |
+| Almonacid Emir | Modulo 12 y 13 | 12/9 | 19/9 | Almonacid |
 
 ---
 
@@ -131,8 +132,12 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 | 11 | Agregar Mesa | Pantalla | Pantalla | | ![Agregar Mesa](https://i.ibb.co/Z1XNRgPK/Whats-App-Image-2026-09-12-at-08-30-30-1.jpg) |
 | 12 | Listado Mesas | Listados | Listados | | ![Agregar Mesa](https://i.ibb.co/qFV8xwgt/Whats-App-Image-2026-09-12-at-08-30-30-2.jpg) |
 | 13 | Home Cliente | Pantalla | Pantalla | | ![Home Cliente](https://i.ibb.co/4wDKhSjn/Captura-de-pantalla-2026-09-11-164245.png) |
-| 12 | Home Metre | Pantalla | Pantalla | | ![Home Metre](https://i.ibb.co/yBfPMN3c/Captura-de-pantalla-2026-09-11-164659.png) |
-| 12 | Qr Ingreso | Pantalla | Pantalla | | ![Qr Ingreso](https://i.ibb.co/XxnPKH7z/Whats-App-Image-2026-09-08-at-22-29-03.jpg) |
+| 14 | Home Metre | Pantalla | Pantalla | | ![Home Metre](https://i.ibb.co/yBfPMN3c/Captura-de-pantalla-2026-09-11-164659.png) |
+| 15 | Qr Ingreso | Pantalla | Pantalla | | ![Qr Ingreso](https://i.ibb.co/XxnPKH7z/Whats-App-Image-2026-09-08-at-22-29-03.jpg) |
+| 16 | Qr Mesa 14 | Pantalla | Pantalla | | ![Qr Mesa 14](https://i.ibb.co/BKttKQRd/Whats-App-Image-2026-09-18-at-22-29-22.jpg) |
+| 17 | Qr Mesa 15 | Pantalla | Pantalla | | ![Qr Mesa 15](https://i.ibb.co/KjsY0CLv/Whats-App-Image-2026-09-18-at-22-19-08.jpg) |
+| 18 | Qr Mesa 16 | Pantalla | Pantalla | | ![Qr Mesa 16](https://i.ibb.co/pB8VYCZp/Captura-de-pantalla-2026-09-18-224902.png) |
+| 18 | Qr Mesa 17 | Pantalla | Pantalla | | ![Qr Mesa 17](https://i.ibb.co/gFTrH37m/Captura-de-pantalla-2026-09-18-224428.png) |
 
 **Categorías:**
 - Íconos (app, botones, controles)
