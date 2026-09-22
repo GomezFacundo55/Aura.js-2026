@@ -210,7 +210,6 @@ export default function App() {
           {elementosPaginados.map((item, index) => {
             const numeroTurno = indiceInicio + index + 1;
             const tieneMesa = item.estado === "asignado";
-
             return (
               <View
                 key={item.id}
@@ -225,7 +224,7 @@ export default function App() {
                     </View>
                     <View>
                       <Text className="text-sm font-bold text-neutral-900">
-                        Cliente en cola
+                        Cliente: {item.cliente_nombre}
                       </Text>
                       <Text className="text-[10px] text-neutral-400">
                         {item.created_at

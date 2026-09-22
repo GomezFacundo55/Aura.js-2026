@@ -6,6 +6,10 @@ export type EstadoPedido =
   | 'listo'
   | 'entregado';
 
+export type EstadoPedidoItem = 
+  | "pendiente"
+  | "en_preparacion"
+  | "terminado";
 export interface PedidoItem {
   id?: string;
   pedido_id?: string;
@@ -14,6 +18,7 @@ export interface PedidoItem {
   nombre_producto: string;
   precio_unitario: number;
   cantidad: number;
+  estado?: string;
 }
 
 export interface Pedido {

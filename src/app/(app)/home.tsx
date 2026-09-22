@@ -1,5 +1,12 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { TouchableOpacity, View, Text, Image, ActivityIndicator, ScrollView } from "react-native";
+import {
+  TouchableOpacity,
+  View,
+  Text,
+  Image,
+  ActivityIndicator,
+  ScrollView,
+} from "react-native";
 import { getMyProfile, signOut, type UserProfile } from "@/lib/auth";
 import { useToast } from "../../contextJ/Toast";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -9,7 +16,11 @@ import QrScannerModal from "@/components/ui/QRScanner";
 import { ConfirmModal } from "@/components/modal";
 import { useMesaActual } from "@/hooks/useMesaActual";
 import { usePedidoActivo } from "@/hooks/usePedidoActivo";
-import { crearUnaEspera, consultarClienteEnListaDeEspera, vincularClienteAMesa } from "@/servicesJ/listaDeEsperaService";
+import {
+  crearUnaEspera,
+  consultarClienteEnListaDeEspera,
+  vincularClienteAMesa,
+} from "@/servicesJ/listaDeEsperaService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "@/lib/supabase";
@@ -31,13 +42,17 @@ export default function HomeScreen() {
   const [esperaId, setEsperaId] = useState<string | null>(null);
   const [mesaHabilitada, setMesaHabilitada] = useState<boolean>(false);
   const [mostrarModal, setMostrarModal] = useState<boolean>(false);
-  
 
-  const { mesa, tieneMesa, mesaVinculada, refetch } = useMesaActual(profile?.id);
+  const { mesa, tieneMesa, mesaVinculada, refetch } = useMesaActual(
+    profile?.id,
+  );
   const { pedido: pedidoActivo } = usePedidoActivo(mesa?.id);
 
-  const pedidoConfirmado = !!pedidoActivo && pedidoActivo.estado !== 'pendiente' && pedidoActivo.estado !== 'rechazado';
-  const esClienteRegistrado = profile?.perfil === 'cliente_registrado';
+  const pedidoConfirmado =
+    !!pedidoActivo &&
+    pedidoActivo.estado !== "pendiente" &&
+    pedidoActivo.estado !== "rechazado";
+  const esClienteRegistrado = profile?.perfil === "cliente_registrado";
   const puedeJugar = pedidoConfirmado && esClienteRegistrado;
 
   const keyIngreso = (clienteId: string) => `ingreso_${clienteId}`;
@@ -45,7 +60,13 @@ export default function HomeScreen() {
   const QR_INGRESO = "INGRESO_LOCAL";
 
   const paso: "ingreso" | "espera" | "escanear_mesa" | "vinculado" =
-    !qrEscaneado ? "ingreso" : !tieneMesa ? "espera" : !mesaVinculada ? "escanear_mesa" : "vinculado";
+    !qrEscaneado
+      ? "ingreso"
+      : !tieneMesa
+        ? "espera"
+        : !mesaVinculada
+          ? "escanear_mesa"
+          : "vinculado";
 
   const esCasoA = paso === "ingreso";
   const esCasoB = paso === "espera";
@@ -53,10 +74,11 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       let canalEspera: any = null;
+      let canalPedido: any = null;
 
       const inicializarPantalla = async () => {
         await cargaDatosIniciales();
-        
+
         const perfilActual = await getMyProfile();
         if (!perfilActual?.id) return;
 
@@ -65,7 +87,7 @@ export default function HomeScreen() {
         const canalExistente = supabase
           .getChannels()
           .find((c) => c.topic === `realtime:${nombreCanal}`);
-        
+
         if (canalExistente) {
           supabase.removeChannel(canalExistente);
         }
@@ -96,7 +118,48 @@ export default function HomeScreen() {
                 );
                 await refetch();
               }
-            }
+            },
+          )
+          .subscribe();
+        const nombreCanalPedido = `pedido-cliente-${perfilActual.id}`;
+        const canalPedidoExistente = supabase
+          .getChannels()
+          .find((c) => c.topic === `realtime:${nombreCanalPedido}`);
+
+        if (canalPedidoExistente) {
+          supabase.removeChannel(canalPedidoExistente);
+        }
+
+        canalPedido = supabase
+          .channel(nombreCanalPedido)
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE", 
+              schema: "public",
+              table: "pedidos",
+              filter: `cliente_id=eq.${perfilActual.id}`, 
+            },
+            async (payload) => {
+              const pedidoActualizado = payload.new as any;
+
+              if (pedidoActualizado.estado === "en_preparacion") {
+                await SoundService.reproducir("exito"); 
+                showToast(
+                  "success",
+                  "¡Pedido en preparacion!",
+                  "Tus productos estarán en cualquier momento.",
+                );
+              }
+              if(pedidoActualizado.estado === "listo"){
+                await SoundService.reproducir("exito"); 
+                showToast(
+                  "success",
+                  "¡Pedido listo!",
+                  "En breve te entregarán el pedido.",
+                );
+              }
+            },
           )
           .subscribe();
       };
@@ -107,8 +170,11 @@ export default function HomeScreen() {
         if (canalEspera) {
           supabase.removeChannel(canalEspera);
         }
+        if (canalPedido) {
+          supabase.removeChannel(canalPedido);
+        }
       };
-    }, [])
+    }, []),
   );
 
   useEffect(() => {
@@ -163,9 +229,16 @@ export default function HomeScreen() {
 
   const onListaEsperaPress = async () => {
     if (!qrEscaneado || profile === null || mesaHabilitada === true) return;
-    const { exito, datos, error } = await crearUnaEspera(profile.id);
+    const { exito, datos, error } = await crearUnaEspera(
+      profile.id,
+      `${profile.nombres} ${profile.apellidos}`,
+    );
     if (error || !datos) {
-      showToast("error", "Error al unirse a la lista de espera", error || "No se pudo registrar");
+      showToast(
+        "error",
+        "Error al unirse a la lista de espera",
+        error || "No se pudo registrar",
+      );
       SoundService.reproducir("error");
     } else {
       setEnListaDeEspera(true);
@@ -190,10 +263,18 @@ export default function HomeScreen() {
         await AsyncStorage.setItem(keyIngreso(profile.id), "1");
       }
       await SoundService.reproducir("exito");
-      showToast("success", "¡Bienvenido!", "Ingreso al local validado correctamente.");
+      showToast(
+        "success",
+        "¡Bienvenido!",
+        "Ingreso al local validado correctamente.",
+      );
     } else {
       await SoundService.reproducir("error");
-      showToast("error", "Código inválido", "El QR escaneado no es el de ingreso al local.");
+      showToast(
+        "error",
+        "Código inválido",
+        "El QR escaneado no es el de ingreso al local.",
+      );
     }
   };
 
@@ -210,20 +291,32 @@ export default function HomeScreen() {
 
     if (mesaIdEscaneada !== mesa.id) {
       await SoundService.reproducir("error");
-      showToast("error", "Mesa incorrecta", "Este QR no corresponde a tu mesa asignada.");
+      showToast(
+        "error",
+        "Mesa incorrecta",
+        "Este QR no corresponde a tu mesa asignada.",
+      );
       return;
     }
 
     const { exito, error } = await vincularClienteAMesa(profile.id, mesa.id);
     if (!exito) {
       await SoundService.reproducir("error");
-      showToast("error", "Error", error || "No se pudo vincular la mesa. Reintentá.");
+      showToast(
+        "error",
+        "Error",
+        error || "No se pudo vincular la mesa. Reintentá.",
+      );
       return;
     }
 
     await refetch();
     await SoundService.reproducir("exito");
-    showToast("success", "¡Mesa vinculada!", "Ya podés ver el menú y consultar al mozo.");
+    showToast(
+      "success",
+      "¡Mesa vinculada!",
+      "Ya podés ver el menú y consultar al mozo.",
+    );
   };
 
   const handleQrScanned = async (data: string) => {
@@ -263,7 +356,11 @@ export default function HomeScreen() {
         visible={scannerVisible}
         onClose={() => setScannerVisible(false)}
         onScanned={handleQrScanned}
-        title={scanMode === "ingreso" ? "Ingreso al Local" : "Escaneá el QR de tu mesa"}
+        title={
+          scanMode === "ingreso"
+            ? "Ingreso al Local"
+            : "Escaneá el QR de tu mesa"
+        }
       />
 
       <ScrollView
@@ -287,7 +384,9 @@ export default function HomeScreen() {
 
             <View className="relative mt-1">
               <Image
-                source={{ uri: profile?.foto_url || "https://placehold.co/150" }}
+                source={{
+                  uri: profile?.foto_url || "https://placehold.co/150",
+                }}
                 className="w-30 h-30 rounded-full border-4 border-white"
                 resizeMode="cover"
               />
@@ -295,7 +394,9 @@ export default function HomeScreen() {
                 <Ionicons name="checkmark" size={14} color="#FFF" />
               </View>
             </View>
-            <Text className="text-2xl font-black text-[#1E2342] mt-2.5">¡Hola, {profile?.nombres}!</Text>
+            <Text className="text-2xl font-black text-[#1E2342] mt-2.5">
+              ¡Hola, {profile?.nombres}!
+            </Text>
           </View>
 
           {qrEscaneado && (
@@ -306,7 +407,11 @@ export default function HomeScreen() {
             >
               <View className="w-full items-center">
                 <View className="w-12 h-12 bg-white/80 rounded-2xl items-center justify-center mb-2">
-                  <Ionicons name="restaurant-outline" size={26} color="#FF6B00" />
+                  <Ionicons
+                    name="restaurant-outline"
+                    size={26}
+                    color="#FF6B00"
+                  />
                 </View>
                 <Text className="text-xl font-black text-[#1E2342] text-center mb-1">
                   Opciones del local habilitadas
@@ -320,28 +425,55 @@ export default function HomeScreen() {
                     className="flex-row items-center mb-2 p-3 rounded-2xl border bg-white border-orange-200 shadow-sm"
                   >
                     <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
-                      <MaterialCommunityIcons name="clipboard-text-outline" size={20} color="#FF6B00" />
+                      <MaterialCommunityIcons
+                        name="clipboard-text-outline"
+                        size={20}
+                        color="#FF6B00"
+                      />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-lg font-bold text-[#1E2342]">Ver encuestas</Text>
+                      <Text className="text-lg font-bold text-[#1E2342]">
+                        Ver encuestas
+                      </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
+                    <Ionicons
+                      name="chevron-forward"
+                      size={18}
+                      color="#FF6B00"
+                    />
                   </TouchableOpacity>
 
                   {puedeJugar && (
                     <TouchableOpacity
                       activeOpacity={0.7}
-                      onPress={() => router.push({ pathname: "/juegos", params: { mesaId: mesa?.id } })}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/juegos",
+                          params: { mesaId: mesa?.id },
+                        })
+                      }
                       className="flex-row items-center mb-2 p-3 rounded-2xl border bg-white border-orange-200 shadow-sm"
                     >
                       <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
-                        <MaterialCommunityIcons name="gamepad-variant-outline" size={20} color="#FF6B00" />
+                        <MaterialCommunityIcons
+                          name="gamepad-variant-outline"
+                          size={20}
+                          color="#FF6B00"
+                        />
                       </View>
                       <View className="flex-1">
-                        <Text className="text-lg font-bold text-[#1E2342]">Juegos y descuentos</Text>
-                        <Text className="text-xs text-[#8A7B6D]">Ganá hasta 20% de descuento</Text>
+                        <Text className="text-lg font-bold text-[#1E2342]">
+                          Juegos y descuentos
+                        </Text>
+                        <Text className="text-xs text-[#8A7B6D]">
+                          Ganá hasta 20% de descuento
+                        </Text>
                       </View>
-                      <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
+                      <Ionicons
+                        name="chevron-forward"
+                        size={18}
+                        color="#FF6B00"
+                      />
                     </TouchableOpacity>
                   )}
 
@@ -349,7 +481,7 @@ export default function HomeScreen() {
                     onPress={onListaEsperaPress}
                     disabled={enListaDeEspera || mesaHabilitada || tieneMesa}
                     className={`flex-row items-center p-3 rounded-2xl border ${
-                       mesaHabilitada || tieneMesa
+                      mesaHabilitada || tieneMesa
                         ? "bg-brand-400 border-amber-200 opacity-90 shadow-sm"
                         : enListaDeEspera
                           ? "bg-brand-100 border-amber-200 opacity-90 shadow-sm"
@@ -366,16 +498,34 @@ export default function HomeScreen() {
                       }`}
                     >
                       <MaterialCommunityIcons
-                        name={tieneMesa ? "table-chair" : enListaDeEspera ? "clock-check-outline" : "account-clock-outline"}
+                        name={
+                          tieneMesa
+                            ? "table-chair"
+                            : enListaDeEspera
+                              ? "clock-check-outline"
+                              : "account-clock-outline"
+                        }
                         size={20}
-                        color={tieneMesa ? "#FFFFFF" : enListaDeEspera ? "#B45309" : "#FF6B00"}
+                        color={
+                          tieneMesa
+                            ? "#FFFFFF"
+                            : enListaDeEspera
+                              ? "#B45309"
+                              : "#FF6B00"
+                        }
                       />
                     </View>
                     <View className="flex-1">
                       <Text className="text-lg font-bold text-[#1E2342]">
-                        {tieneMesa ? `Mesa ${mesa?.numero} - asignada` : enListaDeEspera ? "En espera de asignación" : "Lista de espera"}
+                        {tieneMesa
+                          ? `Mesa ${mesa?.numero} - asignada`
+                          : enListaDeEspera
+                            ? "En espera de asignación"
+                            : "Lista de espera"}
                       </Text>
-                      <Text className={`text-[13px] font-semibold ${tieneMesa ? "text-white" : "text-[#8A7B6D]"}`}>
+                      <Text
+                        className={`text-[13px] font-semibold ${tieneMesa ? "text-white" : "text-[#8A7B6D]"}`}
+                      >
                         {tieneMesa
                           ? "Escaneá el QR de tu mesa"
                           : enListaDeEspera
@@ -383,7 +533,13 @@ export default function HomeScreen() {
                             : "Anotate para que te asignen una mesa"}
                       </Text>
                     </View>
-                    {!enListaDeEspera && !tieneMesa && <Ionicons name="chevron-forward" size={18} color="#FF6B00" />}
+                    {!enListaDeEspera && !tieneMesa && (
+                      <Ionicons
+                        name="chevron-forward"
+                        size={18}
+                        color="#FF6B00"
+                      />
+                    )}
                     {(enListaDeEspera || tieneMesa) && (
                       <Ionicons
                         name="checkmark-circle"
@@ -409,7 +565,11 @@ export default function HomeScreen() {
                     }`}
                   >
                     <Ionicons
-                      name={enListaDeEspera ? "hourglass-outline" : "information-circle-outline"}
+                      name={
+                        enListaDeEspera
+                          ? "hourglass-outline"
+                          : "information-circle-outline"
+                      }
                       size={24}
                       color={enListaDeEspera ? "#B45309" : "#FF6B00"}
                     />
@@ -443,7 +603,9 @@ export default function HomeScreen() {
               <View className="items-center my-auto py-4">
                 <View className="w-24 h-24 rounded-3xl bg-white/90 items-center justify-center border border-orange-200 shadow-sm mb-3">
                   <Ionicons
-                    name={paso === "ingreso" ? "qr-code-outline" : "camera-outline"}
+                    name={
+                      paso === "ingreso" ? "qr-code-outline" : "camera-outline"
+                    }
                     size={48}
                     color="#FF6B00"
                   />
@@ -460,9 +622,16 @@ export default function HomeScreen() {
                 activeOpacity={0.85}
                 className="w-full py-3.5 rounded-2xl flex-row items-center justify-center shadow-md bg-[#FF6B00] shadow-orange-500/40"
               >
-                <Ionicons name="camera" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                <Ionicons
+                  name="camera"
+                  size={20}
+                  color="#FFFFFF"
+                  style={{ marginRight: 8 }}
+                />
                 <Text className="text-white font-bold text-base">
-                  {paso === "ingreso" ? "Escanear QR de ingreso" : "Escanear QR de la mesa"}
+                  {paso === "ingreso"
+                    ? "Escanear QR de ingreso"
+                    : "Escanear QR de la mesa"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -480,30 +649,56 @@ export default function HomeScreen() {
               <View className="w-full space-y-2.5 my-auto">
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  onPress={() => router.push({ pathname: "/menu", params: { mesaId: mesa?.id } })}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/menu",
+                      params: { mesaId: mesa?.id },
+                    })
+                  }
                   className="flex-row items-center p-3 mb-2 rounded-2xl border bg-white border-orange-200 shadow-sm"
                 >
                   <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
-                    <MaterialCommunityIcons name="silverware-fork-knife" size={20} color="#FF6B00" />
+                    <MaterialCommunityIcons
+                      name="silverware-fork-knife"
+                      size={20}
+                      color="#FF6B00"
+                    />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-lg font-bold text-[#1E2342]">Ver menú</Text>
-                    <Text className="text-xs text-[#8A7B6D]">Comidas y bebidas</Text>
+                    <Text className="text-lg font-bold text-[#1E2342]">
+                      Ver menú
+                    </Text>
+                    <Text className="text-xs text-[#8A7B6D]">
+                      Comidas y bebidas
+                    </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  onPress={() => router.push({ pathname: "/chat", params: { mesaId: mesa?.id } })}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/chat",
+                      params: { mesaId: mesa?.id },
+                    })
+                  }
                   className="flex-row items-center p-3 rounded-2xl border bg-white border-orange-200 shadow-sm"
                 >
                   <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
-                    <MaterialCommunityIcons name="chat-outline" size={20} color="#FF6B00" />
+                    <MaterialCommunityIcons
+                      name="chat-outline"
+                      size={20}
+                      color="#FF6B00"
+                    />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-lg font-bold text-[#1E2342]">Chateá con el mozo</Text>
-                    <Text className="text-xs text-[#8A7B6D]">Consultas en vivo</Text>
+                    <Text className="text-lg font-bold text-[#1E2342]">
+                      Chateá con el mozo
+                    </Text>
+                    <Text className="text-xs text-[#8A7B6D]">
+                      Consultas en vivo
+                    </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
                 </TouchableOpacity>
