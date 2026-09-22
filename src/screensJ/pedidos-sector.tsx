@@ -12,9 +12,12 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { supabase } from "@/lib/supabase";
 import {
   obtenerPedidosPorSector,
+   comenzarSector, terminarSector,
   type PedidoSector,
 } from "@/servicesJ/pedidosSectorService";
 import { notificarNuevoPedido } from "@/lib/notificaciones";
+import { useToast } from '../contextJ/Toast';
+import { SoundService } from '../servicesJ/soundService';
 
 type Props = {
   tabla: "platos" | "bebidas";
@@ -24,11 +27,9 @@ const PEDIDOS_POR_PAGINA = 2;
 
 export default function PedidosSectorScreen({ tabla, titulo }: Props) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [pedidos, setPedidos] = useState<PedidoSector[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [pedidosEnProceso, setPedidosEnProceso] = useState<
-    Record<string, boolean>
-  >({});
   const [paginaActual, setPaginaActual] = useState(1);
 
   const totalPaginas = Math.ceil(pedidos.length / PEDIDOS_POR_PAGINA) || 1;
@@ -41,7 +42,14 @@ export default function PedidosSectorScreen({ tabla, titulo }: Props) {
   const cargarPedidos = useCallback(async () => {
     setCargando(true);
     const { exito, datos } = await obtenerPedidosPorSector(tabla);
-    if (exito && datos) setPedidos(datos);
+    if (exito && datos){
+      setPedidos(datos);
+      showToast("success", "Exito.", "Pedidos cargados exitosamente.");
+      await SoundService.reproducir("exito");
+    } else{
+      showToast("error", "Error", "Erros al cargar pedidos.");
+      await SoundService.reproducir('error');
+    }
     setCargando(false);
     setPaginaActual(1);
   }, [tabla]);
@@ -94,18 +102,24 @@ export default function PedidosSectorScreen({ tabla, titulo }: Props) {
     });
   };
 
-  const manejarComenzar = (idPedido: string) => {
-    setPedidosEnProceso((prev) => ({ ...prev, [idPedido]: true }));
+  const manejarComenzar = async (idPedido: string) => {
+    const { exito, error } = await comenzarSector(idPedido, tabla);
+    if(exito) {
+      cargarPedidos();
+    } else {
+      showToast("error", "Error al empezar con el pedido.", error);
+      await SoundService.reproducir('error');
+    }
   };
 
-  const manejarTerminar = (idPedido: string) => {
-    setPedidos((prev) => prev.filter((p) => p.id !== idPedido));
+  const manejarTerminar = async (idPedido: string) => {
+    const { exito, error } = await terminarSector(idPedido, tabla);
 
-    setPedidosEnProceso((prev) => {
-      const nuevo = { ...prev };
-      delete nuevo[idPedido];
-      return nuevo;
-    });
+    if (!exito) {
+      showToast("error", "Error", "Ocurrio un error al terminar con el pedido.");
+      await SoundService.reproducir('error');
+    }
+    cargarPedidos();
   };
 
   if (cargando) {
@@ -144,8 +158,8 @@ export default function PedidosSectorScreen({ tabla, titulo }: Props) {
         </View>
       ) : (
         <>
-          {pedidosVisibles.map((pedido) => {
-            const enProceso = pedidosEnProceso[pedido.id] || false;
+          {pedidosVisibles.map((pedido: PedidoSector) => {
+            let enProceso = true;
             return (
               <View
                 key={pedido.id}
@@ -166,31 +180,36 @@ export default function PedidosSectorScreen({ tabla, titulo }: Props) {
                 </View>
 
                 <View className="gap-1.5 py-1">
-                  {pedido.items.map((item) => (
-                    <Text
-                      key={item.id}
-                      className="text-[18px] font-medium text-neutral-800"
-                    >
-                      {item.cantidad}x {item.nombre_producto}
-                    </Text>
-                  ))}
+                  {pedido.items.map((item) => { 
+                    if(item.estado == "pendiente"){
+                      enProceso = false;
+                    }
+                    return(
+                      <Text
+                        key={item.id}
+                        className="text-[18px] font-medium text-neutral-800"
+                      >
+                        {item.cantidad}x {item.nombre_producto}
+                      </Text>
+                    )}
+                  )}
                 </View>
 
                 <View className="flex-row justify-end gap-3 mt-2 pt-2 border-t border-brand-300">
                   {!enProceso ? (
                     <Pressable
                       onPress={() => manejarComenzar(pedido.id)}
-                      className="flex-row items-center bg-brand-500 px-4 py-2.5 rounded-xl gap-2 active:opacity-80"
+                      className="flex-row items-center bg-brand-100 border border-brand-500 px-4 py-2.5 rounded-xl gap-2 active:opacity-80"
                     >
-                      <Ionicons name="play-outline" size={18} color="white" />
-                      <Text className="text-white font-bold text-base">
+                      <Ionicons name="play-outline" size={18} color="red" />
+                      <Text className="text-brand-500 font-bold text-base">
                         Comenzar
                       </Text>
                     </Pressable>
                   ) : (
                     <Pressable
                       onPress={() => manejarTerminar(pedido.id)}
-                      className="flex-row items-center bg-green-600 px-4 py-2.5 rounded-xl gap-2 active:opacity-80"
+                      className="flex-row items-center bg-brand-600 px-4 py-2.5 rounded-xl gap-2 active:opacity-80"
                     >
                       <Ionicons
                         name="checkmark-circle-outline"

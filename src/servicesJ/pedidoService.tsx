@@ -1,5 +1,5 @@
 import { supabase } from './supabaseConexion';
-import { ItemCarrito, Pedido, PedidoConItems } from '../interfaces/IPedido';
+import { EstadoPedido, ItemCarrito, Pedido, PedidoConItems } from '../interfaces/IPedido';
 
 export async function crearPedidoConItems(
   mesaId: string,
@@ -166,6 +166,24 @@ export async function confirmarPedido(pedidoId: string) {
       return { exito: false, datos: null, error: error.message };
     }
 
+    return { exito: true, datos: data as Pedido, error: null };
+  } catch (err: any) {
+    return { exito: false, datos: null, error: err.message || 'Error al confirmar el pedido' };
+  }
+}
+
+export async function actualizarEstadoDelPedido(pedidoId: string, estado: EstadoPedido) {
+  try {
+    const { data, error } = await supabase
+      .from('pedidos')
+      .update({ estado: estado })
+      .eq('id', pedidoId)
+      .select()
+      .single();
+
+    if (error) {
+      return { exito: false, datos: null, error: error.message };
+    }
     return { exito: true, datos: data as Pedido, error: null };
   } catch (err: any) {
     return { exito: false, datos: null, error: err.message || 'Error al confirmar el pedido' };
