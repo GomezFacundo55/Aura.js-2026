@@ -19,7 +19,11 @@ import { useMesaActual } from "@/hooks/useMesaActual";
 import { usePedidoActivo } from "@/hooks/usePedidoActivo";
 import { getMyProfile, type UserProfile } from "@/lib/auth";
 import { supabase } from "@/servicesJ/supabaseConexion";
-import { crearPedidoConItems, actualizarPedidoConItems } from "@/servicesJ/pedidoService";
+import {
+  crearPedidoConItems,
+  actualizarPedidoConItems,
+  confirmarRecepcion,
+} from "@/servicesJ/pedidoService";
 import type { ItemCarrito } from "@/interfaces/IPedido";
 import type { IProductoPedido } from "@/interfaces/IProductoPedido";
 import { useToast } from "@/contextJ/Toast";
@@ -38,6 +42,7 @@ export default function MenuScreen() {
   const [numeroMesaFallback, setNumeroMesaFallback] = useState<number | null>(null);
   const [carrito, setCarrito] = useState<CarritoMap>({});
   const [enviando, setEnviando] = useState<boolean>(false);
+  const [confirmandoRecepcion, setConfirmandoRecepcion] = useState<boolean>(false);
   const precargado = useRef<boolean>(false);
 
   const { comidas, bebidas, loading: cargandoMenu, error: errorMenu, recargar } = useMenu();
@@ -162,6 +167,23 @@ export default function MenuScreen() {
     await refetchPedido();
   };
 
+  // Punto 19: el cliente confirma que recibió el pedido completo.
+  const handleConfirmarRecepcion = async () => {
+    if (!pedido || confirmandoRecepcion) return;
+
+    setConfirmandoRecepcion(true);
+    const { exito, error } = await confirmarRecepcion(pedido.id);
+    setConfirmandoRecepcion(false);
+
+    if (!exito) {
+      showToast("error", "Error", error || "No se pudo confirmar la recepción.");
+      return;
+    }
+
+    showToast("success", "¡Gracias!", "Ya podés pedir la cuenta cuando quieras.");
+    await refetchPedido();
+  };
+
   return (
     <View className="flex-1">
       <GradientBackground />
@@ -220,16 +242,43 @@ export default function MenuScreen() {
           </View>
         )}
 
-        {pedido && ["confirmado", "en_preparacion", "listo"].includes(pedido.estado) && (
-  <View className="mx-5 mb-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-200">
-    <View className="flex-row items-center mb-2">
-      <Ionicons name="checkmark-circle-outline" size={18} color="#059669" />
-      <Text className="ml-2 text-xs font-bold text-emerald-700 flex-1">
-        Pedido confirmado. Te avisamos cuando esté listo.
-      </Text>
-    </View>
-  </View>
-)}
+        {pedido && ["confirmado", "en_preparacion"].includes(pedido.estado) && (
+          <View className="mx-5 mb-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-200">
+            <View className="flex-row items-center mb-2">
+              <Ionicons name="checkmark-circle-outline" size={18} color="#059669" />
+              <Text className="ml-2 text-xs font-bold text-emerald-700 flex-1">
+                Pedido confirmado. Te avisamos cuando esté listo.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Punto 19: el pedido llegó a la mesa, el cliente confirma la recepción */}
+        {pedido?.estado === "listo" && (
+          <View className="mx-5 mb-3 p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+            <View className="flex-row items-center mb-3">
+              <Ionicons name="fast-food-outline" size={18} color="#059669" />
+              <Text className="ml-2 text-xs font-bold text-emerald-700 flex-1">
+                ¡Tu pedido está listo! El mozo ya lo está trayendo a tu mesa.
+              </Text>
+            </View>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              disabled={confirmandoRecepcion}
+              onPress={handleConfirmarRecepcion}
+              className="py-2.5 rounded-xl flex-row items-center justify-center bg-emerald-600"
+            >
+              {confirmandoRecepcion ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-done" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                  <Text className="text-white font-bold text-sm">Confirmar recepción</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Tabs */}
         <View className="px-5 mb-4">

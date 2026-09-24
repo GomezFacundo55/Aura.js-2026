@@ -190,3 +190,8 @@ export async function actualizarEstadoDelPedido(pedidoId: string, estado: Estado
     return { exito: false, datos: null, error: err.message || 'Error al confirmar el pedido' };
   }
 }
+
+// Punto 19: el cliente confirma que recibió el pedido completo.
+export async function confirmarRecepcion(pedidoId: string) {
+  return actualizarEstadoDelPedido(pedidoId, 'entregado');
+}

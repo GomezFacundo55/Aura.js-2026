@@ -45,7 +45,6 @@ export default function MozoHome() {
   const [enviando, setEnviando] = useState(false);
   const [confirmandoId, setConfirmandoId] = useState<string | null>(null);
   const [estadoPedidosObtenido, setEstadoPedidosObtenidos] = useState<EstadoPedido>("pendiente");
-  const [entregandoId, setEntregandoId] = useState<string | null>(null);
   const estadoRef = useRef(estadoPedidosObtenido);
   estadoRef.current = estadoPedidosObtenido;
 
@@ -202,22 +201,6 @@ export default function MozoHome() {
     }
     setConfirmandoId(null);
   };
-
-  const handleConfirmarRecepcion = async (pedido: PedidoPendiente) => {
-  setEntregandoId(pedido.id);
-  // ACA TIENE QUE IR LO QUE SE HARA AL PRESIONAR EL BOTON DE ENTREGADO. RECORDATORIO ......
-  let exito = true;
-
-  if (exito) {
-    await SoundService.reproducir('exito');
-    showToast('success', 'Pedido entregado', 'Se marcó la recepción correctamente.');
-    await cargarPedidos('listo');
-  } else {
-    await SoundService.reproducir('error');
-    showToast('error', 'Error', 'No se pudo confirmar la recepción.');
-  }
-  setEntregandoId(null);
-};
 
   if (cargando) {
     return (
@@ -405,23 +388,12 @@ export default function MozoHome() {
                     </TouchableOpacity>
                   </View>
                   ) : esListo ? (
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      disabled={entregandoId === pedido.id}
-                      onPress={() => handleConfirmarRecepcion(pedido)}
-                      className={`px-4 py-2 rounded-xl flex-row items-center gap-1 ${
-                        entregandoId === pedido.id ? 'bg-orange-400' : 'bg-orange-600'
-                      } border border-orange-600`}
-                    >
-                      {entregandoId === pedido.id ? (
-                        <ActivityIndicator color="#FFFFFF" size="small" />
-                      ) : (
-                        <>
-                          <Ionicons name="checkmark-done-circle-outline" size={14} color="#FFFFFF" />
-                          <Text className="text-white font-bold text-xs">Confirmar recepción</Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
+                    <View className="flex-row items-center gap-1">
+                      <Ionicons name="hourglass-outline" size={14} color="#9A6B3D" />
+                      <Text className="text-xs font-semibold text-orange-800">
+                        Esperando confirmación del cliente
+                      </Text>
+                    </View>
                   ) : null}
                 </View>
               </View>
