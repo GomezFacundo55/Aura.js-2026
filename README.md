@@ -137,7 +137,9 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 | 16 | Qr Mesa 14 | Pantalla | Pantalla | | ![Qr Mesa 14](https://i.ibb.co/BKttKQRd/Whats-App-Image-2026-09-18-at-22-29-22.jpg) |
 | 17 | Qr Mesa 15 | Pantalla | Pantalla | | ![Qr Mesa 15](https://i.ibb.co/KjsY0CLv/Whats-App-Image-2026-09-18-at-22-19-08.jpg) |
 | 18 | Qr Mesa 16 | Pantalla | Pantalla | | ![Qr Mesa 16](https://i.ibb.co/pB8VYCZp/Captura-de-pantalla-2026-09-18-224902.png) |
-| 18 | Qr Mesa 17 | Pantalla | Pantalla | | ![Qr Mesa 17](https://i.ibb.co/gFTrH37m/Captura-de-pantalla-2026-09-18-224428.png) |
+| 19 | Qr Mesa 17 | Pantalla | Pantalla | | ![Qr Mesa 17](https://i.ibb.co/gFTrH37m/Captura-de-pantalla-2026-09-18-224428.png) |
+| 20 | Qr Mesa 21 | Pantalla | Pantalla | | ![Qr Mesa 21](https://i.ibb.co/zW0ty1Nj/Whats-App-Image-2026-09-23-at-20-53-16.jpg) |
+
 
 **Categorías:**
 - Íconos (app, botones, controles)

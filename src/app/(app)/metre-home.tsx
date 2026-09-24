@@ -57,8 +57,7 @@ export default function App() {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'lista_espera' },
-        async (payload) => {
-          console.log('Nuevo cliente en lista de espera:', payload.new);
+        async () => {
           showToast('info', "Aviso", "Nuevo cliente en lista de espera.")
           await SoundService.reproducir('info'); 
           cargarListaDeEspera();

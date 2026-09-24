@@ -117,12 +117,12 @@ export async function obtenerPedidoActivoPorMesa(mesaId: string) {
   }
 }
 
-export async function obtenerPedidosPendientes() {
+export async function obtenerPedidos(estadoDePedido: EstadoPedido = "pendiente") {
   try {
     const { data, error } = await supabase
       .from('pedidos')
       .select('*, pedido_items(*), mesas(numero)')
-      .eq('estado', 'pendiente')
+      .eq('estado', estadoDePedido)
       .order('created_at', { ascending: true });
 
     if (error) {
@@ -134,6 +134,7 @@ export async function obtenerPedidosPendientes() {
     return { exito: false, datos: null, error: err.message || 'Error al consultar pedidos pendientes' };
   }
 }
+
 
 export async function rechazarPedido(pedidoId: string, motivo: string) {
   try {
