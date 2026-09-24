@@ -56,7 +56,7 @@ export async function consultarClienteEnListaDeEspera(id_cliente: string){
       .from(TABLA)
       .select("id, estado, mesa_asignada_id, numero_mesa")
       .eq("cliente_id", id_cliente)
-      .in("estado", ["en_espera", "asignado"])
+      .in("estado", ["en_espera", "asignado", "vinculado"])
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();

@@ -158,7 +158,21 @@ export default function HomeScreen() {
   };
 
   const onEncuestasPress = () => {
-    if (!qrEscaneado) return;
+    if (!mesaVinculada) {
+      showToast(
+        "info",
+        "Encuestas",
+        "Primero tenés que tener una mesa asignada y escanear el QR de esa mesa.",
+      );
+      return;
+    }
+    router.push({
+      pathname: "/encuestas",
+      params: {
+        mesaId: mesa?.id,
+        esperaId: esperaId ?? undefined,
+      },
+    });
   };
 
   const onListaEsperaPress = async () => {
@@ -314,20 +328,6 @@ export default function HomeScreen() {
                 <View className="w-full h-[1px] bg-[#F0DFC8] my-2" />
 
                 <View className="w-full mt-1 space-y-2.5">
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={onEncuestasPress}
-                    className="flex-row items-center mb-2 p-3 rounded-2xl border bg-white border-orange-200 shadow-sm"
-                  >
-                    <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
-                      <MaterialCommunityIcons name="clipboard-text-outline" size={20} color="#FF6B00" />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-lg font-bold text-[#1E2342]">Ver encuestas</Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
-                  </TouchableOpacity>
-
                   {puedeJugar && (
                     <TouchableOpacity
                       activeOpacity={0.7}
@@ -504,6 +504,21 @@ export default function HomeScreen() {
                   <View className="flex-1">
                     <Text className="text-lg font-bold text-[#1E2342]">Chateá con el mozo</Text>
                     <Text className="text-xs text-[#8A7B6D]">Consultas en vivo</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={onEncuestasPress}
+                  className="flex-row items-center mt-2 p-3 rounded-2xl border bg-white border-orange-200 shadow-sm"
+                >
+                  <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
+                    <MaterialCommunityIcons name="clipboard-text-outline" size={20} color="#FF6B00" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-lg font-bold text-[#1E2342]">Ver encuestas</Text>
+                    <Text className="text-xs text-[#8A7B6D]">Tu opinión de esta visita</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
                 </TouchableOpacity>
