@@ -57,8 +57,7 @@ export default function App() {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'lista_espera' },
-        async (payload) => {
-          console.log('Nuevo cliente en lista de espera:', payload.new);
+        async () => {
           showToast('info', "Aviso", "Nuevo cliente en lista de espera.")
           await SoundService.reproducir('info'); 
           cargarListaDeEspera();
@@ -210,7 +209,6 @@ export default function App() {
           {elementosPaginados.map((item, index) => {
             const numeroTurno = indiceInicio + index + 1;
             const tieneMesa = item.estado === "asignado";
-
             return (
               <View
                 key={item.id}
@@ -225,7 +223,7 @@ export default function App() {
                     </View>
                     <View>
                       <Text className="text-sm font-bold text-neutral-900">
-                        Cliente en cola
+                        Cliente: {item.cliente_nombre}
                       </Text>
                       <Text className="text-[10px] text-neutral-400">
                         {item.created_at

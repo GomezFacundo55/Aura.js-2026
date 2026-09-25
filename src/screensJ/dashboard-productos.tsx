@@ -208,15 +208,29 @@ export default function ProductDashboard() {
         </Text>
         <Text className="text-xs text-gray-600">Gestión de la carta</Text>
       </View>
-
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={handleAddProduct}
-        className="flex-row items-center bg-brand-500 px-3.5 py-2.5 rounded-xl shadow-sm"
-      >
-        <Ionicons name="add-circle-outline" size={18} color="#FFFFFF" />
-        <Text className="text-white font-semibold text-sm ml-1.5">Agregar</Text>
-      </TouchableOpacity>
+      <View>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => {
+            let ruta: any = perfilUsuario?.perfil === "cocinero" ? "/(app)/pedidos-cocina" : "/(app)/pedidos-bar"
+            router.push({
+              pathname: ruta,
+              params : { perfil: perfilUsuario?.perfil }
+          })}}
+          className="flex-row items-center bg-brand-500 px-3.5 py-2.5 mb-1 rounded-xl shadow-sm"
+        >
+          <Ionicons name="list-circle-outline" size={18} color="#FFFFFF" />
+          <Text className="text-white font-semibold text-sm ml-1.5">Pendientes</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={handleAddProduct}
+          className="flex-row items-center bg-brand-500 px-3.5 py-2.5 rounded-xl shadow-sm"
+        >
+          <Ionicons name="add-circle-outline" size={18} color="#FFFFFF" />
+          <Text className="text-white font-semibold text-sm ml-1.5">Agregar</Text>
+        </TouchableOpacity>
+      </View>
     </View>
 
     {cargando ? (

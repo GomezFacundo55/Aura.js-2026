@@ -99,7 +99,7 @@ export async function obtenerUnaEspera(id: string) {
   }
 }
 
-export async function crearUnaEspera(cliente_id: string): Promise<{
+export async function crearUnaEspera(cliente_id: string, cliente_nombre: string): Promise<{
   exito: boolean;
   datos: IListaDeEspera | null;
   error: string | null;
@@ -130,6 +130,7 @@ export async function crearUnaEspera(cliente_id: string): Promise<{
         cliente_id,
         estado: "en_espera",
         mesa_asignada_id: null,
+        cliente_nombre,
       })
       .select()
       .single();

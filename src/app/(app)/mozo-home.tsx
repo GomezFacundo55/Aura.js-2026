@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,9 @@ import { getMyProfile, signOut, type UserProfile } from '@/lib/auth';
 import { useToast } from '../../contextJ/Toast';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SoundService } from '@/servicesJ/soundService';
-import { obtenerPedidosPendientes, rechazarPedido, confirmarPedido } from '@/servicesJ/pedidoService';
+import { obtenerPedidos, rechazarPedido, confirmarPedido } from '@/servicesJ/pedidoService';
+import { EstadoPedido } from '@/interfaces/IPedido';
+import { supabase } from '@/lib/supabase';
 
 interface PedidoPendiente {
   id: string;
@@ -21,6 +23,7 @@ interface PedidoPendiente {
   importe_total: number;
   tiempo_estimado_min: number;
   created_at: string;
+  estado: EstadoPedido;
   mesas: { numero: number } | null;
   pedido_items: {
     id: string;
@@ -41,12 +44,91 @@ export default function MozoHome() {
   const [motivo, setMotivo] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [confirmandoId, setConfirmandoId] = useState<string | null>(null);
+  const [estadoPedidosObtenido, setEstadoPedidosObtenidos] = useState<EstadoPedido>("pendiente");
+  const estadoRef = useRef(estadoPedidosObtenido);
+  estadoRef.current = estadoPedidosObtenido;
 
   useFocusEffect(
     useCallback(() => {
-      cargarTodo();
-    }, []),
+      let canalPedido: any = null;
+
+      const inicializarPantalla = async () => {
+        await cargarTodo();
+
+        const perfilActual = await getMyProfile();
+        if (!perfilActual?.id) return;
+
+        const nombreCanal = `actualizacion-pedidos-mozo-${perfilActual.id}`;
+
+        const canalExistente = supabase
+          .getChannels()
+          .find((c) => c.topic === `realtime:${nombreCanal}`);
+
+        if (canalExistente) {
+          supabase.removeChannel(canalExistente);
+        }
+
+        canalPedido = supabase
+          .channel(nombreCanal)
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "pedidos",
+            },
+            async (payload) => {
+              const nuevoPedido = payload.new as any;
+              
+              if (nuevoPedido.estado === "pendiente") {
+                await SoundService.reproducir("exito"); 
+                showToast(
+                  "info",
+                  "¡Nuevo pedido para confirmar!",
+                  "Un cliente hizo un nuevo pedido.",
+                );
+                if(estadoRef.current === "pendiente"){
+                  cargarPedidos("pendiente");
+                }
+              }
+            }
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "pedidos",
+            },
+            async (payload) => {
+              const pedidoActualizado = payload.new as any;
+              
+              if (pedidoActualizado.estado === "listo") {
+                await SoundService.reproducir("exito"); 
+                showToast(
+                  "info",
+                  "¡Pedido listo para entregar!",
+                  "El cliente espera su entrega.",
+                );
+                if(estadoRef.current === "listo"){
+                  cargarPedidos("listo");
+                }
+              }
+            }
+          )
+          .subscribe();
+      };
+
+      inicializarPantalla();
+
+      return () => {
+        if (canalPedido) {
+          supabase.removeChannel(canalPedido);
+        }
+      };
+    }, [])
   );
+  
 
   const cargarTodo = async () => {
     setCargando(true);
@@ -56,13 +138,16 @@ export default function MozoHome() {
     setCargando(false);
   };
 
-  const cargarPedidos = async () => {
-    const { exito, datos, error } = await obtenerPedidosPendientes();
+  const cargarPedidos = async (estadoDelPedido: EstadoPedido = "pendiente") => {
+    setCargando(true);
+    setEstadoPedidosObtenidos(estadoDelPedido);
+    const { exito, datos, error } = await obtenerPedidos(estadoDelPedido);
     if (exito && datos) {
       setPedidos(datos as PedidoPendiente[]);
     } else if (error) {
       showToast('error', 'Error', error);
     }
+    setCargando(false);
   };
 
   const logOut = async () => {
@@ -127,6 +212,7 @@ export default function MozoHome() {
 
   return (
     <View className="flex-1">
+      
       <View className="flex-row items-center justify-between p-4">
         <View className="flex-row items-center">
           <TouchableOpacity
@@ -143,9 +229,10 @@ export default function MozoHome() {
             </Text>
           </View>
         </View>
+        
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={cargarPedidos}
+          onPress={ () => { cargarPedidos(estadoPedidosObtenido) } }
           className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center"
         >
           <Ionicons name="refresh" size={18} color="#EA580C" />
@@ -153,33 +240,102 @@ export default function MozoHome() {
       </View>
 
       <Text className="text-xl font-bold text-gray-800 px-4 mb-2">
-        Pedidos pendientes de confirmación
+        Pedidos {estadoPedidosObtenido === "pendiente" ? "pendientes de confirmación" : "Listos"}
       </Text>
+      <View className="flex-row px-4 mb-3 gap-3">
+        <TouchableOpacity
+          activeOpacity={0.7}
+          disabled={estadoPedidosObtenido === 'pendiente'}
+          onPress={() => cargarPedidos('pendiente')}
+          className={`flex-1 flex-row py-3 px-4 rounded-xl items-center justify-center border ${
+            estadoPedidosObtenido === 'pendiente'
+              ? 'bg-orange-200 border-orange-300 opacity-60'
+              : 'bg-orange-500 border-orange-600'
+          }`}
+        >
+          <Ionicons 
+            name="time-outline" 
+            size={18} 
+            color={estadoPedidosObtenido === 'pendiente' ? '#9A3412' : '#FFFFFF'} 
+            style={{ marginRight: 6 }}
+          />
+          <Text className={`font-semibold text-xs ${
+            estadoPedidosObtenido === 'pendiente' ? 'text-amber-900' : 'text-white'
+          }`}>
+            Pendientes
+          </Text>
+        </TouchableOpacity>
 
+        <TouchableOpacity
+          activeOpacity={0.7}
+          disabled={estadoPedidosObtenido === 'listo'}
+          onPress={() => cargarPedidos('listo')}
+          className={`flex-1 flex-row py-3 px-4 rounded-xl items-center justify-center border ${
+            estadoPedidosObtenido === 'listo'
+              ? 'bg-orange-200 border-orange-300 opacity-60'
+              : 'bg-orange-500 border-orange-600'
+          }`}
+        >
+          <Ionicons 
+            name="checkmark-circle-outline" 
+            size={18} 
+            color={estadoPedidosObtenido === 'listo' ? '#9A3412' : '#FFFFFF'} 
+            style={{ marginRight: 6 }}
+          />
+          <Text className={`font-semibold text-xs ${
+            estadoPedidosObtenido === 'listo' ? 'text-amber-900' : 'text-white'
+          }`}>
+            Listos
+          </Text>
+        </TouchableOpacity>
+      </View>
       <ScrollView className="flex-1 px-4">
         {pedidos.length === 0 ? (
           <View className="py-20 items-center justify-center bg-white rounded-2xl border border-gray-200 mt-2">
             <Ionicons name="checkmark-done-circle-outline" size={48} color="#9CA3AF" />
             <Text className="text-gray-500 font-medium text-sm mt-3">
-              No hay pedidos pendientes.
+              {estadoPedidosObtenido === 'pendiente' 
+                ? 'No hay pedidos pendientes.' 
+                : 'No hay pedidos listos.'}
             </Text>
           </View>
         ) : (
           pedidos.map((pedido) => {
             const confirmando = confirmandoId === pedido.id;
+            const esListo = estadoPedidosObtenido === 'listo';
             return (
               <View
                 key={pedido.id}
-                className="bg-orange-100 rounded-2xl p-4 mb-3 border border-orange-200 shadow-sm"
+                className={`rounded-2xl p-4 mb-3 border border-orange-200 shadow-sm ${
+                  esListo 
+                    ? 'bg-brand-50 border-brand-200' 
+                    : 'bg-orange-100 border-orange-200'
+                }`}
               >
                 <View className="flex-row items-center justify-between mb-2">
-                  <Text className="font-bold text-gray-900 text-base">
-                    Mesa {pedido.mesas?.numero ?? '-'}
-                  </Text>
-                  <View className="bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full flex-row items-center">
-                    <Ionicons name="time-outline" size={13} color="#D97706" />
-                    <Text className="text-amber-700 text-xs font-semibold ml-1">
-                      {pedido.tiempo_estimado_min} min aprox.
+                  <View className="flex-row items-center gap-2">
+                    <Ionicons 
+                      name={esListo ? "checkmark-circle" : "alert-circle"} 
+                      size={20} 
+                      color={esListo ? "#c97c3d" : "#C2410C"} 
+                    />
+                    <Text className="font-bold text-gray-900 text-base">
+                      Mesa {pedido.mesas?.numero ?? '-'}
+                    </Text>
+                  </View>
+
+                  <View className={`border px-2.5 py-1 rounded-full flex-row items-center ${
+                    esListo ? 'bg-orange-100 border-brand-300' : 'bg-amber-50 border-amber-200'
+                  }`}>
+                    <Ionicons 
+                      name={esListo ? "fast-food-outline" : "time-outline"} 
+                      size={13} 
+                      color={esListo ? "#d67220" : "#D97706"} 
+                    />
+                    <Text className={`text-xs font-semibold ml-1 ${
+                      esListo ? 'text-orange-800' : 'text-amber-700'
+                    }`}>
+                      {esListo ? 'Listo para retirar' : `${pedido.tiempo_estimado_min} min aprox.`}
                     </Text>
                   </View>
                 </View>
@@ -195,20 +351,22 @@ export default function MozoHome() {
                   </View>
                 ))}
 
-                <View className="h-px bg-orange-200 my-2" />
+                <View className={`h-px my-2 ${esListo ? 'bg-brand-200' : 'bg-orange-200'}`} />
 
                 <View className="flex-row items-center justify-between">
                   <Text className="font-extrabold text-gray-900 text-base">
                     Total: ${pedido.importe_total.toLocaleString('es-AR')}
                   </Text>
+                  { pedido.estado == "pendiente" ? (
 
                   <View className="flex-row gap-2">
                     <TouchableOpacity
                       activeOpacity={0.8}
                       disabled={confirmando}
                       onPress={() => abrirModalRechazo(pedido)}
-                      className="bg-red-500 px-4 py-2 rounded-xl"
+                      className="bg-red-500 px-4 py-2 rounded-xl flex-row items-center gap-1"
                     >
+                      <Ionicons name="close-circle-outline" size={14} color="#FFFFFF" />
                       <Text className="text-white font-bold text-xs">Rechazar</Text>
                     </TouchableOpacity>
 
@@ -216,15 +374,27 @@ export default function MozoHome() {
                       activeOpacity={0.8}
                       disabled={confirmando}
                       onPress={() => handleConfirmar(pedido)}
-                      className={`px-4 py-2 rounded-xl ${confirmando ? 'bg-emerald-300' : 'bg-emerald-600'}`}
+                      className={`px-4 py-2 rounded-xl flex-row items-center gap-1 ${
+                        confirmando ? 'bg-orange-100' : 'bg-orange-200'} border border-orange-600`}
                     >
                       {confirmando ? (
-                        <ActivityIndicator color="#FFFFFF" size="small" />
+                        <ActivityIndicator color="#ffff" size="small" />
                       ) : (
-                        <Text className="text-white font-bold text-xs">Confirmar</Text>
+                        <>
+                          <Ionicons name="checkmark-circle-outline" size={14} color="#d17529" />
+                          <Text className="text-orange-600 font-bold text-xs">Confirmar</Text>
+                        </>
                       )}
                     </TouchableOpacity>
                   </View>
+                  ) : esListo ? (
+                    <View className="flex-row items-center gap-1">
+                      <Ionicons name="hourglass-outline" size={14} color="#9A6B3D" />
+                      <Text className="text-xs font-semibold text-orange-800">
+                        Esperando confirmación del cliente
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
               </View>
             );
