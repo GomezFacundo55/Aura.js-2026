@@ -5,9 +5,12 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 
 export type EstadoMesa = "sin_mesa" | "en_espera" | "asignada" | "vinculada";
 
+export type TipoMesa = "vip" | "estandar" | "movilidad_reducida";
+
 export type MesaActual = {
   id: string;
   numero: number;
+  tipo: TipoMesa | null;
 };
 
 type ListaEsperaRow = {
@@ -15,7 +18,7 @@ type ListaEsperaRow = {
   cliente_id: string;
   mesa_asignada_id: string | null;
   estado: "en_espera" | "asignado" | "vinculado";
-  mesas: { id: string; numero: number } | null;
+  mesas: { id: string; numero: number; tipo: TipoMesa | null } | null;
 };
 
 type CallbackActualizacion = () => void;
@@ -109,10 +112,10 @@ export function useMesaActual(clienteId: string | null | undefined) {
     }
 
     if (fila.estado === "vinculado" && fila.mesas) {
-      setMesa({ id: fila.mesas.id, numero: fila.mesas.numero });
+      setMesa({ id: fila.mesas.id, numero: fila.mesas.numero, tipo: fila.mesas.tipo ?? null });
       setEstadoMesa("vinculada");
     } else if (fila.estado === "asignado" && fila.mesas) {
-      setMesa({ id: fila.mesas.id, numero: fila.mesas.numero });
+      setMesa({ id: fila.mesas.id, numero: fila.mesas.numero, tipo: fila.mesas.tipo ?? null });
       setEstadoMesa("asignada");
     } else {
       setMesa(null);
@@ -134,7 +137,7 @@ export function useMesaActual(clienteId: string | null | undefined) {
     // Se toma el turno activo más reciente del cliente (en_espera o ya asignado)
     const { data, error: err } = await supabase
       .from("lista_espera")
-      .select("id, cliente_id, mesa_asignada_id, estado, mesas:mesa_asignada_id(id, numero)")
+      .select("id, cliente_id, mesa_asignada_id, estado, mesas:mesa_asignada_id(id, numero, tipo)")
       .eq("cliente_id", clienteId)
       .order("id", { ascending: false })
       .limit(1)

@@ -97,13 +97,22 @@ export async function actualizarPedidoConItems(pedidoId: string, items: ItemCarr
   }
 }
 
-export async function obtenerPedidoActivoPorMesa(mesaId: string) {
+export async function obtenerPedidoActivoPorMesa(mesaId: string, clienteId?: string | null) {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('pedidos')
       .select('*, pedido_items(*)')
       .eq('mesa_id', mesaId)
-      .neq('estado', 'entregado')
+      // Solo estados en curso: nunca "entregado" ni "rechazado"
+      // para que sesiones anteriores en la misma mesa no contaminen la vista actual.
+      .in('estado', ['pendiente', 'confirmado', 'en_preparacion', 'listo']);
+
+    if (clienteId) {
+      // Si se pasa clienteId, filtrar ademas por cliente para mayor aislamiento
+      query = query.eq('cliente_id', clienteId);
+    }
+
+    const { data, error } = await query
       .order('created_at', { ascending: false })
       .limit(1);
 

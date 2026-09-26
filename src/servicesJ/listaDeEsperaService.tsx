@@ -1,14 +1,15 @@
+import { IListaDeEspera } from "@/interfaces/IlistaEspara";
+import { mesasServicio } from "@/lib/mesasServicio"; // ajustá el path según donde lo tengas
 import { supabase } from "./supabaseConexion";
-import { EstadoListaEspera, IListaDeEspera } from "@/interfaces/IlistaEspara";
-import { mesasServicio } from '@/lib/mesasServicio'; // ajustá el path según donde lo tengas
 
 const TABLA = "lista_espera";
 
 export async function obtenerListaDeEspera() {
   try {
-    const { data, error } = await supabase.from(TABLA)
-        .select("*")
-        .order("created_at", {ascending: true});
+    const { data, error } = await supabase
+      .from(TABLA)
+      .select("*")
+      .order("created_at", { ascending: true });
 
     if (error) {
       return {
@@ -50,8 +51,8 @@ export async function consultarEstadoEspera(id: string) {
   }
 }
 
-export async function consultarClienteEnListaDeEspera(id_cliente: string){
-    try {
+export async function consultarClienteEnListaDeEspera(id_cliente: string) {
+  try {
     const { data, error } = await supabase
       .from(TABLA)
       .select("id, estado, mesa_asignada_id, numero_mesa")
@@ -99,7 +100,10 @@ export async function obtenerUnaEspera(id: string) {
   }
 }
 
-export async function crearUnaEspera(cliente_id: string, cliente_nombre: string): Promise<{
+export async function crearUnaEspera(
+  cliente_id: string,
+  cliente_nombre: string,
+): Promise<{
   exito: boolean;
   datos: IListaDeEspera | null;
   error: string | null;
@@ -152,7 +156,7 @@ export async function crearUnaEspera(cliente_id: string, cliente_nombre: string)
 export async function actualizarEspera(
   id: string,
   mesa_asignada_id: string,
-  numero_mesa: number
+  numero_mesa: number,
 ): Promise<{
   exito: boolean;
   datos: IListaDeEspera | null;
@@ -164,7 +168,7 @@ export async function actualizarEspera(
       .update({
         estado: "asignado",
         mesa_asignada_id,
-        numero_mesa
+        numero_mesa,
       })
       .eq("id", id)
       .select()
@@ -213,19 +217,26 @@ export async function eliminarEspera(id: string) {
   }
 }
 
-export const vincularClienteAMesa = async (clienteId: string, mesaId: string) => {
+export const vincularClienteAMesa = async (
+  clienteId: string,
+  mesaId: string,
+) => {
   const { data, error } = await supabase
-    .from('lista_espera')
-    .update({ estado: 'vinculado' })
-    .eq('cliente_id', clienteId)
-    .eq('mesa_asignada_id', mesaId)   // si el QR no es el de su mesa, no matchea ninguna fila
-    .eq('estado', 'asignado')
-    .select('id')
+    .from("lista_espera")
+    .update({ estado: "vinculado" })
+    .eq("cliente_id", clienteId)
+    .eq("mesa_asignada_id", mesaId) // si el QR no es el de su mesa, no matchea ninguna fila
+    .eq("estado", "asignado")
+    .select("id")
     .maybeSingle();
 
   if (error) return { exito: false, error: error.message };
-  if (!data) return { exito: false, error: 'Este QR no corresponde a tu mesa asignada.' };
+  if (!data)
+    return {
+      exito: false,
+      error: "Este QR no corresponde a tu mesa asignada.",
+    };
 
-  await mesasServicio.actualizarDisponibilidad(mesaId, 'ocupada');
+  await mesasServicio.actualizarDisponibilidad(mesaId, "ocupada");
   return { exito: true, datos: data };
 };

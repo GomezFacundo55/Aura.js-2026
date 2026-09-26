@@ -104,7 +104,8 @@ export default function MenuScreen() {
     pedido?.estado === "pendiente" ||
     pedido?.estado === "confirmado" ||
     pedido?.estado === "en_preparacion" ||
-    pedido?.estado === "listo";
+    pedido?.estado === "listo" ||
+    pedido?.estado === "entregado";
 
   const itemsCarrito = Object.values(carrito);
   const importeTotal = itemsCarrito.reduce((acc, i) => acc + i.precio * i.cantidad, 0);
