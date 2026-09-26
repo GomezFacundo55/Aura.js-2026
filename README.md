@@ -131,7 +131,7 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 | 10 | Manager Home | Pantalla | Pantalla | | ![Manager Home](https://i.ibb.co/twD9HqpV/Whats-App-Image-2026-09-12-at-08-30-30-3.jpg) |
 | 11 | Agregar Mesa | Pantalla | Pantalla | | ![Agregar Mesa](https://i.ibb.co/Z1XNRgPK/Whats-App-Image-2026-09-12-at-08-30-30-1.jpg) |
 | 12 | Listado Mesas | Listados | Listados | | ![Agregar Mesa](https://i.ibb.co/qFV8xwgt/Whats-App-Image-2026-09-12-at-08-30-30-2.jpg) |
-| 13 | Home Cliente | Pantalla | Pantalla | | ![Home Cliente](https://i.ibb.co/4wDKhSjn/Captura-de-pantalla-2026-09-11-164245.png) |
+| 13 | Home Cliente | Pantalla | Pantalla | | ![Home Cliente](https://s11.aconvert.com/convert/p3r68-cdx67/za8z4-mxrn6.jpg) |
 | 14 | Home Metre | Pantalla | Pantalla | | ![Home Metre](https://i.ibb.co/yBfPMN3c/Captura-de-pantalla-2026-09-11-164659.png) |
 | 15 | Qr Ingreso | Qr | Pantalla | | ![Qr Ingreso](https://i.ibb.co/XxnPKH7z/Whats-App-Image-2026-09-08-at-22-29-03.jpg) |
 | 16 | Qr Mesa 14 | Qr | Pantalla | | ![Qr Mesa 14](https://i.ibb.co/BKttKQRd/Whats-App-Image-2026-09-18-at-22-29-22.jpg) |
