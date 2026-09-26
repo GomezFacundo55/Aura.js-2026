@@ -3,7 +3,7 @@ import { supabase } from "@/servicesJ/supabaseConexion";
 import { obtenerPedidoActivoPorMesa } from "@/servicesJ/pedidoService";
 import type { PedidoConItems } from "@/interfaces/IPedido";
 
-export function usePedidoActivo(mesaId: string | null | undefined) {
+export function usePedidoActivo(mesaId: string | null | undefined, clienteId?: string | null) {
   const [pedido, setPedido] = useState<PedidoConItems | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +18,7 @@ export function usePedidoActivo(mesaId: string | null | undefined) {
     setLoading(true);
     setError(null);
 
-    const { exito, datos, error: err } = await obtenerPedidoActivoPorMesa(mesaId);
+    const { exito, datos, error: err } = await obtenerPedidoActivoPorMesa(mesaId, clienteId);
 
     if (!exito) {
       setError(err || "No se pudo consultar el pedido de la mesa.");
@@ -28,7 +28,7 @@ export function usePedidoActivo(mesaId: string | null | undefined) {
     }
 
     setLoading(false);
-  }, [mesaId]);
+  }, [mesaId, clienteId]);
 
   useEffect(() => {
     fetchPedido();

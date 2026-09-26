@@ -9,6 +9,7 @@ import {
   crearUnaEspera,
   vincularClienteAMesa,
 } from "@/servicesJ/listaDeEsperaService";
+import { confirmarRecepcion } from "@/servicesJ/pedidoService";
 import { SoundService } from "@/servicesJ/soundService";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -46,14 +47,28 @@ export default function HomeScreen() {
   const { mesa, tieneMesa, mesaVinculada, refetch } = useMesaActual(
     profile?.id,
   );
-  const { pedido: pedidoActivo } = usePedidoActivo(mesa?.id);
+  const { pedido: pedidoActivo, refetch: refetchPedido } = usePedidoActivo(
+    mesa?.id,
+    profile?.id,  // filtra por cliente para no heredar pedidos de otros
+  );
 
-  const pedidoConfirmado =
-    !!pedidoActivo &&
-    pedidoActivo.estado !== "pendiente" &&
-    pedidoActivo.estado !== "rechazado";
+  // pedidoEntregado no viene del hook (la query excluye ese estado para evitar
+  // que futuros clientes en la misma mesa lo hereden). Se rastrea localmente.
+  const [pedidoConfirmadoLocal, setPedidoConfirmadoLocal] = useState(false);
+
+  const estadoPedido = pedidoActivo?.estado;
+  const mozoConfirmoPedido =
+    estadoPedido === "confirmado" ||
+    estadoPedido === "en_preparacion" ||
+    estadoPedido === "listo";
+  const pedidoListo = estadoPedido === "listo";
+  const pedidoEntregado = pedidoConfirmadoLocal;
   const esClienteRegistrado = profile?.perfil === "cliente_registrado";
-  const puedeJugar = pedidoConfirmado && esClienteRegistrado;
+  const puedeJugar = (mozoConfirmoPedido || pedidoEntregado) && esClienteRegistrado;
+  const [confirmandoRecepcion, setConfirmandoRecepcion] = useState(false);
+
+  // Key de AsyncStorage para persistir la confirmación entre reinicios de la app
+  const keyPedidoConfirmado = (cId: string, mId: string) => `pedido_confirmado_${cId}_${mId}`;
 
   const keyIngreso = (clienteId: string) => `ingreso_${clienteId}`;
 
@@ -183,6 +198,21 @@ export default function HomeScreen() {
     }
   }, [tieneMesa, qrEscaneado]);
 
+  // Limpiar el flag local cuando el cliente pierde la mesa (nueva sesión)
+  useEffect(() => {
+    if (!mesa?.id) {
+      setPedidoConfirmadoLocal(false);
+    }
+  }, [mesa?.id]);
+
+  // Leer si el cliente ya confirmó la recepción en esta mesa (persiste entre reinicios)
+  useEffect(() => {
+    if (!profile?.id || !mesa?.id) return;
+    AsyncStorage.getItem(keyPedidoConfirmado(profile.id, mesa.id)).then((val) => {
+      if (val === "1") setPedidoConfirmadoLocal(true);
+    });
+  }, [profile?.id, mesa?.id]);
+
   const cargaDatosIniciales = async () => {
     try {
       const perfil = await getMyProfile();
@@ -223,8 +253,46 @@ export default function HomeScreen() {
     setScannerVisible(true);
   };
 
+  // Encuestas completas (con posibilidad de responder) — sólo post-entrega
   const onEncuestasPress = () => {
-    if (!qrEscaneado) return;
+    if (!pedidoEntregado) return;
+    router.push({
+      pathname: "/encuestas",
+      params: {
+        mesaId: mesa?.id,
+        esperaId: esperaId ?? undefined,
+      },
+    });
+  };
+
+  // Solo estadísticas — disponible desde que el cliente ingresó al local
+  const onVerEstadisticasPress = () => {
+    router.push({
+      pathname: "/encuestas",
+      params: {
+        soloGraficos: "1",
+      },
+    });
+  };
+
+  const onConfirmarRecepcion = async () => {
+    if (!pedidoActivo || !mozoConfirmoPedido || confirmandoRecepcion) return;
+    setConfirmandoRecepcion(true);
+    const { exito, error } = await confirmarRecepcion(pedidoActivo.id);
+    setConfirmandoRecepcion(false);
+    if (!exito) {
+      showToast("error", "Error", error || "No se pudo confirmar la recepción.");
+      SoundService.reproducir("error");
+      return;
+    }
+    // Persistir localmente para mostrar el estado final incluso tras refresh
+    if (profile?.id && mesa?.id) {
+      await AsyncStorage.setItem(keyPedidoConfirmado(profile.id, mesa.id), "1");
+    }
+    setPedidoConfirmadoLocal(true);
+    await refetchPedido();
+    SoundService.reproducir("exito");
+    showToast("success", "¡Pedido confirmado!", "Ya podés pedir la cuenta o dejar tu opinión.");
   };
 
   const onListaEsperaPress = async () => {
@@ -350,6 +418,31 @@ export default function HomeScreen() {
     );
   }
 
+  // ─── Textos dinámicos del botón de estado de mesa/pedido ────────────────────
+  // pedidoEnPreparacion: mozo confirmó pero la cocina/barra todavía no marcó "listo"
+  const pedidoEnPreparacion =
+    estadoPedido === "confirmado" || estadoPedido === "en_preparacion";
+
+  const getMesaBtnLabel = () => {
+    if (pedidoEntregado) return "Pedido confirmado";
+    if (pedidoListo) return "Confirmar recepción";
+    if (pedidoEnPreparacion) return "Tu pedido está en preparación";
+    if (mesaVinculada) return `Mesa ${mesa?.numero} - asignada`;
+    return `Mesa ${mesa?.numero} - asignada`;
+  };
+
+  const getMesaBtnSubtitle = () => {
+    if (pedidoEntregado) return "¡Gracias! Ya podés pedir la cuenta";
+    if (pedidoListo) return "Tocá para confirmar";
+    if (pedidoEnPreparacion) return "En breve te lo van a traer";
+    if (mesaVinculada) return "Elegí tu plato o consultá al mozo";
+    return "Escaneá el QR de tu mesa";
+  };
+
+  // Solo es presionable cuando el pedido está listo para ser entregado
+  const isMesaBtnPressable = pedidoListo && !pedidoEntregado && !confirmandoRecepcion;
+
+
   return (
     <View className="flex-1 bg-transparent">
       <QrScannerModal
@@ -373,7 +466,7 @@ export default function HomeScreen() {
         }}
       >
         <View className="flex-1 px-5">
-          <View className="bg-[#FFF4E6] rounded-3xl p-4 items-center mb-4 shadow-sm border border-white/60 relative">
+          <View className="bg-[#FFF4E6] rounded-3xl p-4 items-center mb-2 shadow-sm border border-white/60 relative">
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => setMostrarModal(true)}
@@ -399,103 +492,44 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          {qrEscaneado && (
+          {/* ── Bloque pre-vinculación: lista de espera (sin encuestas) ────────── */}
+          {qrEscaneado && !mesaVinculada && (
             <View
-              className={`bg-[#FFF4E6] rounded-3xl p-6 border border-white/60 shadow-sm ${
-                esCasoB ? "flex-1 justify-between mb-2" : "mb-4"
-              }`}
+              className={`bg-[#FFF4E6] rounded-3xl p-6 border border-white/60 shadow-sm ${esCasoB ? "flex-1 justify-between mb-2" : "mb-4"
+                }`}
             >
               <View className="w-full items-center">
-                <View className="w-12 h-12 bg-white/80 rounded-2xl items-center justify-center mb-2">
+                <View className="w-17 h-17 bg-white/80 rounded-2xl items-center justify-center mb-2">
                   <Ionicons
                     name="restaurant-outline"
-                    size={26}
+                    size={40}
                     color="#FF6B00"
                   />
                 </View>
-                <Text className="text-xl font-black text-[#1E2342] text-center mb-1">
+                <Text className="text-2xl font-black text-[#1E2342] text-center mb-1">
                   Opciones del local habilitadas
                 </Text>
-                <View className="w-full h-[1px] bg-[#F0DFC8] my-2" />
+                <View className="w-full h-[3px] bg-[#F0DFC8] my-2" />
 
                 <View className="w-full mt-1 space-y-2.5">
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={onEncuestasPress}
-                    className="flex-row items-center mb-2 p-3 rounded-2xl border bg-white border-orange-200 shadow-sm"
-                  >
-                    <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
-                      <MaterialCommunityIcons
-                        name="clipboard-text-outline"
-                        size={20}
-                        color="#FF6B00"
-                      />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-lg font-bold text-[#1E2342]">
-                        Ver encuestas
-                      </Text>
-                    </View>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={18}
-                      color="#FF6B00"
-                    />
-                  </TouchableOpacity>
-
-                  {puedeJugar && (
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={() =>
-                        router.push({
-                          pathname: "/juegos",
-                          params: { mesaId: mesa?.id },
-                        })
-                      }
-                      className="flex-row items-center mb-2 p-3 rounded-2xl border bg-white border-orange-200 shadow-sm"
-                    >
-                      <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
-                        <MaterialCommunityIcons
-                          name="gamepad-variant-outline"
-                          size={20}
-                          color="#FF6B00"
-                        />
-                      </View>
-                      <View className="flex-1">
-                        <Text className="text-lg font-bold text-[#1E2342]">
-                          Juegos y descuentos
-                        </Text>
-                        <Text className="text-xs text-[#8A7B6D]">
-                          Ganá hasta 20% de descuento
-                        </Text>
-                      </View>
-                      <Ionicons
-                        name="chevron-forward"
-                        size={18}
-                        color="#FF6B00"
-                      />
-                    </TouchableOpacity>
-                  )}
-
+                  {/* Botón lista de espera / mesa asignada */}
                   <TouchableOpacity
                     onPress={onListaEsperaPress}
                     disabled={enListaDeEspera || mesaHabilitada || tieneMesa}
-                    className={`flex-row items-center p-3 rounded-2xl border ${
-                      mesaHabilitada || tieneMesa
-                        ? "bg-brand-400 border-amber-200 opacity-90 shadow-sm"
-                        : enListaDeEspera
-                          ? "bg-brand-100 border-amber-200 opacity-90 shadow-sm"
-                          : "bg-white border-orange-200 shadow-sm"
-                    }`}
+                    className={`flex-row items-center p-3 rounded-2xl border ${mesaHabilitada || tieneMesa
+                      ? "bg-brand-400 border-amber-200 opacity-90 shadow-sm"
+                      : enListaDeEspera
+                        ? "bg-brand-100 border-amber-200 opacity-90 shadow-sm"
+                        : "bg-white border-orange-200 shadow-sm"
+                      }`}
                   >
                     <View
-                      className={`w-9 h-9 rounded-xl items-center justify-center mr-3 overflow-hidden ${
-                        tieneMesa
-                          ? "bg-black"
-                          : enListaDeEspera
-                            ? "bg-orange-300"
-                            : "bg-orange-100"
-                      }`}
+                      className={`w-15 h-15 rounded-xl items-center justify-center mr-3 overflow-hidden ${tieneMesa
+                        ? "bg-black"
+                        : enListaDeEspera
+                          ? "bg-orange-300"
+                          : "bg-orange-100"
+                        }`}
                     >
                       <MaterialCommunityIcons
                         name={
@@ -505,7 +539,7 @@ export default function HomeScreen() {
                               ? "clock-check-outline"
                               : "account-clock-outline"
                         }
-                        size={20}
+                        size={30}
                         color={
                           tieneMesa
                             ? "#FFFFFF"
@@ -516,7 +550,7 @@ export default function HomeScreen() {
                       />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-lg font-bold text-[#1E2342]">
+                      <Text className="text-xl font-bold text-[#1E2342]">
                         {tieneMesa
                           ? `Mesa ${mesa?.numero} - asignada`
                           : enListaDeEspera
@@ -530,13 +564,13 @@ export default function HomeScreen() {
                           ? "Escaneá el QR de tu mesa"
                           : enListaDeEspera
                             ? "Anotado. Esperando al metre"
-                            : "Anotate para que te asignen una mesa"}
+                            : "Clickeá para anotarte"}
                       </Text>
                     </View>
                     {!enListaDeEspera && !tieneMesa && (
                       <Ionicons
                         name="chevron-forward"
-                        size={18}
+                        size={25}
                         color="#FF6B00"
                       />
                     )}
@@ -548,21 +582,40 @@ export default function HomeScreen() {
                       />
                     )}
                   </TouchableOpacity>
+
+                  {/* ── Ver estadísticas de encuestas (siempre visible tras escanear QR) ── */}
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={onVerEstadisticasPress}
+                    className="flex-row items-center mt-1 p-3 rounded-2xl border bg-white border-orange-200 shadow-sm"
+                  >
+                    <View className="w-15 h-15 rounded-xl bg-orange-100 items-center justify-center mr-3">
+                      <MaterialCommunityIcons
+                        name="chart-box-outline"
+                        size={30}
+                        color="#FF6B00"
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-xl font-bold text-[#1E2342]">
+                        Ver encuestas
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
+                  </TouchableOpacity>
                 </View>
               </View>
 
               {esCasoB && (
                 <View
-                  className={`w-full mt-6 p-4 rounded-2xl border items-center ${
-                    enListaDeEspera
-                      ? "bg-brand-100 border-amber-200"
-                      : "bg-[#ffff] border-orange-200"
-                  }`}
+                  className={`w-full mt-2 p-4 rounded-2xl border items-center ${enListaDeEspera
+                    ? "bg-brand-100 border-amber-200"
+                    : "bg-[#ffff] border-orange-200"
+                    }`}
                 >
                   <View
-                    className={`w-17 h-17 mb-4 rounded-2xl items-center justify-center ${
-                      enListaDeEspera ? "bg-orange-300" : "bg-orange-100"
-                    }`}
+                    className={`w-14 h-14 mb-2 rounded-2xl items-center justify-center ${enListaDeEspera ? "bg-orange-300" : "bg-orange-100"
+                      }`}
                   >
                     <Ionicons
                       name={
@@ -570,18 +623,18 @@ export default function HomeScreen() {
                           ? "hourglass-outline"
                           : "information-circle-outline"
                       }
-                      size={24}
+                      size={30}
                       color={enListaDeEspera ? "#B45309" : "#FF6B00"}
                     />
                   </View>
-                  <Text className="text-[19px] font-black text-[#1E2342] text-center mb-3">
+                  <Text className="text-[20px] font-black text-[#1E2342] text-center mb-1">
                     {enListaDeEspera
                       ? "Estás en la lista de espera"
-                      : "Siguiente paso: solicitar mesa"}
+                      : "Siguiente paso:\n solicitar mesa"}
                   </Text>
-                  <Text className="text-lg font-semibold text-[#8A7B6D] text-center leading-4 px-2">
+                  <Text className="text- font-semibold text-[#8A7B6D] text-center leading-4">
                     {enListaDeEspera
-                      ? "El metre te asignará una mesa disponible en breve. Podés aprovechar para responder las encuestas mientras esperás."
+                      ? "El metre te asignará una mesa disponible en breve. Podés mirar las encuestas mientras esperás."
                       : "Tocá en 'Lista de espera' para registrar tu turno y que el local pueda asignarte una mesa."}
                   </Text>
                 </View>
@@ -589,33 +642,32 @@ export default function HomeScreen() {
             </View>
           )}
 
+          {/* ── Pantalla QR (ingreso o escanear mesa) ──────────────────────────── */}
           {(paso === "ingreso" || paso === "escanear_mesa") && (
-            <View className="bg-[#FFF4E6] rounded-3xl p-6 flex-1 items-center justify-between border border-white/60 shadow-sm mb-2">
+            <View className="bg-[#FFF4E6] rounded-3xl p-6 flex-1 items-center justify-between border border-white/60 shadow-sm mb-1">
               <View className="w-full items-center">
-                <Text className="text-[11px] font-bold tracking-widest text-[#9E8B79] uppercase text-center">
+                <Text className="text-[25px] font-bold tracking-widest text-[#9E8B79] uppercase text-center">
                   {paso === "ingreso" ? "Ingreso al local" : "Tu mesa asignada"}
                 </Text>
-                <Text className="text-2xl font-black text-[#1E2342] text-center mt-0.5">
+                <Text className="text-3xl font-black text-[#1E2342] text-center mt-0.5">
                   {paso === "ingreso" ? "Cámara lista" : `Mesa ${mesa?.numero}`}
                 </Text>
               </View>
 
-              <View className="items-center my-auto py-4">
-                <View className="w-24 h-24 rounded-3xl bg-white/90 items-center justify-center border border-orange-200 shadow-sm mb-3">
-                  <Ionicons
-                    name={
-                      paso === "ingreso" ? "qr-code-outline" : "camera-outline"
-                    }
-                    size={48}
-                    color="#FF6B00"
-                  />
+              {paso === "ingreso" && (
+                <View className="items-center my-auto py-4">
+                  <View className="w-30 h-30 rounded-3xl bg-white/90 items-center justify-center border border-orange-200 shadow-sm mb-3">
+                    <Ionicons
+                      name="qr-code-outline"
+                      size={60}
+                      color="#FF6B00"
+                    />
+                  </View>
+                  <Text className="text-xl font-semibold text-[#8A7B6D] text-center max-w-[260px] leading-4">
+                    Escaneá el código QR en la entrada del local para acceder a las opciones de espera y encuestas.
+                  </Text>
                 </View>
-                <Text className="text-xs font-semibold text-[#8A7B6D] text-center max-w-[260px] leading-4">
-                  {paso === "ingreso"
-                    ? "Escaneá el código QR en la entrada del local para acceder a las opciones de espera y encuestas."
-                    : "Escaneá el código QR físico de tu mesa para validar tu ubicación y acceder al menú y al chat con el mozo."}
-                </Text>
-              </View>
+              )}
 
               <TouchableOpacity
                 onPress={onScanPress}
@@ -624,11 +676,11 @@ export default function HomeScreen() {
               >
                 <Ionicons
                   name="camera"
-                  size={20}
+                  size={30}
                   color="#FFFFFF"
                   style={{ marginRight: 8 }}
                 />
-                <Text className="text-white font-bold text-base">
+                <Text className="text-white font-bold text-xl">
                   {paso === "ingreso"
                     ? "Escanear QR de ingreso"
                     : "Escanear QR de la mesa"}
@@ -637,44 +689,181 @@ export default function HomeScreen() {
             </View>
           )}
 
+          {/* ── Bloque VINCULADO: Mesa confirmada ──────────────────────────────── */}
           {mesaVinculada && (
             <View className="bg-[#FFF4E6] rounded-3xl p-6 mb-2 items-center border border-white/60 shadow-sm flex-1 justify-between">
               <View className="w-full items-center">
-                <Text className="text-2xl font-black text-[#1E2342] text-center">
-                  Mesa {mesa?.numero}
-                </Text>
-                <View className="w-full h-[1px] bg-[#F0DFC8] my-3" />
+                <View className="flex-row items-center justify-center gap-2 flex-wrap">
+                  <Text className="text-3xl font-black text-[#1E2342] text-center">
+                    Mesa {mesa?.numero}
+                  </Text>
+                  {mesa?.tipo && (
+                    <View
+                      className={`flex-row items-center px-2.5 py-1 rounded-full ${mesa.tipo === "vip"
+                        ? "bg-amber-100 border border-amber-300"
+                        : mesa.tipo === "movilidad_reducida"
+                          ? "bg-violet-100 border border-violet-300"
+                          : "bg-sky-100 border border-sky-300"
+                        }`}
+                    >
+                      <MaterialCommunityIcons
+                        name={
+                          mesa.tipo === "vip"
+                            ? "crown-outline"
+                            : mesa.tipo === "movilidad_reducida"
+                              ? "wheelchair-accessibility"
+                              : "table-furniture"
+                        }
+                        size={20}
+                        color={
+                          mesa.tipo === "vip"
+                            ? "#B45309"
+                            : mesa.tipo === "movilidad_reducida"
+                              ? "#7C3AED"
+                              : "#0369A1"
+                        }
+                        style={{ marginRight: 4 }}
+                      />
+                      <Text
+                        className={`text-lg font-bold ${mesa.tipo === "vip"
+                          ? "text-amber-700"
+                          : mesa.tipo === "movilidad_reducida"
+                            ? "text-violet-700"
+                            : "text-sky-700"
+                          }`}
+                      >
+                        {mesa.tipo === "vip"
+                          ? "VIP"
+                          : mesa.tipo === "movilidad_reducida"
+                            ? "Movilidad reducida"
+                            : "Estándar"}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <View className="w-full h-[2px] bg-[#F0DFC8] my-3" />
               </View>
 
               <View className="w-full space-y-2.5 my-auto">
+
+                {/* ── Botón de estado dinámico (mesa/pedido) ── */}
                 <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/menu",
-                      params: { mesaId: mesa?.id },
-                    })
-                  }
-                  className="flex-row items-center p-3 mb-2 rounded-2xl border bg-white border-orange-200 shadow-sm"
+                  activeOpacity={isMesaBtnPressable ? 0.75 : 1}
+                  onPress={isMesaBtnPressable ? onConfirmarRecepcion : undefined}
+                  disabled={!isMesaBtnPressable || confirmandoRecepcion}
+                  className={`flex-row h-40 items-center p-3 mb-5 rounded-2xl border shadow-sm ${pedidoEntregado
+                    ? "bg-emerald-100 border-emerald-300"
+                    : pedidoListo
+                      ? "bg-emerald-500 border-emerald-600"
+                      : pedidoEnPreparacion
+                        ? "bg-amber-100 border-amber-300"
+                        : "bg-brand-400 border-amber-200 opacity-90"
+                    }`}
                 >
-                  <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
-                    <MaterialCommunityIcons
-                      name="silverware-fork-knife"
-                      size={20}
-                      color="#FF6B00"
-                    />
+                  <View
+                    className={`w-15 h-15 rounded-xl items-center justify-center mr-3 ${pedidoEntregado
+                      ? "bg-emerald-200"
+                      : pedidoListo
+                        ? "bg-emerald-600"
+                        : pedidoEnPreparacion
+                          ? "bg-amber-200"
+                          : "bg-black"
+                      }`}
+                  >
+                    {confirmandoRecepcion ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <MaterialCommunityIcons
+                        name={
+                          pedidoEntregado
+                            ? "check-decagram"
+                            : pedidoListo
+                              ? "bell-ring-outline"
+                              : pedidoEnPreparacion
+                                ? "chef-hat"
+                                : "table-chair"
+                        }
+                        size={35}
+                        color={
+                          pedidoEntregado
+                            ? "#059669"
+                            : pedidoListo
+                              ? "#FFFFFF"
+                              : pedidoEnPreparacion
+                                ? "#B45309"
+                                : "#FFFFFF"
+                        }
+                      />
+                    )}
                   </View>
                   <View className="flex-1">
-                    <Text className="text-lg font-bold text-[#1E2342]">
-                      Ver menú
+                    <Text
+                      className={`text-2xl font-bold ${pedidoListo && !pedidoEntregado
+                        ? "text-white"
+                        : pedidoEnPreparacion
+                          ? "text-amber-900"
+                          : "text-[#1E2342]"
+                        }`}
+                    >
+                      {getMesaBtnLabel()}
                     </Text>
-                    <Text className="text-xs text-[#8A7B6D]">
-                      Comidas y bebidas
+                    <Text
+                      className={`text-[15px] font-semibold ${pedidoListo && !pedidoEntregado
+                        ? "text-emerald-100"
+                        : pedidoEnPreparacion
+                          ? "text-amber-700"
+                          : "text-black"
+                        }`}
+                    >
+                      {getMesaBtnSubtitle()}
                     </Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
+                  {/* Chevron solo cuando el botón es presionable */}
+                  {pedidoListo && !pedidoEntregado && (
+                    <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
+                  )}
+                  {pedidoEntregado && (
+                    <Ionicons name="checkmark-circle" size={20} color="#059669" />
+                  )}
                 </TouchableOpacity>
 
+
+                {/* ── Ver menú (oculto cuando el pedido fue confirmado por el cliente) ── */}
+                {!pedidoEntregado && (
+                  <>
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/menu",
+                          params: { mesaId: mesa?.id },
+                        })
+                      }
+                      className="flex-row items-center h-25 p-3 mb-4 rounded-2xl border bg-white border-orange-200 shadow-sm"
+                    >
+                      <View className="w-15 h-15 rounded-xl bg-orange-100 items-center justify-center mr-3">
+                        <MaterialCommunityIcons
+                          name="silverware-fork-knife"
+                          size={40}
+                          color="#FF6B00"
+                        />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-2xl font-bold text-[#1E2342]">
+                          Ver menú
+                        </Text>
+                        <Text className="text-base text-[#8A7B6D]">
+                          Comidas y bebidas
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
+                    </TouchableOpacity>
+
+                    <View className="w-full h-[2px] bg-[#F0DFC8] my-3" />
+                  </>
+                )}
+
+                {/* ── Chateá con el mozo ── */}
                 <TouchableOpacity
                   activeOpacity={0.7}
                   onPress={() =>
@@ -685,23 +874,109 @@ export default function HomeScreen() {
                   }
                   className="flex-row items-center p-3 rounded-2xl border bg-white border-orange-200 shadow-sm"
                 >
-                  <View className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center mr-3">
+                  <View className="w-10 h-10 rounded-xl bg-orange-100 items-center justify-center mr-3">
                     <MaterialCommunityIcons
                       name="chat-outline"
-                      size={20}
+                      size={30}
                       color="#FF6B00"
                     />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-lg font-bold text-[#1E2342]">
+                    <Text className="text-xl font-bold text-[#1E2342]">
                       Chateá con el mozo
                     </Text>
-                    <Text className="text-xs text-[#8A7B6D]">
+                    <Text className="text-base text-[#8A7B6D]">
                       Consultas en vivo
                     </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
                 </TouchableOpacity>
+
+                {/* ── Juegos (visibles sólo cuando el mozo confirmó el pedido) ── */}
+                {puedeJugar && (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/juegos",
+                        params: { mesaId: mesa?.id },
+                      })
+                    }
+                    className="flex-row items-center p-3 mt-0.5 rounded-2xl border bg-white border-orange-200 shadow-sm"
+                  >
+                    <View className="w-10 h-10 rounded-xl bg-orange-100 items-center justify-center mr-3">
+                      <MaterialCommunityIcons
+                        name="gamepad-variant-outline"
+                        size={30}
+                        color="#FF6B00"
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-xl font-bold text-[#1E2342]">
+                        Juegos y descuentos
+                      </Text>
+                      <Text className="text-[13px] text-[#8A7B6D]">
+                        Ganá hasta 20% de descuento
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
+                  </TouchableOpacity>
+                )}
+
+                {/* ── Ver encuestas (sólo cuando el cliente confirmó recepción) ── */}
+                {pedidoEntregado && (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={onEncuestasPress}
+                    className="flex-row items-center p-3 mt-0.5 rounded-2xl border bg-white border-orange-200 shadow-sm"
+                  >
+                    <View className="w-10 h-10 rounded-xl bg-orange-100 items-center justify-center mr-3">
+                      <MaterialCommunityIcons
+                        name="clipboard-text-outline"
+                        size={30}
+                        color="#FF6B00"
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-xl font-bold text-[#1E2342]">
+                        Ver encuestas
+                      </Text>
+                      <Text className="text-[14px] text-[#8A7B6D]">
+                        Dejá tu opinión
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
+                  </TouchableOpacity>
+                )}
+
+                {/* ── Pedir la cuenta (sólo cuando el cliente confirmó recepción) ── */}
+                {pedidoEntregado && (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      // TODO: implementar pantalla de pedido de cuenta
+                    }}
+                    className="flex-row items-center p-3 mt-0.5 rounded-2xl border bg-white border-orange-200 shadow-sm"
+                  >
+                    <View className="w-10 h-10 rounded-xl bg-orange-100 items-center justify-center mr-3">
+                      <MaterialCommunityIcons
+                        name="receipt"
+                        size={30}
+                        color="#FF6B00"
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-xl font-bold text-[#1E2342]">
+                        Pedir la cuenta
+                      </Text>
+                      <Text className="text-[12px] text-[#8A7B6D]">
+                        Solicitá el resumen de tu consumo
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
+                  </TouchableOpacity>
+                )}
+
               </View>
             </View>
           )}

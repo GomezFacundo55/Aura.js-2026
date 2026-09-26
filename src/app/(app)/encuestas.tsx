@@ -29,7 +29,7 @@ export default function EncuestasScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
-  const params = useLocalSearchParams<{ mesaId?: string; esperaId?: string }>();
+  const params = useLocalSearchParams<{ mesaId?: string; esperaId?: string; soloGraficos?: string }>();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [cargando, setCargando] = useState<boolean>(true);
@@ -38,6 +38,9 @@ export default function EncuestasScreen() {
   const [yaRespondio, setYaRespondio] = useState<boolean>(false);
   const [tabPrincipal, setTabPrincipal] = useState<TabPrincipal>("graficos");
   const [tipoGrafico, setTipoGrafico] = useState<TipoGrafico>("atencion");
+
+  // Si soloGraficos="1" el cliente solo puede ver estadísticas, no responder
+  const soloModoGraficos = params.soloGraficos === "1";
 
   const { mesa } = useMesaActual(profile?.id);
   const mesaIdReal = mesaFisicaId || params.mesaId || mesa?.id || "";
@@ -112,7 +115,8 @@ export default function EncuestasScreen() {
           <View className="w-10" />
         </View>
 
-        {/* Selector de modo: Gráficos vs Responder */}
+        {/* Selector de modo: Gráficos vs Responder — oculto en modo solo-estadísticas */}
+        {!soloModoGraficos && (
         <View className="flex-row mx-5 mb-3 p-1 bg-white/80 rounded-2xl border border-orange-200 shadow-sm">
           <TouchableOpacity
             activeOpacity={0.8}
@@ -154,6 +158,7 @@ export default function EncuestasScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+        )}
 
         {/* Contenido según el tab seleccionado */}
         {tabPrincipal === "graficos" ? (
