@@ -1,10 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import {
-  Text,
-  View,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
+import { Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { getMyProfile, signOut, type UserProfile } from "@/lib/auth";
 import { useToast } from "../../contextJ/Toast";
@@ -12,11 +7,13 @@ import { useRouter } from "expo-router";
 import { useState, useCallback } from "react";
 import { useFocusEffect } from "expo-router";
 import { ConfirmModal } from "@/components/modal";
-import { obtenerListaDeEspera, eliminarEspera } from "@/servicesJ/listaDeEsperaService";
+import {
+  obtenerListaDeEspera,
+  eliminarEspera,
+} from "@/servicesJ/listaDeEsperaService";
 import { SoundService } from "@/servicesJ/soundService";
 import { IListaDeEspera } from "@/interfaces/IlistaEspara";
 import { supabase } from "@/lib/supabase";
-
 
 type ModalMode = "salir" | "eliminar";
 
@@ -28,7 +25,8 @@ export default function App() {
   const [mostrarModal, setMostrarModal] = useState<boolean>(false);
   const [cargando, setCargando] = useState<boolean>(false);
   const [cargoUsuario, setCargoUsuario] = useState<string | null>(null);
-  const [esperaSeleccionada, setEsperaSeleccionada] = useState<IListaDeEspera | null>(null);
+  const [esperaSeleccionada, setEsperaSeleccionada] =
+    useState<IListaDeEspera | null>(null);
   const [modoModal, setModoModal] = useState<ModalMode>("salir");
 
   const [paginaActual, setPaginaActual] = useState<number>(1);
@@ -43,32 +41,32 @@ export default function App() {
 
   useFocusEffect(
     useCallback(() => {
-    inicializar();
-    const topic = 'cambios-lista-espera-metre';
-    const canalExistente = supabase
-      .getChannels()
-      .find((c) => c.topic === `realtime:${topic}`);
-    if (canalExistente) {
-      supabase.removeChannel(canalExistente);
-    }
+      inicializar();
+      const topic = "cambios-lista-espera-metre";
+      const canalExistente = supabase
+        .getChannels()
+        .find((c) => c.topic === `realtime:${topic}`);
+      if (canalExistente) {
+        supabase.removeChannel(canalExistente);
+      }
 
-    const canalEspera = supabase
-      .channel(topic)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'lista_espera' },
-        async () => {
-          showToast('info', "Aviso", "Nuevo cliente en lista de espera.")
-          await SoundService.reproducir('info'); 
-          cargarListaDeEspera();
-        }
-      )
-      .subscribe();
+      const canalEspera = supabase
+        .channel(topic)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "lista_espera" },
+          async () => {
+            showToast("info", "Aviso", "Nuevo cliente en lista de espera.");
+            await SoundService.reproducir("info");
+            cargarListaDeEspera();
+          },
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(canalEspera);
-    };
-    }, [])
+      return () => {
+        supabase.removeChannel(canalEspera);
+      };
+    }, []),
   );
 
   const inicializar = async () => {
@@ -100,7 +98,7 @@ export default function App() {
       setCargando(false);
     }
   }
-  
+
   const ejecutarAccionModal = () => {
     if (modoModal === "eliminar") {
       handleEliminarCliente();
@@ -117,7 +115,9 @@ export default function App() {
       await SoundService.reproducir("error");
     }
     if (exito && datos) {
-      const datosFiltrados = datos.filter((item)=> item.estado === "en_espera")
+      const datosFiltrados = datos.filter(
+        (item) => item.estado === "en_espera",
+      );
       setListaDeEspera(datosFiltrados);
     }
   };
@@ -132,23 +132,23 @@ export default function App() {
 
   const handleAsignarMesa = (item: IListaDeEspera) => {
     console.log("Asignar mesa al turno:", item.id);
-    router.push({pathname: "/(app)/lista_mesas",
-      params: {id: item.id, estado: item.estado}
+    router.push({
+      pathname: "/(app)/lista_mesas",
+      params: { id: item.id, estado: item.estado },
     });
   };
 
   const handleEliminarCliente = async () => {
     if (!esperaSeleccionada) return;
     const { error } = await eliminarEspera(esperaSeleccionada.id);
-    if(error){
-      showToast('error', "Error", error);
+    if (error) {
+      showToast("error", "Error", error);
       await SoundService.reproducir("error");
     } else {
       showToast("success", "Listo.", "Eliminado con exito.");
       await SoundService.reproducir("exito");
       await cargarListaDeEspera();
     }
-
   };
 
   return (
@@ -203,6 +203,22 @@ export default function App() {
       {cargando ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#FF6B00" />
+        </View>
+      ) : listaDeEspera.length === 0 ? (
+        <View className="flex-1 items-center justify-center px-6">
+          <View className="w-20 h-20 bg-orange-100 rounded-full items-center justify-center mb-4">
+            <MaterialCommunityIcons
+              name="account-clock-outline"
+              size={42}
+              color="#FF6B00"
+            />
+          </View>
+          <Text className="text-base font-bold text-neutral-800 text-center mb-1">
+            No hay clientes en espera
+          </Text>
+          <Text className="text-xs text-neutral-500 text-center leading-4 mb-5">
+            Cuando un cliente solicite una mesa aparecerá aquí automáticamente.
+          </Text>
         </View>
       ) : (
         <View className="flex-1">
@@ -292,9 +308,9 @@ export default function App() {
 
                   <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={() => { 
+                    onPress={() => {
                       setEsperaSeleccionada(item);
-                      setModoModal("eliminar"); 
+                      setModoModal("eliminar");
                       setMostrarModal(true);
                     }}
                     className="w-10 h-10 bg-red-50 border border-red-200 rounded-xl items-center justify-center"
@@ -307,7 +323,7 @@ export default function App() {
           })}
         </View>
       )}
-     
+
       {!cargando && listaDeEspera.length > 0 && (
         <View className="flex-row items-center justify-between py-1 mt-1">
           <TouchableOpacity
