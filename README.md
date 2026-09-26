@@ -133,12 +133,14 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 | 12 | Listado Mesas | Listados | Listados | | ![Agregar Mesa](https://i.ibb.co/qFV8xwgt/Whats-App-Image-2026-09-12-at-08-30-30-2.jpg) |
 | 13 | Home Cliente | Pantalla | Pantalla | | ![Home Cliente](https://i.ibb.co/4wDKhSjn/Captura-de-pantalla-2026-09-11-164245.png) |
 | 14 | Home Metre | Pantalla | Pantalla | | ![Home Metre](https://i.ibb.co/yBfPMN3c/Captura-de-pantalla-2026-09-11-164659.png) |
-| 15 | Qr Ingreso | Pantalla | Pantalla | | ![Qr Ingreso](https://i.ibb.co/XxnPKH7z/Whats-App-Image-2026-09-08-at-22-29-03.jpg) |
-| 16 | Qr Mesa 14 | Pantalla | Pantalla | | ![Qr Mesa 14](https://i.ibb.co/BKttKQRd/Whats-App-Image-2026-09-18-at-22-29-22.jpg) |
-| 17 | Qr Mesa 15 | Pantalla | Pantalla | | ![Qr Mesa 15](https://i.ibb.co/KjsY0CLv/Whats-App-Image-2026-09-18-at-22-19-08.jpg) |
-| 18 | Qr Mesa 16 | Pantalla | Pantalla | | ![Qr Mesa 16](https://i.ibb.co/pB8VYCZp/Captura-de-pantalla-2026-09-18-224902.png) |
-| 19 | Qr Mesa 17 | Pantalla | Pantalla | | ![Qr Mesa 17](https://i.ibb.co/gFTrH37m/Captura-de-pantalla-2026-09-18-224428.png) |
-| 20 | Qr Mesa 21 | Pantalla | Pantalla | | ![Qr Mesa 21](https://i.ibb.co/zW0ty1Nj/Whats-App-Image-2026-09-23-at-20-53-16.jpg) |
+| 15 | Qr Ingreso | Qr | Pantalla | | ![Qr Ingreso](https://i.ibb.co/XxnPKH7z/Whats-App-Image-2026-09-08-at-22-29-03.jpg) |
+| 16 | Qr Mesa 14 | Qr | Pantalla | | ![Qr Mesa 14](https://i.ibb.co/BKttKQRd/Whats-App-Image-2026-09-18-at-22-29-22.jpg) |
+| 17 | Qr Mesa 15 | Qr | Pantalla | | ![Qr Mesa 15](https://i.ibb.co/KjsY0CLv/Whats-App-Image-2026-09-18-at-22-19-08.jpg) |
+| 18 | Qr Mesa 16 | Qr | Pantalla | | ![Qr Mesa 16](https://i.ibb.co/pB8VYCZp/Captura-de-pantalla-2026-09-18-224902.png) |
+| 19 | Qr Mesa 17 | Qr | Pantalla | | ![Qr Mesa 17](https://i.ibb.co/gFTrH37m/Captura-de-pantalla-2026-09-18-224428.png) |
+| 20 | Qr Mesa 21 | Qr | Pantalla | | ![Qr Mesa 21](https://i.ibb.co/zW0ty1Nj/Whats-App-Image-2026-09-23-at-20-53-16.jpg) |
+| 21 | Sala chat | Pantalla | Pantalla | | [![Chat](https://s11.aconvert.com/convert/p3r68-cdx67/y9o8b-v14uv.webp)] |
+
 
 
 **Categorías:**
