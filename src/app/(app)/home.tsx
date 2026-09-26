@@ -158,6 +158,24 @@ export default function HomeScreen() {
             async (payload) => {
               const pedidoActualizado = payload.new as any;
 
+              if (pedidoActualizado.estado === "rechazado") {
+                await SoundService.reproducir("error");
+                showToast(
+                  "success",
+                  "¡Pedido rechazado!",
+                  "El mozo no ha aceptado tu pedido.",
+                );
+              }
+               //ESTO ES CUANDO SE EL MOZO CONFIRMA EL PEDIDO, GIULI.
+              if (pedidoActualizado.estado === "confirmado") {
+                await SoundService.reproducir("exito");
+                showToast(
+                  "success",
+                  "¡Pedido confirmado!",
+                  "El mozo ha aceptado tu pedido.",
+                );
+              }
+
               if (pedidoActualizado.estado === "en_preparacion") {
                 await SoundService.reproducir("exito");
                 showToast(
