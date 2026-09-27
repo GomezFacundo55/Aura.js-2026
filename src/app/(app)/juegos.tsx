@@ -1,25 +1,49 @@
+import { JuegoMemoria } from '@/components/juegos/juegoMemoria';
+import { JuegoParImpar } from '@/components/juegos/juegoParImpar';
+import { JuegoRuleta } from '@/components/juegos/juegoRuleta';
+import { getMyProfile, type UserProfile } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
+import { registrarDescuento, yaTieneDescuento } from '@/servicesJ/juegosService';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import { getMyProfile, type UserProfile } from '@/lib/auth';
-import { usePedidoActivo } from '@/hooks/usePedidoActivo';
-import { JuegoParImpar } from '@/components/juegos/juegoParImpar';
-import { JuegoMemoria } from '@/components/juegos/juegoMemoria';
-import { JuegoRuleta } from '@/components/juegos/juegoRuleta';
-import { yaTieneDescuento, registrarDescuento } from '@/servicesJ/juegosService';
+
 
 export default function JuegosScreen() {
   const { mesaId } = useLocalSearchParams<{ mesaId: string }>();
-  const { pedido, loading: cargandoPedido } = usePedidoActivo(mesaId);
+  const [pedidoId, setPedidoId] = useState<string | null>(null);
+  const [cargandoPedido, setCargandoPedido] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [descuentoObtenido, setDescuentoObtenido] = useState<{ porcentaje: number; juego: string } | null>(null);
 
   const esClienteRegistrado = profile?.perfil === 'cliente_registrado';
-  const pedidoId = pedido?.id;
 
   useEffect(() => {
     getMyProfile().then(setProfile);
   }, []);
+
+  useEffect(() => {
+  if (!mesaId) {
+    console.log('[juegos] mesaId vacío');
+    setCargandoPedido(false);
+    return;
+  }
+
+  console.log('[juegos] buscando pedido para mesaId:', mesaId);
+
+  supabase
+    .from('pedidos')
+    .select('id, estado')
+    .eq('mesa_id', mesaId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+    .then(({ data, error }) => {
+      console.log('[juegos] resultado:', data, 'error:', error);
+      setPedidoId(data?.id ?? null);
+      setCargandoPedido(false);
+    });
+}, [mesaId]);
 
   useEffect(() => {
     if (pedidoId) {
@@ -46,7 +70,7 @@ export default function JuegosScreen() {
     );
   }
 
-  if (!pedido) {
+  if (!pedidoId) {
     return (
       <View className="flex-1 items-center justify-center bg-[#FFF4E6] p-6">
         <Text className="text-center text-base font-bold text-[#1E2342]">
@@ -60,7 +84,7 @@ export default function JuegosScreen() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-transparent" contentContainerStyle={{ padding: 20, gap: 16 }}>
+    <ScrollView className="flex-1 bg-[#FFF4E6]" contentContainerStyle={{ padding: 20, gap: 16 }}>
       <Text className="text-center text-2xl font-black text-[#1E2342]">Juegos y descuentos</Text>
 
       {descuentoObtenido ? (
@@ -69,7 +93,7 @@ export default function JuegosScreen() {
             Ya tenés tu {descuentoObtenido.porcentaje}% de descuento asegurado
           </Text>
           <Text className="mt-1 text-center text-sm text-[#8A7B6D]">
-            Podés seguir jugando por diversión, no se sumarán más descuentos.
+            Se aplicará al pagar tu cuenta.
           </Text>
         </View>
       ) : esClienteRegistrado ? (
