@@ -10,11 +10,17 @@ import {
   vincularClienteAMesa,
 } from "@/servicesJ/listaDeEsperaService";
 import { confirmarRecepcion } from "@/servicesJ/pedidoService";
+import {
+  consultarMesaPorQr,
+  formatearPesos,
+  obtenerUltimaCuentaCliente,
+} from "@/servicesJ/cuentaService";
+import type { Cuenta } from "@/interfaces/ICuenta";
 import { SoundService } from "@/servicesJ/soundService";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -47,6 +53,11 @@ export default function HomeScreen() {
   const { mesa, tieneMesa, mesaVinculada, refetch } = useMesaActual(
     profile?.id,
   );
+  const refetchMesaRef = useRef(refetch);
+  refetchMesaRef.current = refetch;
+
+  const [cuentaActual, setCuentaActual] = useState<Cuenta | null>(null);
+  const keyCuentaCerrada = (cuentaId: string) => `cuenta_cerrada_${cuentaId}`;
   const { pedido: pedidoActivo, refetch: refetchPedido } = usePedidoActivo(
     mesa?.id,
     profile?.id,  // filtra por cliente para no heredar pedidos de otros
@@ -90,6 +101,7 @@ export default function HomeScreen() {
     useCallback(() => {
       let canalEspera: any = null;
       let canalPedido: any = null;
+      let canalCuenta: any = null;
 
       const inicializarPantalla = async () => {
         await cargaDatosIniciales();
@@ -136,6 +148,37 @@ export default function HomeScreen() {
             },
           )
           .subscribe();
+        const nombreCanalCuenta = `cuenta-cliente-home-${perfilActual.id}`;
+        const canalCuentaExistente = supabase
+          .getChannels()
+          .find((c) => c.topic === `realtime:${nombreCanalCuenta}`);
+        if (canalCuentaExistente) {
+          supabase.removeChannel(canalCuentaExistente);
+        }
+
+        canalCuenta = supabase
+          .channel(nombreCanalCuenta)
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "cuentas",
+              filter: `cliente_id=eq.${perfilActual.id}`,
+            },
+            async (payload) => {
+              const cuenta = payload.new as Cuenta;
+              if (!cuenta?.id) return;
+              if (cuenta.estado === "confirmada") {
+                await refetchMesaRef.current();
+                await cargaDatosIniciales();
+              } else {
+                setCuentaActual(cuenta);
+              }
+            },
+          )
+          .subscribe();
+
         const nombreCanalPedido = `pedido-cliente-${perfilActual.id}`;
         const canalPedidoExistente = supabase
           .getChannels()
@@ -206,6 +249,9 @@ export default function HomeScreen() {
         if (canalPedido) {
           supabase.removeChannel(canalPedido);
         }
+        if (canalCuenta) {
+          supabase.removeChannel(canalCuenta);
+        }
       };
     }, []),
   );
@@ -241,6 +287,8 @@ export default function HomeScreen() {
       setProfile(perfil);
 
       if (perfil?.id) {
+        await verificarCierreDeCuenta(perfil.id);
+
         const [{ exito, datos }, ingresoGuardado] = await Promise.all([
           consultarClienteEnListaDeEspera(perfil.id),
           AsyncStorage.getItem(keyIngreso(perfil.id)),
@@ -264,6 +312,35 @@ export default function HomeScreen() {
     } finally {
       setCargando(false);
     }
+  };
+
+  const verificarCierreDeCuenta = async (clienteId: string) => {
+    const { exito, datos: ultima } = await obtenerUltimaCuentaCliente(clienteId);
+    if (!exito) return;
+
+    if (ultima?.estado === "confirmada") {
+      const yaProcesada = await AsyncStorage.getItem(keyCuentaCerrada(ultima.id));
+      if (!yaProcesada) {
+        await AsyncStorage.multiRemove([
+          keyIngreso(clienteId),
+          keyPedidoConfirmado(clienteId, ultima.mesa_id),
+        ]);
+        await AsyncStorage.setItem(keyCuentaCerrada(ultima.id), "1");
+        setQrEscaneado(false);
+        setEnListaDeEspera(false);
+        setEsperaId(null);
+        setMesaHabilitada(false);
+        setPedidoConfirmadoLocal(false);
+      }
+      setCuentaActual(null);
+    } else {
+      setCuentaActual(ultima ?? null);
+    }
+  };
+
+  const onPedirCuentaPress = () => {
+    if (!mesa?.id) return;
+    router.push({ pathname: "/cuenta", params: { mesaId: mesa.id } });
   };
 
   const onScanPress = () => {
@@ -355,6 +432,25 @@ export default function HomeScreen() {
         "Ingreso al local validado correctamente.",
       );
     } else {
+      const { exito, datos } = await consultarMesaPorQr(data);
+      if (exito && datos) {
+        if (datos.disponibilidad === "vacia") {
+          await SoundService.reproducir("info");
+          showToast(
+            "info",
+            `Mesa ${datos.numero} libre`,
+            "Para ocuparla primero escaneá el QR de ingreso y anotate en la lista de espera.",
+          );
+        } else {
+          await SoundService.reproducir("error");
+          showToast(
+            "error",
+            `Mesa ${datos.numero} ocupada`,
+            "Esta mesa no está disponible en este momento.",
+          );
+        }
+        return;
+      }
       await SoundService.reproducir("error");
       showToast(
         "error",
@@ -971,9 +1067,7 @@ export default function HomeScreen() {
                 {pedidoEntregado && (
                   <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={() => {
-                      // TODO: implementar pantalla de pedido de cuenta
-                    }}
+                    onPress={onPedirCuentaPress}
                     className="flex-row items-center p-3 mt-0.5 rounded-2xl border bg-white border-orange-200 shadow-sm"
                   >
                     <View className="w-10 h-10 rounded-xl bg-orange-100 items-center justify-center mr-3">
@@ -985,10 +1079,22 @@ export default function HomeScreen() {
                     </View>
                     <View className="flex-1">
                       <Text className="text-xl font-bold text-[#1E2342]">
-                        Pedir la cuenta
+                        {!cuentaActual
+                          ? "Pedir la cuenta"
+                          : cuentaActual.estado === "pagada"
+                            ? "Pago en revisión"
+                            : cuentaActual.propina_porcentaje == null
+                              ? "Ver mi cuenta"
+                              : "Pagar la cuenta"}
                       </Text>
-                      <Text className="text-[12px] text-[#8A7B6D]">
-                        Solicitá el resumen de tu consumo
+                      <Text className="text-[14px] text-[#8A7B6D]">
+                        {!cuentaActual
+                          ? "Solicitá el resumen de tu consumo"
+                          : cuentaActual.estado === "pagada"
+                            ? "Esperando la confirmación del mozo"
+                            : cuentaActual.propina_porcentaje == null
+                              ? "Falta escanear el QR de propina"
+                              : `Total: ${formatearPesos(cuentaActual.total)}`}
                       </Text>
                     </View>
                     <Ionicons name="chevron-forward" size={18} color="#FF6B00" />

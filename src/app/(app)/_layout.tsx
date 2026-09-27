@@ -2,12 +2,14 @@ import { getMyProfile, signOut, type UserProfile } from "@/lib/auth";
 import { Stack, router, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
+import { useCuentaNotifications } from "@/hooks/useCuentaNotifications";
 
 export default function AppLayout() {
   const navigation = useNavigation();
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useChatNotifications(profile);
+  useCuentaNotifications(profile);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("beforeRemove", (e) => {

@@ -139,7 +139,7 @@ export function useMesaActual(clienteId: string | null | undefined) {
       .from("lista_espera")
       .select("id, cliente_id, mesa_asignada_id, estado, mesas:mesa_asignada_id(id, numero, tipo)")
       .eq("cliente_id", clienteId)
-      .order("id", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 

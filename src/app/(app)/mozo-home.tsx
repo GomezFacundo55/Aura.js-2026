@@ -16,6 +16,7 @@ import { SoundService } from '@/servicesJ/soundService';
 import { obtenerPedidos, rechazarPedido, confirmarPedido } from '@/servicesJ/pedidoService';
 import { EstadoPedido } from '@/interfaces/IPedido';
 import { supabase } from '@/lib/supabase';
+import CuentasMozo from '@/components/cuenta/CuentasMozo';
 
 interface PedidoPendiente {
   id: string;
@@ -45,6 +46,10 @@ export default function MozoHome() {
   const [enviando, setEnviando] = useState(false);
   const [confirmandoId, setConfirmandoId] = useState<string | null>(null);
   const [estadoPedidosObtenido, setEstadoPedidosObtenidos] = useState<EstadoPedido>("pendiente");
+  const [verCuentas, setVerCuentas] = useState(false);
+  const [recargaCuentas, setRecargaCuentas] = useState(0);
+  const verCuentasRef = useRef(verCuentas);
+  verCuentasRef.current = verCuentas;
   const estadoRef = useRef(estadoPedidosObtenido);
   estadoRef.current = estadoPedidosObtenido;
 
@@ -87,7 +92,7 @@ export default function MozoHome() {
                   "¡Nuevo pedido para confirmar!",
                   "Un cliente hizo un nuevo pedido.",
                 );
-                if(estadoRef.current === "pendiente"){
+                if(!verCuentasRef.current && estadoRef.current === "pendiente"){
                   cargarPedidos("pendiente");
                 }
               }
@@ -110,7 +115,7 @@ export default function MozoHome() {
                   "¡Pedido listo para entregar!",
                   "El cliente espera su entrega.",
                 );
-                if(estadoRef.current === "listo"){
+                if(!verCuentasRef.current && estadoRef.current === "listo"){
                   cargarPedidos("listo");
                 }
               }
@@ -139,6 +144,7 @@ export default function MozoHome() {
   };
 
   const cargarPedidos = async (estadoDelPedido: EstadoPedido = "pendiente") => {
+    setVerCuentas(false);
     setCargando(true);
     setEstadoPedidosObtenidos(estadoDelPedido);
     const { exito, datos, error } = await obtenerPedidos(estadoDelPedido);
@@ -232,7 +238,10 @@ export default function MozoHome() {
         
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={ () => { cargarPedidos(estadoPedidosObtenido) } }
+          onPress={ () => {
+            if (verCuentas) setRecargaCuentas((n) => n + 1);
+            else cargarPedidos(estadoPedidosObtenido);
+          } }
           className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center"
         >
           <Ionicons name="refresh" size={18} color="#EA580C" />
@@ -240,15 +249,17 @@ export default function MozoHome() {
       </View>
 
       <Text className="text-xl font-bold text-gray-800 px-4 mb-2">
-        Pedidos {estadoPedidosObtenido === "pendiente" ? "pendientes de confirmación" : "Listos"}
+        {verCuentas
+          ? "Cuentas por cobrar"
+          : `Pedidos ${estadoPedidosObtenido === "pendiente" ? "pendientes de confirmación" : "Listos"}`}
       </Text>
       <View className="flex-row px-4 mb-3 gap-3">
         <TouchableOpacity
           activeOpacity={0.7}
-          disabled={estadoPedidosObtenido === 'pendiente'}
+          disabled={!verCuentas && estadoPedidosObtenido === 'pendiente'}
           onPress={() => cargarPedidos('pendiente')}
           className={`flex-1 flex-row py-3 px-4 rounded-xl items-center justify-center border ${
-            estadoPedidosObtenido === 'pendiente'
+            !verCuentas && estadoPedidosObtenido === 'pendiente'
               ? 'bg-orange-200 border-orange-300 opacity-60'
               : 'bg-orange-500 border-orange-600'
           }`}
@@ -256,11 +267,11 @@ export default function MozoHome() {
           <Ionicons 
             name="time-outline" 
             size={18} 
-            color={estadoPedidosObtenido === 'pendiente' ? '#9A3412' : '#FFFFFF'} 
+            color={!verCuentas && estadoPedidosObtenido === 'pendiente' ? '#9A3412' : '#FFFFFF'} 
             style={{ marginRight: 6 }}
           />
           <Text className={`font-semibold text-xs ${
-            estadoPedidosObtenido === 'pendiente' ? 'text-amber-900' : 'text-white'
+            !verCuentas && estadoPedidosObtenido === 'pendiente' ? 'text-amber-900' : 'text-white'
           }`}>
             Pendientes
           </Text>
@@ -268,10 +279,10 @@ export default function MozoHome() {
 
         <TouchableOpacity
           activeOpacity={0.7}
-          disabled={estadoPedidosObtenido === 'listo'}
+          disabled={!verCuentas && estadoPedidosObtenido === 'listo'}
           onPress={() => cargarPedidos('listo')}
           className={`flex-1 flex-row py-3 px-4 rounded-xl items-center justify-center border ${
-            estadoPedidosObtenido === 'listo'
+            !verCuentas && estadoPedidosObtenido === 'listo'
               ? 'bg-orange-200 border-orange-300 opacity-60'
               : 'bg-orange-500 border-orange-600'
           }`}
@@ -279,16 +290,40 @@ export default function MozoHome() {
           <Ionicons 
             name="checkmark-circle-outline" 
             size={18} 
-            color={estadoPedidosObtenido === 'listo' ? '#9A3412' : '#FFFFFF'} 
+            color={!verCuentas && estadoPedidosObtenido === 'listo' ? '#9A3412' : '#FFFFFF'} 
             style={{ marginRight: 6 }}
           />
           <Text className={`font-semibold text-xs ${
-            estadoPedidosObtenido === 'listo' ? 'text-amber-900' : 'text-white'
+            !verCuentas && estadoPedidosObtenido === 'listo' ? 'text-amber-900' : 'text-white'
           }`}>
             Listos
           </Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={0.7}
+          disabled={verCuentas}
+          onPress={() => setVerCuentas(true)}
+          className={`flex-1 flex-row py-3 px-4 rounded-xl items-center justify-center border ${
+            verCuentas
+              ? 'bg-orange-200 border-orange-300 opacity-60'
+              : 'bg-orange-500 border-orange-600'
+          }`}
+        >
+          <Ionicons
+            name="receipt-outline"
+            size={18}
+            color={verCuentas ? '#9A3412' : '#FFFFFF'}
+            style={{ marginRight: 6 }}
+          />
+          <Text className={`font-semibold text-xs ${verCuentas ? 'text-amber-900' : 'text-white'}`}>
+            Cuentas
+          </Text>
+        </TouchableOpacity>
       </View>
+      {verCuentas && profile ? (
+        <CuentasMozo key={recargaCuentas} mozoId={profile.id} />
+      ) : (
       <ScrollView className="flex-1 px-4">
         {pedidos.length === 0 ? (
           <View className="py-20 items-center justify-center bg-white rounded-2xl border border-gray-200 mt-2">
@@ -402,6 +437,7 @@ export default function MozoHome() {
         )}
         <View className="h-6" />
       </ScrollView>
+      )}
 
       <Modal visible={!!pedidoARechazar} transparent animationType="fade">
         <View className="flex-1 bg-black/50 justify-center items-center p-6">

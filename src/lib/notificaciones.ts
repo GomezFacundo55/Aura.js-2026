@@ -98,3 +98,31 @@ export async function notificarNuevoMensajeChat(titulo: string, cuerpo: string) 
     console.warn('No se pudo enviar la notificación de chat:', error);
   }
 }
+
+export async function notificarCuenta(titulo: string, cuerpo: string) {
+  const Notifications = cargarNotifications();
+  if (!Notifications) return;
+
+  try {
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('cuentas', {
+        name: 'Cuentas y pagos',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF6B00',
+      });
+    }
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: titulo,
+        body: cuerpo,
+        sound: true,
+        channelId: Platform.OS === 'android' ? 'cuentas' : undefined,
+      },
+      trigger: null,
+    });
+  } catch (error) {
+    console.warn('No se pudo enviar la notificación de cuenta:', error);
+  }
+}
