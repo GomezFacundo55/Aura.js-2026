@@ -140,6 +140,11 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 | 19 | Qr Mesa 17 | Qr | Pantalla | | ![Qr Mesa 17](https://i.ibb.co/gFTrH37m/Captura-de-pantalla-2026-09-18-224428.png) |
 | 20 | Qr Mesa 21 | Qr | Pantalla | | ![Qr Mesa 21](https://i.ibb.co/zW0ty1Nj/Whats-App-Image-2026-09-23-at-20-53-16.jpg) |
 | 21 | Sala chat | Pantalla | Pantalla | | [![Chat](https://s11.aconvert.com/convert/p3r68-cdx67/y9o8b-v14uv.webp)] |
+| 22 | Qr Propina Excelente (20%) | Qr | Pedir la cuenta | `assets/propinas/propina_excelente.png` | ![Qr Propina Excelente](assets/propinas/propina_excelente.png) |
+| 23 | Qr Propina Muy bueno (15%) | Qr | Pedir la cuenta | `assets/propinas/propina_muy_bueno.png` | ![Qr Propina Muy bueno](assets/propinas/propina_muy_bueno.png) |
+| 24 | Qr Propina Bueno (10%) | Qr | Pedir la cuenta | `assets/propinas/propina_bueno.png` | ![Qr Propina Bueno](assets/propinas/propina_bueno.png) |
+| 25 | Qr Propina Regular (5%) | Qr | Pedir la cuenta | `assets/propinas/propina_regular.png` | ![Qr Propina Regular](assets/propinas/propina_regular.png) |
+| 26 | Qr Propina Malo (0%) | Qr | Pedir la cuenta | `assets/propinas/propina_malo.png` | ![Qr Propina Malo](assets/propinas/propina_malo.png) |
 
 
 
