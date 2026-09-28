@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
-  ScrollView,
+  Image,
   ActivityIndicator,
   Pressable,
   TouchableOpacity,
@@ -201,7 +201,16 @@ export default function PedidosSectorScreen({ tabla, titulo }: Props) {
           >
             <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
           </TouchableOpacity>
-
+          <View className="w-11 h-11 rounded-full bg-white/40 overflow-hidden items-center justify-center mr-3 border border-white/50">
+            {perfilUsuario?.foto_url ? (
+              <Image 
+                source={{ uri: perfilUsuario.foto_url }} 
+                className="w-full h-full"
+              />
+            ) : (
+              <Ionicons name="person" size={22} color="#444" />
+            )}
+          </View>
           <View className="flex-1">
             <Text className="text-dark font-medium text-xs">Bienvenido/a,</Text>
             <Text className="text-dark font-bold text-base" numberOfLines={1}>
