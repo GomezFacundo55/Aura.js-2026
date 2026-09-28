@@ -99,16 +99,22 @@ export async function actualizarPedidoConItems(pedidoId: string, items: ItemCarr
 
 export async function obtenerPedidoActivoPorMesa(mesaId: string, clienteId?: string | null) {
   try {
+    // Cuando se filtra por clienteId el pedido ya está aislado a ese cliente,
+    // por lo que es seguro incluir "rechazado": así el estado persiste entre
+    // reinicios de sesión (no depende solo del estado en memoria).
+    // Sin clienteId (ej: vista del mozo) se excluyen "entregado" y "rechazado"
+    // para no contaminar la vista con pedidos de sesiones anteriores.
+    const estadosActivos = clienteId
+      ? ['pendiente', 'confirmado', 'en_preparacion', 'listo', 'rechazado']
+      : ['pendiente', 'confirmado', 'en_preparacion', 'listo'];
+
     let query = supabase
       .from('pedidos')
       .select('*, pedido_items(*)')
       .eq('mesa_id', mesaId)
-      // Solo estados en curso: nunca "entregado" ni "rechazado"
-      // para que sesiones anteriores en la misma mesa no contaminen la vista actual.
-      .in('estado', ['pendiente', 'confirmado', 'en_preparacion', 'listo']);
+      .in('estado', estadosActivos);
 
     if (clienteId) {
-      // Si se pasa clienteId, filtrar ademas por cliente para mayor aislamiento
       query = query.eq('cliente_id', clienteId);
     }
 

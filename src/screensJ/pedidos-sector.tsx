@@ -88,7 +88,7 @@ export default function PedidosSectorScreen({ tabla, titulo }: Props) {
       const pedidosFiltrados = pedidosVisibles.filter((pedido) => {
         return !pedido.items.every((item) => item.estado === 'terminado');
       });
-      setPedidos(pedidosFiltrados);
+      setPedidos(datos);
       showToast("success", "Exito.", "Pedidos cargados exitosamente.");
       await SoundService.reproducir("exito");
     } else{
