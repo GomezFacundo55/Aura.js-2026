@@ -20,7 +20,13 @@ import { SoundService } from "@/servicesJ/soundService";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+} from "react";
 import {
   ActivityIndicator,
   Image,
@@ -33,6 +39,101 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useToast } from "../../contextJ/Toast";
 
 type ScanMode = "ingreso" | "mesa";
+
+// ─── Configuración visual del botón de estado dinámico ────────────────────────
+type EstadoBoton =
+  | "sin_pedido"
+  | "confirmado"
+  | "en_preparacion"
+  | "listo"
+  | "rechazado"
+  | "entregado";
+
+type McIcon = ComponentProps<typeof MaterialCommunityIcons>["name"];
+type IoIcon = ComponentProps<typeof Ionicons>["name"];
+
+const BOTON_ESTADO: Record<
+  EstadoBoton,
+  {
+    label: (numeroMesa?: number | string) => string;
+    subtitle: string;
+    container: string;
+    iconBox: string;
+    icon: McIcon;
+    iconColor: string;
+    labelColor: string;
+    subtitleColor: string;
+    trailing?: { name: IoIcon; color: string };
+  }
+> = {
+  sin_pedido: {
+    label: (n) => `Mesa ${n} - asignada`,
+    subtitle: "Elegí tu plato o consultá al mozo",
+    container: "bg-brand-400 border-amber-200 opacity-90",
+    iconBox: "bg-black",
+    icon: "table-chair",
+    iconColor: "#FFFFFF",
+    labelColor: "text-[#1E2342]",
+    subtitleColor: "text-black",
+  },
+  // 1. El mozo confirmó el pedido
+  confirmado: {
+    label: () => "Pedido confirmado por el mozo",
+    subtitle: "Ya lo enviamos a cocina y barra",
+    container: "bg-sky-100 border-sky-300",
+    iconBox: "bg-sky-200",
+    icon: "clipboard-check-outline",
+    iconColor: "#0369A1",
+    labelColor: "text-sky-900",
+    subtitleColor: "text-sky-700",
+  },
+  // 2. Cocina / barra preparando
+  en_preparacion: {
+    label: () => "Tu pedido está en preparación",
+    subtitle: "En breve te lo van a traer",
+    container: "bg-amber-100 border-amber-300",
+    iconBox: "bg-amber-200",
+    icon: "chef-hat",
+    iconColor: "#B45309",
+    labelColor: "text-amber-900",
+    subtitleColor: "text-amber-700",
+  },
+  // 3. Listo: el cartel se vuelve botón
+  listo: {
+    label: () => "Confirmar recepción",
+    subtitle: "Tocá para confirmar",
+    container: "bg-emerald-500 border-emerald-600",
+    iconBox: "bg-emerald-600",
+    icon: "bell-ring-outline",
+    iconColor: "#FFFFFF",
+    labelColor: "text-white",
+    subtitleColor: "text-emerald-100",
+    trailing: { name: "chevron-forward", color: "#FFFFFF" },
+  },
+  // 4. Rechazado: también es tocable, lleva al menú
+  rechazado: {
+    label: () => "Pedido rechazado",
+    subtitle: "Tocá para hacer un pedido nuevo",
+    container: "bg-red-100 border-red-300",
+    iconBox: "bg-red-200",
+    icon: "close-circle-outline",
+    iconColor: "#DC2626",
+    labelColor: "text-red-900",
+    subtitleColor: "text-red-700",
+    trailing: { name: "chevron-forward", color: "#DC2626" },
+  },
+  entregado: {
+    label: () => "Pedido recibido",
+    subtitle: "¡Gracias! Ya podés pedir la cuenta",
+    container: "bg-emerald-100 border-emerald-300",
+    iconBox: "bg-emerald-200",
+    icon: "check-decagram",
+    iconColor: "#059669",
+    labelColor: "text-[#1E2342]",
+    subtitleColor: "text-black",
+    trailing: { name: "checkmark-circle", color: "#059669" },
+  },
+};
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -56,16 +157,27 @@ export default function HomeScreen() {
   const refetchMesaRef = useRef(refetch);
   refetchMesaRef.current = refetch;
 
+  const showToastRef = useRef(showToast);
+  showToastRef.current = showToast;
+
   const [cuentaActual, setCuentaActual] = useState<Cuenta | null>(null);
   const keyCuentaCerrada = (cuentaId: string) => `cuenta_cerrada_${cuentaId}`;
   const { pedido: pedidoActivo, refetch: refetchPedido } = usePedidoActivo(
     mesa?.id,
-    profile?.id,  // filtra por cliente para no heredar pedidos de otros
+    profile?.id, // filtra por cliente para no heredar pedidos de otros
   );
+
+  // Ref para que el canal realtime (deps []) no use una función vieja
+  const refetchPedidoRef = useRef(refetchPedido);
+  refetchPedidoRef.current = refetchPedido;
 
   // pedidoEntregado no viene del hook (la query excluye ese estado para evitar
   // que futuros clientes en la misma mesa lo hereden). Se rastrea localmente.
   const [pedidoConfirmadoLocal, setPedidoConfirmadoLocal] = useState(false);
+
+  // El rechazo también se rastrea localmente: la query puede excluir "rechazado"
+  // para que el cliente pueda hacer un pedido nuevo.
+  const [pedidoRechazado, setPedidoRechazado] = useState(false);
 
   const estadoPedido = pedidoActivo?.estado;
   const mozoConfirmoPedido =
@@ -138,12 +250,12 @@ export default function HomeScreen() {
               ) {
                 setMesaHabilitada(true);
                 await SoundService.reproducir("exito");
-                showToast(
+                showToastRef.current(
                   "success",
                   "¡Mesa asignada!",
                   "El metre te asignó una mesa. Ya podés ingresar.",
                 );
-                await refetch();
+                await refetchMesaRef.current();
               }
             },
           )
@@ -201,43 +313,50 @@ export default function HomeScreen() {
             async (payload) => {
               const pedidoActualizado = payload.new as any;
 
-              if (pedidoActualizado.estado === "rechazado") {
-                await SoundService.reproducir("error");
-                showToast(
-                  "success",
-                  "¡Pedido rechazado!",
-                  "El mozo no ha aceptado tu pedido.",
-                );
-              }
-               //ESTO ES CUANDO SE EL MOZO CONFIRMA EL PEDIDO, GIULI.
-              if (pedidoActualizado.estado === "confirmado") {
-                await SoundService.reproducir("exito");
-                showToast(
-                  "success",
-                  "¡Pedido confirmado!",
-                  "El mozo ha aceptado tu pedido.",
-                );
-              }
+              // Clave: refrescar el estado que consume el botón
+              await refetchPedidoRef.current();
 
-              if (pedidoActualizado.estado === "en_preparacion") {
-                await SoundService.reproducir("exito");
-                showToast(
-                  "success",
-                  "¡Pedido en preparacion!",
-                  "Tus productos estarán en cualquier momento.",
-                );
-              }
-              if (pedidoActualizado.estado === "listo") {
-                await SoundService.reproducir("exito");
-                showToast(
-                  "success",
-                  "¡Pedido listo!",
-                  "En breve te entregarán el pedido.",
-                );
+              switch (pedidoActualizado.estado) {
+                case "rechazado":
+                  setPedidoRechazado(true);
+                  await SoundService.reproducir("error");
+                  showToastRef.current(
+                    "error",
+                    "¡Pedido rechazado!",
+                    "El mozo no ha aceptado tu pedido.",
+                  );
+                  break;
+                case "confirmado":
+                  await SoundService.reproducir("exito");
+                  showToastRef.current(
+                    "success",
+                    "¡Pedido confirmado!",
+                    "El mozo ha aceptado tu pedido.",
+                  );
+                  break;
+                case "en_preparacion":
+                  await SoundService.reproducir("exito");
+                  showToastRef.current(
+                    "success",
+                    "¡Pedido en preparación!",
+                    "Tus productos estarán en cualquier momento.",
+                  );
+                  break;
+                case "listo":
+                  await SoundService.reproducir("exito");
+                  showToastRef.current(
+                    "success",
+                    "¡Pedido listo!",
+                    "Confirmá la recepción cuando te lo entreguen.",
+                  );
+                  break;
               }
             },
           )
           .subscribe();
+
+        // Sincroniza el pedido al volver a la pantalla (ej: desde el menú)
+        refetchPedidoRef.current();
       };
 
       inicializarPantalla();
@@ -262,12 +381,25 @@ export default function HomeScreen() {
     }
   }, [tieneMesa, qrEscaneado]);
 
-  // Limpiar el flag local cuando el cliente pierde la mesa (nueva sesión)
+  // Limpiar los flags locales cuando el cliente pierde la mesa (nueva sesión)
   useEffect(() => {
     if (!mesa?.id) {
       setPedidoConfirmadoLocal(false);
+      setPedidoRechazado(false);
     }
   }, [mesa?.id]);
+
+  // Sincronizar pedidoRechazado con el estado que llega de la query.
+  // - Si el pedido activo viene como "rechazado" (ej: re-login) → activar el flag.
+  // - Si llega un pedido nuevo con otro estado → limpiar el flag.
+  useEffect(() => {
+    if (!pedidoActivo?.id) return;
+    if (pedidoActivo.estado === "rechazado") {
+      setPedidoRechazado(true);
+    } else {
+      setPedidoRechazado(false);
+    }
+  }, [pedidoActivo?.id, pedidoActivo?.estado]);
 
   // Leer si el cliente ya confirmó la recepción en esta mesa (persiste entre reinicios)
   useEffect(() => {
@@ -295,7 +427,6 @@ export default function HomeScreen() {
         ]);
 
         if (exito && datos) {
-          // Corrección aplicada aquí:
           if (datos.estado === "asignado" || datos.estado === "vinculado") {
             setMesaHabilitada(true);
           }
@@ -308,7 +439,7 @@ export default function HomeScreen() {
       }
     } catch (err) {
       console.error(err);
-      showToast("error", "Error", "No se pudo cargar la información inicial");
+      showToastRef.current("error", "Error", "No se pudo cargar la información inicial");
     } finally {
       setCargando(false);
     }
@@ -331,6 +462,7 @@ export default function HomeScreen() {
         setEsperaId(null);
         setMesaHabilitada(false);
         setPedidoConfirmadoLocal(false);
+        setPedidoRechazado(false);
       }
       setCuentaActual(null);
     } else {
@@ -492,6 +624,13 @@ export default function HomeScreen() {
       return;
     }
 
+    // Limpiar el flag de confirmación de recepción para esta mesa,
+    // por si el cliente ya la había usado antes y confirmó un pedido previo.
+    // Sin esto, AsyncStorage devuelve "1" y muestra "Pedido recibido" de inmediato.
+    await AsyncStorage.removeItem(keyPedidoConfirmado(profile.id, mesa.id));
+    setPedidoConfirmadoLocal(false);
+    setPedidoRechazado(false);
+
     await refetch();
     await SoundService.reproducir("exito");
     showToast(
@@ -532,30 +671,34 @@ export default function HomeScreen() {
     );
   }
 
-  // ─── Textos dinámicos del botón de estado de mesa/pedido ────────────────────
-  // pedidoEnPreparacion: mozo confirmó pero la cocina/barra todavía no marcó "listo"
-  const pedidoEnPreparacion =
-    estadoPedido === "confirmado" || estadoPedido === "en_preparacion";
+  // ─── Estado del botón dinámico de mesa/pedido ───────────────────────────────
+  const estadoBoton: EstadoBoton = pedidoEntregado
+    ? "entregado"
+    : pedidoRechazado || estadoPedido === "rechazado"
+      ? "rechazado"
+      : estadoPedido === "listo"
+        ? "listo"
+        : estadoPedido === "en_preparacion"
+          ? "en_preparacion"
+          : estadoPedido === "confirmado"
+            ? "confirmado"
+            : "sin_pedido";
 
-  const getMesaBtnLabel = () => {
-    if (pedidoEntregado) return "Pedido confirmado";
-    if (pedidoListo) return "Confirmar recepción";
-    if (pedidoEnPreparacion) return "Tu pedido está en preparación";
-    if (mesaVinculada) return `Mesa ${mesa?.numero} - asignada`;
-    return `Mesa ${mesa?.numero} - asignada`;
+  const cfg = BOTON_ESTADO[estadoBoton];
+
+  // Es presionable cuando el pedido está listo (confirmar) o fue rechazado (ir al menú)
+  const isMesaBtnPressable =
+    (estadoBoton === "listo" || estadoBoton === "rechazado") &&
+    !confirmandoRecepcion;
+
+  const onBotonEstadoPress = () => {
+    if (estadoBoton === "listo") {
+      onConfirmarRecepcion();
+    } else if (estadoBoton === "rechazado") {
+      setPedidoRechazado(false);
+      router.push({ pathname: "/menu", params: { mesaId: mesa?.id } });
+    }
   };
-
-  const getMesaBtnSubtitle = () => {
-    if (pedidoEntregado) return "¡Gracias! Ya podés pedir la cuenta";
-    if (pedidoListo) return "Tocá para confirmar";
-    if (pedidoEnPreparacion) return "En breve te lo van a traer";
-    if (mesaVinculada) return "Elegí tu plato o consultá al mozo";
-    return "Escaneá el QR de tu mesa";
-  };
-
-  // Solo es presionable cuando el pedido está listo para ser entregado
-  const isMesaBtnPressable = pedidoListo && !pedidoEntregado && !confirmandoRecepcion;
-
 
   return (
     <View className="flex-1 bg-transparent">
@@ -863,84 +1006,41 @@ export default function HomeScreen() {
                 {/* ── Botón de estado dinámico (mesa/pedido) ── */}
                 <TouchableOpacity
                   activeOpacity={isMesaBtnPressable ? 0.75 : 1}
-                  onPress={isMesaBtnPressable ? onConfirmarRecepcion : undefined}
-                  disabled={!isMesaBtnPressable || confirmandoRecepcion}
-                  className={`flex-row h-40 items-center p-3 mb-5 rounded-2xl border shadow-sm ${pedidoEntregado
-                    ? "bg-emerald-100 border-emerald-300"
-                    : pedidoListo
-                      ? "bg-emerald-500 border-emerald-600"
-                      : pedidoEnPreparacion
-                        ? "bg-amber-100 border-amber-300"
-                        : "bg-brand-400 border-amber-200 opacity-90"
-                    }`}
+                  onPress={isMesaBtnPressable ? onBotonEstadoPress : undefined}
+                  disabled={!isMesaBtnPressable}
+                  className={`flex-row h-40 items-center p-3 mb-5 rounded-2xl border shadow-sm ${cfg.container}`}
                 >
                   <View
-                    className={`w-15 h-15 rounded-xl items-center justify-center mr-3 ${pedidoEntregado
-                      ? "bg-emerald-200"
-                      : pedidoListo
-                        ? "bg-emerald-600"
-                        : pedidoEnPreparacion
-                          ? "bg-amber-200"
-                          : "bg-black"
-                      }`}
+                    className={`w-15 h-15 rounded-xl items-center justify-center mr-3 ${cfg.iconBox}`}
                   >
                     {confirmandoRecepcion ? (
                       <ActivityIndicator size="small" color="#fff" />
                     ) : (
                       <MaterialCommunityIcons
-                        name={
-                          pedidoEntregado
-                            ? "check-decagram"
-                            : pedidoListo
-                              ? "bell-ring-outline"
-                              : pedidoEnPreparacion
-                                ? "chef-hat"
-                                : "table-chair"
-                        }
+                        name={cfg.icon}
                         size={35}
-                        color={
-                          pedidoEntregado
-                            ? "#059669"
-                            : pedidoListo
-                              ? "#FFFFFF"
-                              : pedidoEnPreparacion
-                                ? "#B45309"
-                                : "#FFFFFF"
-                        }
+                        color={cfg.iconColor}
                       />
                     )}
                   </View>
                   <View className="flex-1">
-                    <Text
-                      className={`text-2xl font-bold ${pedidoListo && !pedidoEntregado
-                        ? "text-white"
-                        : pedidoEnPreparacion
-                          ? "text-amber-900"
-                          : "text-[#1E2342]"
-                        }`}
-                    >
-                      {getMesaBtnLabel()}
+                    <Text className={`text-2xl font-bold ${cfg.labelColor}`}>
+                      {cfg.label(mesa?.numero)}
                     </Text>
                     <Text
-                      className={`text-[15px] font-semibold ${pedidoListo && !pedidoEntregado
-                        ? "text-emerald-100"
-                        : pedidoEnPreparacion
-                          ? "text-amber-700"
-                          : "text-black"
-                        }`}
+                      className={`text-[15px] font-semibold ${cfg.subtitleColor}`}
                     >
-                      {getMesaBtnSubtitle()}
+                      {cfg.subtitle}
                     </Text>
                   </View>
-                  {/* Chevron solo cuando el botón es presionable */}
-                  {pedidoListo && !pedidoEntregado && (
-                    <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
-                  )}
-                  {pedidoEntregado && (
-                    <Ionicons name="checkmark-circle" size={20} color="#059669" />
+                  {cfg.trailing && (
+                    <Ionicons
+                      name={cfg.trailing.name}
+                      size={20}
+                      color={cfg.trailing.color}
+                    />
                   )}
                 </TouchableOpacity>
-
 
                 {/* ── Ver menú (oculto cuando el pedido fue confirmado por el cliente) ── */}
                 {!pedidoEntregado && (
