@@ -85,10 +85,10 @@ export default function PedidosSectorScreen({ tabla, titulo }: Props) {
     setCargando(true);
     const { exito, datos } = await obtenerPedidosPorSector(tabla);
     if (exito && datos){
-      const pedidosFiltrados = pedidosVisibles.filter((pedido) => {
+      const pedidosFiltrados = datos.filter((pedido) => {
         return !pedido.items.every((item) => item.estado === 'terminado');
       });
-      setPedidos(datos);
+      setPedidos(pedidosFiltrados);
       showToast("success", "Exito.", "Pedidos cargados exitosamente.");
       await SoundService.reproducir("exito");
     } else{
