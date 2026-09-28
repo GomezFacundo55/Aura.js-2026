@@ -29,7 +29,7 @@ export default function JuegosScreen() {
     return;
   }
 
-  console.log('[juegos] buscando pedido para mesaId:', mesaId);
+
 
   supabase
     .from('pedidos')
@@ -39,7 +39,6 @@ export default function JuegosScreen() {
     .limit(1)
     .maybeSingle()
     .then(({ data, error }) => {
-      console.log('[juegos] resultado:', data, 'error:', error);
       setPedidoId(data?.id ?? null);
       setCargandoPedido(false);
     });

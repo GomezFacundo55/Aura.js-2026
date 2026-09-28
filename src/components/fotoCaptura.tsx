@@ -58,21 +58,13 @@ export function FotoCaptura({
     error ?? permissionMessage;
 
   return (
-    <View className="w-full items-center gap-1.5">
-
-      <Text
-        nativeID="foto-captura-label"
-        className="text-sm font-semibold text-neutral-800"
-      >
-        {label}
-      </Text>
+    <View className="w-full">
 
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={label}
-        aria-labelledby="foto-captura-label"
-        className="h-[180px] w-full max-w-[280px] items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-brand-400 bg-surface-light"
         onPress={handleTakePhoto}
+        className="h-[150px] w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-brand-400 bg-orange-50"
       >
         {photoUri ? (
           <Image
@@ -81,47 +73,50 @@ export function FotoCaptura({
             resizeMode="contain"
           />
         ) : (
-          <View className="items-center gap-2">
-            <View className="h-14 w-14 items-center justify-center rounded-full bg-orange-50">
+          <View className="items-center justify-center">
+
+            <View className="h-12 w-12 items-center justify-center rounded-full bg-white">
               <Ionicons
                 name="camera-outline"
-                size={32}
+                size={28}
                 color="#FF7A4D"
               />
             </View>
 
-            <Text className="text-sm font-bold text-brand-600">
+            <Text className="mt-2 text-sm font-bold text-brand-600">
               Tomar foto
             </Text>
 
-            <Text className="text-xs text-neutral-500">
-              Tocá para abrir la cámara
+            <Text className="mt-1 text-xs text-neutral-600">
+              Tocá aquí
             </Text>
+
           </View>
         )}
       </Pressable>
 
-      {photoUri ? (
+      {photoUri && (
         <Pressable
           accessibilityRole="button"
           onPress={handleTakePhoto}
-          className="py-1"
+          className="mt-1.5 items-center py-1"
         >
-          <Text className="text-sm font-semibold text-brand-600">
+          <Text className="text-xs font-semibold text-brand-600">
             Volver a tomar foto
           </Text>
         </Pressable>
-      ) : null}
+      )}
 
-      {displayError ? (
+      {displayError && (
         <Text
           accessibilityRole="alert"
-          className="text-center text-sm font-medium text-danger"
+          className="mt-1 text-center text-xs font-medium text-danger"
         >
           {displayError}
         </Text>
-      ) : null}
+      )}
 
     </View>
   );
 }
+

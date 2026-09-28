@@ -892,14 +892,13 @@ export default function NuevaMesaScreen() {
 <View className="rounded-2xl bg-white px-3 py-3">
 
   <View className="mb-2 flex-row items-center justify-between">
-
     <View>
       <Text className="text-sm font-bold text-neutral-900">
         Foto
       </Text>
 
       <Text className="text-xs text-neutral-600">
-        Una foto rápida de la mesa
+        Tocá para tomar la foto de la mesa
       </Text>
     </View>
 
@@ -916,29 +915,16 @@ export default function NuevaMesaScreen() {
         </Text>
       </View>
     )}
-
   </View>
 
-  {/* Contenedor de la cámara sin altura fija */}
-  <View
-    className={`rounded-2xl border-2 border-dashed p-2 ${
-      errores.foto
-        ? 'border-red-300 bg-red-50'
-        : 'border-neutral-300 bg-neutral-50'
-    }`}
-  >
-    <FotoCaptura
-      label="Tomar foto"
-      photoUri={fotoUri}
-      onPhotoChange={setFotoUri}
-      error={errores.foto}
-    />
-  </View>
+  <FotoCaptura
+    label="Tomar foto"
+    photoUri={fotoUri}
+    onPhotoChange={setFotoUri}
+    error={errores.foto}
+  />
 
 </View>
-
-
-
         {/* =================================================
             GUARDAR
         ================================================= */}
