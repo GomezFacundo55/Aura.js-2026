@@ -29,7 +29,7 @@ export default function CreateProduct() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [prepTime, setPrepTime] = useState('');
+  const [prepTime, setPrepTime] = useState('10');
   const [price, setPrice] = useState('');
   const [images, setImages] = useState<[string, string, string]>(["", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -271,29 +271,46 @@ export default function CreateProduct() {
         />
       </View>
 
-      <View className="flex-row space-x-3 mb-6">
-        <View className="flex-1">
-          <Text className="text-sm font-semibold text-gray-700 mb-1">Tiempo (min)</Text>
-          <TextInput
-            className="bg-orange-100 border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:border-green-600"
-            placeholder="Ej. 25"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
-            value={prepTime}
-            onChangeText={setPrepTime}
-          />
+      <View className="mb-4">
+        <Text className="text-sm font-semibold text-gray-700 mb-1.5">Tiempo (min)</Text>
+        <View className="flex-row gap-2">
+          {["5", "10", "15", "20", "30"].map((tiempo) => {
+            const esSeleccionado = prepTime === tiempo;
+
+            return (
+              <TouchableOpacity
+                key={tiempo}
+                activeOpacity={0.7}
+                onPress={() => setPrepTime(tiempo)}
+                className={`flex-1 py-3 rounded-xl items-center justify-center border ${
+                  esSeleccionado
+                    ? "bg-brand-500 border-brand-600 shadow-sm" 
+                    : "bg-orange-100 border-gray-300"          
+                }`}
+              >
+                <Text
+                  className={`font-bold text-sm ${
+                    esSeleccionado ? "text-white" : "text-gray-800"
+                  }`}
+                >
+                  {tiempo}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
-        <View className="flex-1">
-          <Text className="text-sm font-semibold text-gray-700 mb-1">Precio ($)</Text>
-          <TextInput
-            className="bg-orange-100 border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:border-green-600"
-            placeholder="Ej. 6500"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
-            value={price}
-            onChangeText={setPrice}
-          />
-        </View>
+      </View>
+
+      <View className="mb-6">
+        <Text className="text-sm font-semibold text-gray-700 mb-1">Precio ($)</Text>
+        <TextInput
+          className="bg-orange-100 border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:border-green-600"
+          placeholder="Ej. 6500"
+          placeholderTextColor="#9CA3AF"
+          keyboardType="numeric"
+          value={price}
+          onChangeText={setPrice}
+        />
       </View>
 
       <Text className="text-sm font-semibold text-gray-700 mb-2">
