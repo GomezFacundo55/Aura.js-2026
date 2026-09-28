@@ -287,8 +287,8 @@ export async function createEmployeeAccount(
 
 const EMPLOYEE_ROUTES: Record<string, Href> = {
   mozo: "/(app)/mozo-home",
-  cocinero: "/(app)/cocinero-home",
-  cantinero: "/(app)/cantinero-home",
+  cocinero: "/(app)/pedidos-cocina",
+  cantinero: "/(app)/pedidos-bar",
   metre: "/(app)/metre-home", 
 };
 

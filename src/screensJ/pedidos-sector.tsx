@@ -18,6 +18,9 @@ import {
 import { notificarNuevoPedido } from "@/lib/notificaciones";
 import { useToast } from '../contextJ/Toast';
 import { SoundService } from '../servicesJ/soundService';
+import { getMyProfile, signOut, UserProfile } from "@/lib/auth";
+import { ConfirmModal } from "@/components/modal";
+import type { tabla } from "@/servicesJ/productService";
 
 type Props = {
   tabla: "platos" | "bebidas";
@@ -29,8 +32,15 @@ export default function PedidosSectorScreen({ tabla, titulo }: Props) {
   const router = useRouter();
   const { showToast } = useToast();
   const [pedidos, setPedidos] = useState<PedidoSector[]>([]);
+  const [perfilUsuario, setPerfilUsuario] = useState<UserProfile | null>(null);
+  const [cargoUsuario, setCargoUsuario] = useState<tabla>('');
   const [cargando, setCargando] = useState(true);
   const [paginaActual, setPaginaActual] = useState(1);
+
+  const [mensajeModal, setMensajeModal] = useState<string>("");
+  const [tituloModal, setTituloModal] = useState<string>("");
+  const [actionModal, setActionModal] = useState<boolean>(false);
+  const [mostrarModalDos, setMostrarModalDos] = useState(false);
 
   const totalPaginas = Math.ceil(pedidos.length / PEDIDOS_POR_PAGINA) || 1;
   const indiceInicio = (paginaActual - 1) * PEDIDOS_POR_PAGINA;
@@ -39,11 +49,46 @@ export default function PedidosSectorScreen({ tabla, titulo }: Props) {
     indiceInicio + PEDIDOS_POR_PAGINA,
   );
 
+  useEffect(() => {
+      async function loadUserData(){
+  
+        try {
+          const user = await getMyProfile();
+          if (user) {
+            setPerfilUsuario(user);
+            if(user.perfil === "cantinero"){
+              setCargoUsuario('bebidas')
+            } else if (user.perfil === "cocinero"){
+              setCargoUsuario('platos');
+            } else{
+              showToast("error", "Perfil no admitido.", "Debe ser Cocinero o Bartender.");
+              await SoundService.reproducir('error');
+              await logOut();
+            }
+          } else {
+            setCargoUsuario("");
+            showToast("error", "Error al cargar usuario.", "Redirigiendo al login.");
+            await SoundService.reproducir('error');
+            await logOut();
+          }
+        } catch {
+          showToast("error", "Error", "Error al cargar el perfil.");
+        } finally{
+          setCargando(false);
+        }
+      }
+        
+      loadUserData();
+    }, []);
+
   const cargarPedidos = useCallback(async () => {
     setCargando(true);
     const { exito, datos } = await obtenerPedidosPorSector(tabla);
     if (exito && datos){
-      setPedidos(datos);
+      const pedidosFiltrados = pedidosVisibles.filter((pedido) => {
+        return !pedido.items.every((item) => item.estado === 'terminado');
+      });
+      setPedidos(pedidosFiltrados);
       showToast("success", "Exito.", "Pedidos cargados exitosamente.");
       await SoundService.reproducir("exito");
     } else{
@@ -94,6 +139,21 @@ export default function PedidosSectorScreen({ tabla, titulo }: Props) {
     };
   }, [tabla, titulo, cargarPedidos]);
 
+  const logOut = async()=>{
+    const { error } = await signOut();
+    if(error){
+      showToast("error", "Error", "Error al cerrar sesión")
+    } else {
+      router.replace("/log-in");
+    }
+  }
+  
+  const modalOut = () =>{
+    setTituloModal("Salir");
+    setMensajeModal("Desea salir?")
+    setMostrarModalDos(true);
+  }
+
   const formatearHora = (fecha: string) => {
     const d = new Date(fecha);
     return d.toLocaleTimeString("es-AR", {
@@ -131,17 +191,41 @@ export default function PedidosSectorScreen({ tabla, titulo }: Props) {
   }
 
   return (
-    <ScrollView
-      className="flex-1 bg-transparent"
-      contentContainerStyle={{ padding: 16, gap: 12 }}
-    >
-      <View className="flex-row items-center justify-between">
-        <Text className="text-[30px] font-bold text-neutral-900">{titulo}</Text>
+    <View className="flex-1 bg-transparent p-4">
+      <View className="flex-row items-center justify-between mt-2 mb-0 bg-orange-500/30 p-2.5 rounded-2xl">
+        <View className="flex-row items-center flex-1 mr-2">
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={modalOut}
+            className="w-9 h-9 rounded-xl bg-red-400 items-center justify-center mr-3 shadow-sm"
+          >
+            <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          <View className="flex-1">
+            <Text className="text-dark font-medium text-xs">Bienvenido/a,</Text>
+            <Text className="text-dark font-bold text-base" numberOfLines={1}>
+              {perfilUsuario ? `${perfilUsuario.nombres} ${perfilUsuario.apellidos}` : "Cargando..."}
+            </Text>
+          </View>
+        </View>
+
+        {cargoUsuario ? (
+          <View className="bg-white/20 px-2.5 py-1 rounded-full">
+            <Text className="text-dark text-xs font-semibold uppercase tracking-wider">
+              {perfilUsuario? `${perfilUsuario.perfil}` : "Cargando..."}
+            </Text>
+          </View>
+        ) : null}
+        </View>
+      <View className="flex-row items-center justify-between p-2">
+        <Text className="text-xl font-bold text-neutral-900">{titulo} </Text>
         <Pressable
-          onPress={() => router.replace("/(app)/dashboard")}
-          className="w-10 h-10 rounded-full bg-brand-500 items-center justify-center mr-3"
+          onPress={() => router.push("/(app)/cocinero-home")}
+          className="flex-row items-center bg-brand-500 px-3 h-10 rounded-full mr-3 gap-2 active:opacity-85"
         >
-          <Ionicons name="arrow-back" size={20} color="white" />
+          <Ionicons name="create-outline" size={18} color="white" />
+          <Text className="text-white font-semibold text-sm">Administrar</Text>
         </Pressable>
       </View>
 
@@ -265,6 +349,18 @@ export default function PedidosSectorScreen({ tabla, titulo }: Props) {
           )}
         </>
       )}
-    </ScrollView>
+      <ConfirmModal
+          visible={mostrarModalDos}
+          title={tituloModal}
+          message={mensajeModal}
+          confirmText="Si"
+          cancelText="No"
+          action={false}
+          onConfirm={logOut}
+          onCancel={() => {
+            setMostrarModalDos(false);
+          }}
+        />
+    </View>
   );
 }
