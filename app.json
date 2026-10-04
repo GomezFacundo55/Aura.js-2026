@@ -18,7 +18,14 @@
     "android": {
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.Aura.js2026",
-      "softwareKeyboardLayoutMode": "pan"
+      "softwareKeyboardLayoutMode": "pan",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "web": {
       "output": "static",
@@ -31,12 +38,16 @@
         {
           "backgroundColor": "#FF9C7A",
           "image": "./assets/images/splash-icon.png",
-          "resizeMode": "contain", 
+          "resizeMode": "contain",
           "imageWidth": 200
         }
       ],
       [
-        "expo-navigation-bar", { "enforceContrast": false, "style": "light" }
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false,
+          "style": "light"
+        }
       ],
       [
         "expo-font",
@@ -63,12 +74,21 @@
           "cameraPermission": "Aura necesita acceder a la cámara para tomar tu foto de perfil."
         }
       ],
-      
       "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "expo-navigation-bar": {
+        "enforceContrast": false,
+        "style": "light"
+      },
+      "eas": {
+        "projectId": "329c4e82-9712-4a0b-9a32-f28a4126dd3f"
+      }
     }
   }
 }
