@@ -1,14 +1,17 @@
-import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "expo-router";
+import { useEffect, useRef } from "react";
 
 import { useToast } from "@/contextJ/Toast";
 import { getMyProfile, type UserProfile } from "@/lib/auth";
 import { notificarNuevoMensajeChat, pedirPermisosNotificaciones } from "@/lib/notificaciones";
+import type { MensajeMesa } from "@/servicesJ/mensajesMesaService";
 import { SoundService } from "@/servicesJ/soundService";
 import { supabase } from "@/servicesJ/supabaseConexion";
-import type { MensajeMesa } from "@/servicesJ/mensajesMesaService";
 
-const ROLES_STAFF = new Set(["mozo", "dueño", "dueno", "supervisor"]);
+// Roles que participan del chat y reciben notificaciones
+const ROLES_QUE_NOTIFICAN_CHAT = new Set(["mozo", "dueño", "dueno", "supervisor", "cliente"]);
+// Roles que envían mensajes al chat (staff con acceso)
+const ROLES_STAFF_CHAT = new Set(["mozo", "dueño", "dueno", "supervisor"]);
 const TOPIC_NOTIFICACIONES_CHAT = "notificaciones_chat_general";
 
 export function useChatNotifications(currentProfile?: UserProfile | null) {
@@ -70,13 +73,17 @@ export function useChatNotifications(currentProfile?: UserProfile | null) {
           // 1. Descartar si el mensaje fue enviado por el propio usuario
           if (nuevoMensaje.remitente_id === perfilActivo.id) return;
 
-          const remitenteRol = (nuevoMensaje.remitente_rol ?? "").toLowerCase();
-          const esRemitenteStaff = ROLES_STAFF.has(remitenteRol);
-          const esRemitenteCliente = remitenteRol === "cliente" || !esRemitenteStaff;
-
           const miRol = (perfilActivo.perfil ?? "").toLowerCase();
-          const soyStaff = ROLES_STAFF.has(miRol);
-          const soyCliente = !soyStaff;
+
+          // Cocinero, cantinero y metre NO reciben notificaciones de chat
+          if (!ROLES_QUE_NOTIFICAN_CHAT.has(miRol)) return;
+
+          const remitenteRol = (nuevoMensaje.remitente_rol ?? "").toLowerCase();
+          const esRemitenteStaff = ROLES_STAFF_CHAT.has(remitenteRol);
+          const esRemitenteCliente = remitenteRol === "cliente";
+
+          const soyStaff = ROLES_STAFF_CHAT.has(miRol);
+          const soyCliente = miRol === "cliente";
 
           // Regla:
           // A los clientes les debe llegar cuando un mozo/dueño/supervisor envía.
