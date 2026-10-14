@@ -2,20 +2,20 @@ import { ConfirmModal } from "@/components/modal";
 import QrScannerModal from "@/components/ui/QRScanner";
 import { useMesaActual } from "@/hooks/useMesaActual";
 import { usePedidoActivo } from "@/hooks/usePedidoActivo";
+import type { Cuenta } from "@/interfaces/ICuenta";
 import { getMyProfile, signOut, type UserProfile } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import {
+  consultarMesaPorQr,
+  formatearPesos,
+  obtenerUltimaCuentaCliente,
+} from "@/servicesJ/cuentaService";
 import {
   consultarClienteEnListaDeEspera,
   crearUnaEspera,
   vincularClienteAMesa,
 } from "@/servicesJ/listaDeEsperaService";
 import { confirmarRecepcion } from "@/servicesJ/pedidoService";
-import {
-  consultarMesaPorQr,
-  formatearPesos,
-  obtenerUltimaCuentaCliente,
-} from "@/servicesJ/cuentaService";
-import type { Cuenta } from "@/interfaces/ICuenta";
 import { SoundService } from "@/servicesJ/soundService";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -731,22 +731,23 @@ export default function HomeScreen() {
             >
               <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
             </TouchableOpacity>
-
-            <View className="relative mt-1">
-              <Image
-                source={{
-                  uri: profile?.foto_url || "https://placehold.co/150",
-                }}
-                className="w-30 h-30 rounded-full border-4 border-white"
-                resizeMode="cover"
-              />
-              <View className="absolute bottom-1 right-1 w-6 h-6 bg-orange-500 rounded-full border-2 border-white items-center justify-center">
-                <Ionicons name="checkmark" size={14} color="#FFF" />
+            <View className="flex-row items-end -ml-10">
+              <View className="relative mt-1">
+                <Image
+                  source={{
+                    uri: profile?.foto_url || "https://placehold.co/150",
+                  }}
+                  className="w-20 h-20 rounded-full border-4 border-white"
+                  resizeMode="cover"
+                />
+                <View className="absolute bottom-1 right-1 w-6 h-6 bg-orange-500 rounded-full border-2 border-white items-center justify-center">
+                  <Ionicons name="checkmark" size={14} color="#FFF" />
+                </View>
               </View>
+              <Text className="text-[22px] font-black text-[#1E2342] mb-3 ml-2">
+                ¡Hola, {profile?.nombres}!
+              </Text>
             </View>
-            <Text className="text-2xl font-black text-[#1E2342] mt-2.5">
-              ¡Hola, {profile?.nombres}!
-            </Text>
           </View>
 
           {/* ── Bloque pre-vinculación: lista de espera (sin encuestas) ────────── */}
@@ -884,12 +885,12 @@ export default function HomeScreen() {
                       color={enListaDeEspera ? "#B45309" : "#FF6B00"}
                     />
                   </View>
-                  <Text className="text-[20px] font-black text-[#1E2342] text-center mb-1">
+                  <Text className="text-[25px] font-black text-[#1E2342] text-center mb-5">
                     {enListaDeEspera
                       ? "Estás en la lista de espera"
                       : "Siguiente paso:\n solicitar mesa"}
                   </Text>
-                  <Text className="text- font-semibold text-[#8A7B6D] text-center leading-4">
+                  <Text className="text-[15px] font-semibold text-[#8A7B6D] text-center leading-4">
                     {enListaDeEspera
                       ? "El metre te asignará una mesa disponible en breve. Podés mirar las encuestas mientras esperás."
                       : "Tocá en 'Lista de espera' para registrar tu turno y que el local pueda asignarte una mesa."}
@@ -901,12 +902,12 @@ export default function HomeScreen() {
 
           {/* ── Pantalla QR (ingreso o escanear mesa) ──────────────────────────── */}
           {(paso === "ingreso" || paso === "escanear_mesa") && (
-            <View className="bg-[#FFF4E6] rounded-3xl p-6 flex-1 items-center justify-between border border-white/60 shadow-sm mb-1">
+            <View className="bg-[#FFF4E6] rounded-3xl p-6 flex-1 items-center justify-between border border-white/60 shadow-sm mb-5">
               <View className="w-full items-center">
-                <Text className="text-[25px] font-bold tracking-widest text-[#9E8B79] uppercase text-center">
+                <Text className="text-[25px] font-bold tracking-widest text-[#9E8B79] uppercase text-center -mb-5">
                   {paso === "ingreso" ? "Ingreso al local" : "Tu mesa asignada"}
                 </Text>
-                <Text className="text-3xl font-black text-[#1E2342] text-center mt-0.5">
+                <Text className="text-4xl font-black text-[#1E2342] text-center mt-10">
                   {paso === "ingreso" ? "Cámara lista" : `Mesa ${mesa?.numero}`}
                 </Text>
               </View>
@@ -950,10 +951,8 @@ export default function HomeScreen() {
           {mesaVinculada && (
             <View className="bg-[#FFF4E6] rounded-3xl p-6 mb-2 items-center border border-white/60 shadow-sm flex-1 justify-between">
               <View className="w-full items-center">
-                <View className="flex-row items-center justify-center gap-2 flex-wrap">
-                  <Text className="text-3xl font-black text-[#1E2342] text-center">
-                    Mesa {mesa?.numero}
-                  </Text>
+                <View className="flex-1 items-center justify-center gap-2 flex-wrap">
+
                   {mesa?.tipo && (
                     <View
                       className={`flex-row items-center px-2.5 py-1 rounded-full ${mesa.tipo === "vip"
@@ -997,10 +996,12 @@ export default function HomeScreen() {
                       </Text>
                     </View>
                   )}
+                  <Text className="text-3xl font-black text-[#1E2342] text-center">
+                    Mesa {mesa?.numero}
+                  </Text>
                 </View>
                 <View className="w-full h-[2px] bg-[#F0DFC8] my-3" />
               </View>
-
               <View className="w-full space-y-2.5 my-auto">
 
                 {/* ── Botón de estado dinámico (mesa/pedido) ── */}
@@ -1008,7 +1009,7 @@ export default function HomeScreen() {
                   activeOpacity={isMesaBtnPressable ? 0.75 : 1}
                   onPress={isMesaBtnPressable ? onBotonEstadoPress : undefined}
                   disabled={!isMesaBtnPressable}
-                  className={`flex-row h-40 items-center p-3 mb-5 rounded-2xl border shadow-sm ${cfg.container}`}
+                  className={`flex-row h-40 items-center p-3 -mt-5 mb-5 rounded-2xl border shadow-sm ${cfg.container}`}
                 >
                   <View
                     className={`w-15 h-15 rounded-xl items-center justify-center mr-3 ${cfg.iconBox}`}
@@ -1042,6 +1043,29 @@ export default function HomeScreen() {
                   )}
                 </TouchableOpacity>
 
+                {/* ── Ver encuestas (oculto mientras el pedido esté en curso y después de que el cliente confirme recepción) ── */}
+                {!mozoConfirmoPedido && !pedidoEntregado && (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={onVerEstadisticasPress}
+                    className="flex-row items-center mb-2 p-3 rounded-2xl border bg-white border-orange-200 shadow-sm"
+                  >
+                    <View className="w-15 h-15 rounded-xl bg-orange-100 items-center justify-center mr-3">
+                      <MaterialCommunityIcons
+                        name="chart-box-outline"
+                        size={40}
+                        color="#FF6B00"
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-2xl font-bold text-[#1E2342]">
+                        Ver encuestas
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color="#FF6B00" />
+                  </TouchableOpacity>
+                )}
+
                 {/* ── Ver menú (oculto cuando el pedido fue confirmado por el cliente) ── */}
                 {!pedidoEntregado && (
                   <>
@@ -1053,7 +1077,7 @@ export default function HomeScreen() {
                           params: { mesaId: mesa?.id },
                         })
                       }
-                      className="flex-row items-center h-25 p-3 mb-4 rounded-2xl border bg-white border-orange-200 shadow-sm"
+                      className="flex-row items-center h-25 p-3 mb-1 rounded-2xl border bg-white border-orange-200 shadow-sm"
                     >
                       <View className="w-15 h-15 rounded-xl bg-orange-100 items-center justify-center mr-3">
                         <MaterialCommunityIcons
@@ -1116,7 +1140,7 @@ export default function HomeScreen() {
                         params: { mesaId: mesa?.id },
                       })
                     }
-                    className="flex-row items-center p-3 mt-0.5 rounded-2xl border bg-white border-orange-200 shadow-sm"
+                    className="flex-row items-center p-3 mt-1 rounded-2xl border bg-white border-orange-200 shadow-sm"
                   >
                     <View className="w-10 h-10 rounded-xl bg-orange-100 items-center justify-center mr-3">
                       <MaterialCommunityIcons
@@ -1142,7 +1166,7 @@ export default function HomeScreen() {
                   <TouchableOpacity
                     activeOpacity={0.7}
                     onPress={onEncuestasPress}
-                    className="flex-row items-center p-3 mt-0.5 rounded-2xl border bg-white border-orange-200 shadow-sm"
+                    className="flex-row items-center p-3 mt-1 rounded-2xl border bg-white border-orange-200 shadow-sm"
                   >
                     <View className="w-10 h-10 rounded-xl bg-orange-100 items-center justify-center mr-3">
                       <MaterialCommunityIcons
@@ -1168,7 +1192,7 @@ export default function HomeScreen() {
                   <TouchableOpacity
                     activeOpacity={0.7}
                     onPress={onPedirCuentaPress}
-                    className="flex-row items-center p-3 mt-0.5 rounded-2xl border bg-white border-orange-200 shadow-sm"
+                    className="flex-row items-center p-3 mt-1 rounded-2xl border bg-white border-orange-200 shadow-sm"
                   >
                     <View className="w-10 h-10 rounded-xl bg-orange-100 items-center justify-center mr-3">
                       <MaterialCommunityIcons

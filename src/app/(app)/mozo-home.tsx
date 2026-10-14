@@ -1,22 +1,23 @@
+import CuentasMozo from '@/components/cuenta/CuentasMozo';
+import { EstadoPedido } from '@/interfaces/IPedido';
+import { getMyProfile, signOut, type UserProfile } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
+import { confirmarPedido, obtenerPedidos, rechazarPedido } from '@/servicesJ/pedidoService';
+import { SoundService } from '@/servicesJ/soundService';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
-  TextInput,
+  Image,
   Modal,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { getMyProfile, signOut, type UserProfile } from '@/lib/auth';
 import { useToast } from '../../contextJ/Toast';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { SoundService } from '@/servicesJ/soundService';
-import { obtenerPedidos, rechazarPedido, confirmarPedido } from '@/servicesJ/pedidoService';
-import { EstadoPedido } from '@/interfaces/IPedido';
-import { supabase } from '@/lib/supabase';
-import CuentasMozo from '@/components/cuenta/CuentasMozo';
 
 interface PedidoPendiente {
   id: string;
@@ -84,15 +85,15 @@ export default function MozoHome() {
             },
             async (payload) => {
               const nuevoPedido = payload.new as any;
-              
+
               if (nuevoPedido.estado === "pendiente") {
-                await SoundService.reproducir("exito"); 
+                await SoundService.reproducir("exito");
                 showToast(
                   "info",
                   "¡Nuevo pedido para confirmar!",
                   "Un cliente hizo un nuevo pedido.",
                 );
-                if(!verCuentasRef.current && estadoRef.current === "pendiente"){
+                if (!verCuentasRef.current && estadoRef.current === "pendiente") {
                   cargarPedidos("pendiente");
                 }
               }
@@ -107,15 +108,15 @@ export default function MozoHome() {
             },
             async (payload) => {
               const pedidoActualizado = payload.new as any;
-              
+
               if (pedidoActualizado.estado === "listo") {
-                await SoundService.reproducir("exito"); 
+                await SoundService.reproducir("exito");
                 showToast(
                   "info",
                   "¡Pedido listo para entregar!",
                   "El cliente espera su entrega.",
                 );
-                if(!verCuentasRef.current && estadoRef.current === "listo"){
+                if (!verCuentasRef.current && estadoRef.current === "listo") {
                   cargarPedidos("listo");
                 }
               }
@@ -133,7 +134,7 @@ export default function MozoHome() {
       };
     }, [])
   );
-  
+
 
   const cargarTodo = async () => {
     setCargando(true);
@@ -218,37 +219,58 @@ export default function MozoHome() {
 
   return (
     <View className="flex-1">
-      
-      <View className="flex-row items-center justify-between p-4">
-        <View className="flex-row items-center">
+
+      <View className="flex-row items-center justify-between mt-10 mb-5 mx-4 mb-0 bg-orange-500/30 p-2.5 rounded-2xl">
+        <View className="flex-row items-center flex-1 mr-2">
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={logOut}
-            className="w-9 h-9 rounded-xl bg-red-500 items-center justify-center mr-3 shadow-sm"
+            className="w-9 h-9 rounded-xl bg-red-400 items-center justify-center mr-3 shadow-sm"
           >
             <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
           </TouchableOpacity>
-          <View>
-            <Text className="text-xs text-gray-500">Bienvenido/a,</Text>
-            <Text className="text-base font-bold text-gray-900">
+
+          <View className="w-11 h-11 rounded-full bg-white/40 overflow-hidden items-center justify-center mr-3 border border-white/50">
+            {profile?.foto_url ? (
+              <Image
+                source={{ uri: profile.foto_url }}
+                className="w-full h-full"
+              />
+            ) : (
+              <Ionicons name="person" size={22} color="#444" />
+            )}
+          </View>
+
+          <View className="flex-1">
+            <Text className="text-dark font-medium text-xs">Bienvenido/a,</Text>
+            <Text className="text-dark font-bold text-base" numberOfLines={1}>
               {profile ? `${profile.nombres} ${profile.apellidos}` : 'Cargando...'}
             </Text>
           </View>
         </View>
-        
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={ () => {
-            if (verCuentas) setRecargaCuentas((n) => n + 1);
-            else cargarPedidos(estadoPedidosObtenido);
-          } }
-          className="w-9 h-9 rounded-xl bg-orange-100 items-center justify-center"
-        >
-          <Ionicons name="refresh" size={18} color="#EA580C" />
-        </TouchableOpacity>
+
+        <View className="flex-row items-center gap-2">
+          {profile?.perfil ? (
+            <View className="bg-white/20 px-2.5 py-1 rounded-full">
+              <Text className="text-dark text-xs font-semibold uppercase tracking-wider">
+                {profile.perfil}
+              </Text>
+            </View>
+          ) : null}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              if (verCuentas) setRecargaCuentas((n) => n + 1);
+              else cargarPedidos(estadoPedidosObtenido);
+            }}
+            className="w-9 h-9 rounded-xl bg-white/30 items-center justify-center"
+          >
+            <Ionicons name="refresh" size={18} color="#EA580C" />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <Text className="text-xl font-bold text-gray-800 px-4 mb-2">
+      <Text className="text-xl font-bold text-gray-800 px-4 mb-4">
         {verCuentas
           ? "Cuentas por cobrar"
           : `Pedidos ${estadoPedidosObtenido === "pendiente" ? "pendientes de confirmación" : "Listos"}`}
@@ -258,21 +280,19 @@ export default function MozoHome() {
           activeOpacity={0.7}
           disabled={!verCuentas && estadoPedidosObtenido === 'pendiente'}
           onPress={() => cargarPedidos('pendiente')}
-          className={`flex-1 flex-row py-3 px-4 rounded-xl items-center justify-center border ${
-            !verCuentas && estadoPedidosObtenido === 'pendiente'
+          className={`flex-1 flex-row py-3 px-4 rounded-xl items-center justify-center border ${!verCuentas && estadoPedidosObtenido === 'pendiente'
               ? 'bg-orange-200 border-orange-300 opacity-60'
               : 'bg-orange-500 border-orange-600'
-          }`}
+            }`}
         >
-          <Ionicons 
-            name="time-outline" 
-            size={18} 
-            color={!verCuentas && estadoPedidosObtenido === 'pendiente' ? '#9A3412' : '#FFFFFF'} 
+          <Ionicons
+            name="time-outline"
+            size={18}
+            color={!verCuentas && estadoPedidosObtenido === 'pendiente' ? '#9A3412' : '#FFFFFF'}
             style={{ marginRight: 6 }}
           />
-          <Text className={`font-semibold text-xs ${
-            !verCuentas && estadoPedidosObtenido === 'pendiente' ? 'text-amber-900' : 'text-white'
-          }`}>
+          <Text className={`font-semibold text-xs ${!verCuentas && estadoPedidosObtenido === 'pendiente' ? 'text-amber-900' : 'text-white'
+            }`}>
             Pendientes
           </Text>
         </TouchableOpacity>
@@ -281,21 +301,19 @@ export default function MozoHome() {
           activeOpacity={0.7}
           disabled={!verCuentas && estadoPedidosObtenido === 'listo'}
           onPress={() => cargarPedidos('listo')}
-          className={`flex-1 flex-row py-3 px-4 rounded-xl items-center justify-center border ${
-            !verCuentas && estadoPedidosObtenido === 'listo'
+          className={`flex-1 flex-row py-3 px-4 rounded-xl items-center justify-center border ${!verCuentas && estadoPedidosObtenido === 'listo'
               ? 'bg-orange-200 border-orange-300 opacity-60'
               : 'bg-orange-500 border-orange-600'
-          }`}
+            }`}
         >
-          <Ionicons 
-            name="checkmark-circle-outline" 
-            size={18} 
-            color={!verCuentas && estadoPedidosObtenido === 'listo' ? '#9A3412' : '#FFFFFF'} 
+          <Ionicons
+            name="checkmark-circle-outline"
+            size={18}
+            color={!verCuentas && estadoPedidosObtenido === 'listo' ? '#9A3412' : '#FFFFFF'}
             style={{ marginRight: 6 }}
           />
-          <Text className={`font-semibold text-xs ${
-            !verCuentas && estadoPedidosObtenido === 'listo' ? 'text-amber-900' : 'text-white'
-          }`}>
+          <Text className={`font-semibold text-xs ${!verCuentas && estadoPedidosObtenido === 'listo' ? 'text-amber-900' : 'text-white'
+            }`}>
             Listos
           </Text>
         </TouchableOpacity>
@@ -304,11 +322,10 @@ export default function MozoHome() {
           activeOpacity={0.7}
           disabled={verCuentas}
           onPress={() => setVerCuentas(true)}
-          className={`flex-1 flex-row py-3 px-4 rounded-xl items-center justify-center border ${
-            verCuentas
+          className={`flex-1 flex-row py-3 px-4 rounded-xl items-center justify-center border ${verCuentas
               ? 'bg-orange-200 border-orange-300 opacity-60'
               : 'bg-orange-500 border-orange-600'
-          }`}
+            }`}
         >
           <Ionicons
             name="receipt-outline"
@@ -324,119 +341,115 @@ export default function MozoHome() {
       {verCuentas && profile ? (
         <CuentasMozo key={recargaCuentas} mozoId={profile.id} />
       ) : (
-      <ScrollView className="flex-1 px-4">
-        {pedidos.length === 0 ? (
-          <View className="py-20 items-center justify-center bg-white rounded-2xl border border-gray-200 mt-2">
-            <Ionicons name="checkmark-done-circle-outline" size={48} color="#9CA3AF" />
-            <Text className="text-gray-500 font-medium text-sm mt-3">
-              {estadoPedidosObtenido === 'pendiente' 
-                ? 'No hay pedidos pendientes.' 
-                : 'No hay pedidos listos.'}
-            </Text>
-          </View>
-        ) : (
-          pedidos.map((pedido) => {
-            const confirmando = confirmandoId === pedido.id;
-            const esListo = estadoPedidosObtenido === 'listo';
-            return (
-              <View
-                key={pedido.id}
-                className={`rounded-2xl p-4 mb-3 border border-orange-200 shadow-sm ${
-                  esListo 
-                    ? 'bg-brand-50 border-brand-200' 
-                    : 'bg-orange-100 border-orange-200'
-                }`}
-              >
-                <View className="flex-row items-center justify-between mb-2">
-                  <View className="flex-row items-center gap-2">
-                    <Ionicons 
-                      name={esListo ? "checkmark-circle" : "alert-circle"} 
-                      size={20} 
-                      color={esListo ? "#c97c3d" : "#C2410C"} 
-                    />
-                    <Text className="font-bold text-gray-900 text-base">
-                      Mesa {pedido.mesas?.numero ?? '-'}
-                    </Text>
-                  </View>
-
-                  <View className={`border px-2.5 py-1 rounded-full flex-row items-center ${
-                    esListo ? 'bg-orange-100 border-brand-300' : 'bg-amber-50 border-amber-200'
-                  }`}>
-                    <Ionicons 
-                      name={esListo ? "fast-food-outline" : "time-outline"} 
-                      size={13} 
-                      color={esListo ? "#d67220" : "#D97706"} 
-                    />
-                    <Text className={`text-xs font-semibold ml-1 ${
-                      esListo ? 'text-orange-800' : 'text-amber-700'
-                    }`}>
-                      {esListo ? 'Listo para retirar' : `${pedido.tiempo_estimado_min} min aprox.`}
-                    </Text>
-                  </View>
-                </View>
-
-                {pedido.pedido_items.map((item) => (
-                  <View key={item.id} className="flex-row justify-between mb-1">
-                    <Text className="text-gray-700 text-xs flex-1" numberOfLines={1}>
-                      {item.cantidad}x {item.nombre_producto}
-                    </Text>
-                    <Text className="text-gray-700 text-xs font-semibold">
-                      ${(item.precio_unitario * item.cantidad).toLocaleString('es-AR')}
-                    </Text>
-                  </View>
-                ))}
-
-                <View className={`h-px my-2 ${esListo ? 'bg-brand-200' : 'bg-orange-200'}`} />
-
-                <View className="flex-row items-center justify-between">
-                  <Text className="font-extrabold text-gray-900 text-base">
-                    Total: ${pedido.importe_total.toLocaleString('es-AR')}
-                  </Text>
-                  { pedido.estado == "pendiente" ? (
-
-                  <View className="flex-row gap-2">
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      disabled={confirmando}
-                      onPress={() => abrirModalRechazo(pedido)}
-                      className="bg-red-500 px-4 py-2 rounded-xl flex-row items-center gap-1"
-                    >
-                      <Ionicons name="close-circle-outline" size={14} color="#FFFFFF" />
-                      <Text className="text-white font-bold text-xs">Rechazar</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      disabled={confirmando}
-                      onPress={() => handleConfirmar(pedido)}
-                      className={`px-4 py-2 rounded-xl flex-row items-center gap-1 ${
-                        confirmando ? 'bg-orange-100' : 'bg-orange-200'} border border-orange-600`}
-                    >
-                      {confirmando ? (
-                        <ActivityIndicator color="#ffff" size="small" />
-                      ) : (
-                        <>
-                          <Ionicons name="checkmark-circle-outline" size={14} color="#d17529" />
-                          <Text className="text-orange-600 font-bold text-xs">Confirmar</Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                  ) : esListo ? (
-                    <View className="flex-row items-center gap-1">
-                      <Ionicons name="hourglass-outline" size={14} color="#9A6B3D" />
-                      <Text className="text-xs font-semibold text-orange-800">
-                        Esperando confirmación del cliente
+        <ScrollView className="flex-1 px-4">
+          {pedidos.length === 0 ? (
+            <View className="py-20 items-center justify-center bg-white rounded-2xl border border-gray-200 mt-2">
+              <Ionicons name="checkmark-done-circle-outline" size={48} color="#9CA3AF" />
+              <Text className="text-gray-500 font-medium text-sm mt-3">
+                {estadoPedidosObtenido === 'pendiente'
+                  ? 'No hay pedidos pendientes.'
+                  : 'No hay pedidos listos.'}
+              </Text>
+            </View>
+          ) : (
+            pedidos.map((pedido) => {
+              const confirmando = confirmandoId === pedido.id;
+              const esListo = estadoPedidosObtenido === 'listo';
+              return (
+                <View
+                  key={pedido.id}
+                  className={`rounded-2xl p-4 mb-3 border border-orange-200 shadow-sm ${esListo
+                      ? 'bg-brand-50 border-brand-200'
+                      : 'bg-orange-100 border-orange-200'
+                    }`}
+                >
+                  <View className="flex-row items-center justify-between mb-2">
+                    <View className="flex-row items-center gap-2">
+                      <Ionicons
+                        name={esListo ? "checkmark-circle" : "alert-circle"}
+                        size={20}
+                        color={esListo ? "#c97c3d" : "#C2410C"}
+                      />
+                      <Text className="font-bold text-gray-900 text-base">
+                        Mesa {pedido.mesas?.numero ?? '-'}
                       </Text>
                     </View>
-                  ) : null}
+
+                    <View className={`border px-2.5 py-1 rounded-full flex-row items-center ${esListo ? 'bg-orange-100 border-brand-300' : 'bg-amber-50 border-amber-200'
+                      }`}>
+                      <Ionicons
+                        name={esListo ? "fast-food-outline" : "time-outline"}
+                        size={13}
+                        color={esListo ? "#d67220" : "#D97706"}
+                      />
+                      <Text className={`text-xs font-semibold ml-1 ${esListo ? 'text-orange-800' : 'text-amber-700'
+                        }`}>
+                        {esListo ? 'Listo para retirar' : `${pedido.tiempo_estimado_min} min aprox.`}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {pedido.pedido_items.map((item) => (
+                    <View key={item.id} className="flex-row justify-between mb-1">
+                      <Text className="text-gray-700 text-xs flex-1" numberOfLines={1}>
+                        {item.cantidad}x {item.nombre_producto}
+                      </Text>
+                      <Text className="text-gray-700 text-xs font-semibold">
+                        ${(item.precio_unitario * item.cantidad).toLocaleString('es-AR')}
+                      </Text>
+                    </View>
+                  ))}
+
+                  <View className={`h-px my-2 ${esListo ? 'bg-brand-200' : 'bg-orange-200'}`} />
+
+                  <View className="flex-row items-center justify-between">
+                    <Text className="font-extrabold text-gray-900 text-base">
+                      Total: ${pedido.importe_total.toLocaleString('es-AR')}
+                    </Text>
+                    {pedido.estado == "pendiente" ? (
+
+                      <View className="flex-row gap-2">
+                        <TouchableOpacity
+                          activeOpacity={0.8}
+                          disabled={confirmando}
+                          onPress={() => abrirModalRechazo(pedido)}
+                          className="bg-red-500 px-4 py-2 rounded-xl flex-row items-center gap-1"
+                        >
+                          <Ionicons name="close-circle-outline" size={14} color="#FFFFFF" />
+                          <Text className="text-white font-bold text-xs">Rechazar</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          activeOpacity={0.8}
+                          disabled={confirmando}
+                          onPress={() => handleConfirmar(pedido)}
+                          className={`px-4 py-2 rounded-xl flex-row items-center gap-1 ${confirmando ? 'bg-orange-100' : 'bg-orange-200'} border border-orange-600`}
+                        >
+                          {confirmando ? (
+                            <ActivityIndicator color="#ffff" size="small" />
+                          ) : (
+                            <>
+                              <Ionicons name="checkmark-circle-outline" size={14} color="#d17529" />
+                              <Text className="text-orange-600 font-bold text-xs">Confirmar</Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+                      </View>
+                    ) : esListo ? (
+                      <View className="flex-row items-center gap-1">
+                        <Ionicons name="hourglass-outline" size={14} color="#9A6B3D" />
+                        <Text className="text-xs font-semibold text-orange-800">
+                          Esperando confirmación del cliente
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
                 </View>
-              </View>
-            );
-          })
-        )}
-        <View className="h-6" />
-      </ScrollView>
+              );
+            })
+          )}
+          <View className="h-6" />
+        </ScrollView>
       )}
 
       <Modal visible={!!pedidoARechazar} transparent animationType="fade">
@@ -469,9 +482,8 @@ export default function MozoHome() {
                 activeOpacity={0.8}
                 disabled={enviando}
                 onPress={confirmarRechazo}
-                className={`flex-1 py-3 rounded-xl items-center ${
-                  enviando ? 'bg-red-300' : 'bg-red-500'
-                }`}
+                className={`flex-1 py-3 rounded-xl items-center ${enviando ? 'bg-red-300' : 'bg-red-500'
+                  }`}
               >
                 {enviando ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />

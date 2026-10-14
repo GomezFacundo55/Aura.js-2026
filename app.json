@@ -29,7 +29,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/splash-icon.png"
+      "favicon": "./assets/images/splash-icon-static.png"
     },
     "plugins": [
       "expo-router",
@@ -37,18 +37,12 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#FF9C7A",
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splash-icon-static.png",
           "resizeMode": "contain",
           "imageWidth": 200
         }
       ],
-      [
-        "expo-navigation-bar",
-        {
-          "enforceContrast": false,
-          "style": "light"
-        }
-      ],
+      ["expo-navigation-bar", { "enforceContrast": false, "style": "light" }],
       [
         "expo-font",
         {

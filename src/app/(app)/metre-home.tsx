@@ -1,19 +1,18 @@
-import { StatusBar } from "expo-status-bar";
-import { Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { getMyProfile, signOut, type UserProfile } from "@/lib/auth";
-import { useToast } from "../../contextJ/Toast";
-import { useRouter } from "expo-router";
-import { useState, useCallback } from "react";
-import { useFocusEffect } from "expo-router";
 import { ConfirmModal } from "@/components/modal";
+import { IListaDeEspera } from "@/interfaces/IlistaEspara";
+import { getMyProfile, signOut, type UserProfile } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import {
-  obtenerListaDeEspera,
   eliminarEspera,
+  obtenerListaDeEspera,
 } from "@/servicesJ/listaDeEsperaService";
 import { SoundService } from "@/servicesJ/soundService";
-import { IListaDeEspera } from "@/interfaces/IlistaEspara";
-import { supabase } from "@/lib/supabase";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, Image, Text, TouchableOpacity, View } from "react-native";
+import { useToast } from "../../contextJ/Toast";
 
 type ModalMode = "salir" | "eliminar";
 
@@ -155,7 +154,7 @@ export default function App() {
     <View className="flex-1 p-4">
       <StatusBar style="dark" />
 
-      <View className="flex-row items-center justify-between mt-2 mb-2 bg-[#FFE8D1] p-3 rounded-2xl border border-orange-200">
+      <View className="flex-row items-center justify-between mt-2 mb-2 bg-orange-500/30 p-2.5 rounded-2xl">
         <View className="flex-row items-center flex-1 mr-2">
           <TouchableOpacity
             activeOpacity={0.7}
@@ -163,19 +162,25 @@ export default function App() {
               setModoModal("salir");
               setMostrarModal(true);
             }}
-            className="w-10 h-10 rounded-xl bg-red-500 items-center justify-center mr-3 shadow-sm"
+            className="w-9 h-9 rounded-xl bg-red-400 items-center justify-center mr-3 shadow-sm"
           >
-            <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
+            <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
           </TouchableOpacity>
 
+          <View className="w-11 h-11 rounded-full bg-white/40 overflow-hidden items-center justify-center mr-3 border border-white/50">
+            {perfilUsuario?.foto_url ? (
+              <Image
+                source={{ uri: perfilUsuario.foto_url }}
+                className="w-full h-full"
+              />
+            ) : (
+              <Ionicons name="person" size={22} color="#444" />
+            )}
+          </View>
+
           <View className="flex-1">
-            <Text className="text-neutral-500 font-medium text-xs">
-              Bienvenido/a,
-            </Text>
-            <Text
-              className="text-neutral-900 font-bold text-base"
-              numberOfLines={1}
-            >
+            <Text className="text-dark font-medium text-xs">Bienvenido/a,</Text>
+            <Text className="text-dark font-bold text-base" numberOfLines={1}>
               {perfilUsuario
                 ? `${perfilUsuario.nombres} ${perfilUsuario.apellidos}`
                 : "Cargando..."}
@@ -184,8 +189,8 @@ export default function App() {
         </View>
 
         {cargoUsuario && (
-          <View className="bg-[#FF6B00] px-3 py-1 rounded-full shadow-sm">
-            <Text className="text-white text-xs font-bold uppercase tracking-wider">
+          <View className="bg-white/20 px-2.5 py-1 rounded-full">
+            <Text className="text-dark text-xs font-semibold uppercase tracking-wider">
               {perfilUsuario ? perfilUsuario.perfil : ""}
             </Text>
           </View>
@@ -244,30 +249,27 @@ export default function App() {
                       <Text className="text-[10px] text-neutral-400">
                         {item.created_at
                           ? new Date(item.created_at).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
                           : "Reciente"}
                       </Text>
                     </View>
                   </View>
 
                   <View
-                    className={`flex-row items-center px-2.5 py-1 rounded-full border ${
-                      tieneMesa
+                    className={`flex-row items-center px-2.5 py-1 rounded-full border ${tieneMesa
                         ? "bg-emerald-50 border-emerald-200"
                         : "bg-amber-50 border-amber-200"
-                    }`}
+                      }`}
                   >
                     <View
-                      className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                        tieneMesa ? "bg-emerald-500" : "bg-amber-500"
-                      }`}
+                      className={`w-1.5 h-1.5 rounded-full mr-1.5 ${tieneMesa ? "bg-emerald-500" : "bg-amber-500"
+                        }`}
                     />
                     <Text
-                      className={`text-[11px] font-bold ${
-                        tieneMesa ? "text-emerald-700" : "text-amber-700"
-                      }`}
+                      className={`text-[11px] font-bold ${tieneMesa ? "text-emerald-700" : "text-amber-700"
+                        }`}
                     >
                       {tieneMesa ? "Mesa Asignada" : "En Espera"}
                     </Text>
@@ -329,11 +331,10 @@ export default function App() {
           <TouchableOpacity
             disabled={paginaActual === 1}
             onPress={() => setPaginaActual((prev) => Math.max(prev - 1, 1))}
-            className={`px-3 py-1.5 rounded-xl border flex-row items-center ${
-              paginaActual === 1
+            className={`px-3 py-1.5 rounded-xl border flex-row items-center ${paginaActual === 1
                 ? "bg-neutral-200 border-neutral-300 opacity-50"
                 : "bg-white border-neutral-300 shadow-sm"
-            }`}
+              }`}
           >
             <Ionicons name="chevron-back" size={14} color="#374151" />
             <Text className="text-xs font-bold text-neutral-700 ml-1">
@@ -350,11 +351,10 @@ export default function App() {
             onPress={() =>
               setPaginaActual((prev) => Math.min(prev + 1, totalPaginas))
             }
-            className={`px-3 py-1.5 rounded-xl border flex-row items-center ${
-              paginaActual >= totalPaginas
+            className={`px-3 py-1.5 rounded-xl border flex-row items-center ${paginaActual >= totalPaginas
                 ? "bg-neutral-200 border-neutral-300 opacity-50"
                 : "bg-white border-neutral-300 shadow-sm"
-            }`}
+              }`}
           >
             <Text className="text-xs font-bold text-neutral-700 mr-1">
               Siguiente
