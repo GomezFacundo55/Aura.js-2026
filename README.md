@@ -10,12 +10,10 @@
 |---|---|---|
 | Frontend / App móvil | React Native + Expo + NativeWind v5 (Android) | Expo agiliza el desarrollo y build para Android sin configuración nativa manual. NativeWind v5 permite estilizar con la sintaxis de Tailwind CSS v4 (`className`), acelerando el desarrollo de la UI. |
 | Backend / API | _Supabase_ | _Expone automáticamente una API REST y en tiempo real sobre la base de datos, sin necesidad de programar y mantener un servidor propio. Integra en un mismo servicio la base de datos, autenticación, storage de archivos y suscripciones en tiempo real (Realtime), reduciendo el trabajo de un equipo chico a definir el esquema y consumirlo desde la app._ |
-| Base de datos | _(a completar)_ | _(a completar)_ |
-| Notificaciones push | _Supabase Realtime + expo-notifications (notificaciones locales disparadas por eventos de la base de datos)_ | _Al detectar cambios en tiempo real sobre las tablas (por ejemplo, un nuevo cliente pendiente de aprobación), se dispara una notificación local en el dispositivo del dueño/supervisor sin necesidad de un servidor propio de push._ |
-| Envío de correos automáticos | _(a completar)_ | _(a completar)_ |
+|  Base de datos | PostgreSQL (gestionado por Supabase) | Motor relacional robusto. Permite modelar las relaciones del restaurante (perfiles, mesas, pedidos, ítems de pedido, lista de espera, mensajes de mesa) con claves foráneas y restricciones `CHECK` (por ejemplo, los estados válidos de un pedido). 
+ | Notificaciones push | _Supabase Realtime + expo-notifications (notificaciones locales disparadas por eventos de la base de datos)_ | _Al detectar cambios en tiempo real sobre las tablas (por ejemplo, un nuevo cliente pendiente de aprobación), se dispara una notificación local en el dispositivo del dueño/supervisor sin necesidad de un servidor propio de push._ |
 | Lectura/generación de código QR | _react-native-qrcode-svg (generación)_ | _Librería liviana que renderiza el QR como componente SVG nativo, sin depender de servicios externos de generación de imágenes. Se usa para generar automáticamente el QR de cada mesa al momento del alta._ |
 | Autenticación / perfiles | _Supabase Auth + tabla profiles (con campo perfil para el rol)_ | _Maneja registro, login y sesión persistente de forma nativa junto con el resto del backend. Los roles (dueño, supervisor, empleados, cliente registrado) se modelan en la tabla profiles, vinculada al usuario autenticado, y las políticas de RLS restringen qué puede hacer cada rol directamente a nivel de base de datos._ |
-| Otros | _(a completar)_ | _(a completar)_ |
 
 ---
 
@@ -68,48 +66,22 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 ---
 
 ### Sprint 4 — Sábado 26 de septiembre
-**Alcance:** Requisitos 10, 11, 12 (Asignación de mesa / Listado de productos y consulta al mozo / Pedido del cliente)
+**Alcance:** Requisitos 15, 16, 17, 18,19,20,21 y 22 (Juegos y descuentos / Sector cocina / Sector bar / Aviso de pedido completo,Entrega del pedido / Encuesta / Solicitud de cuenta / Confirmación de pago y liberación de mesa)
 
 | Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
 |---|---|---|---|---|
-| | | | | |
-| | | | | |
-| | | | | |
+| Jauregui Enzo | Módulos 15, 16, 17 y 18 | 20/9 | 25/9| Jauregui |
+| Delgobbo Giuliana | Módulos 19 y 20 | 20/9 |25/9 | Delgobbo |
+| Almonacid Emir | Módulos 21 y 22 | 20/9 | 25/9| Almonacid |
+| Gomez Facundo | Mejora de la interacion para el usuario de manager-home y adaptacion ux/ui | 20/9 | 25/9| Almonacid |
 
 ---
 
-### Sprint 5 — Sábado 03 de octubre
-**Alcance:** Requisitos 13, 14, 15 (Rechazo/confirmación del pedido por el mozo / Juegos y descuentos)
-
-| Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
-|---|---|---|---|---|
-| | | | | |
-| | | | | |
-| | | | | |
-
-> **Nota:** Mínimo de puntos aprobados requerido para poder realizar la entrega en primera fecha.
-
----
-
-### Sprint 6 — Sábado 10 de octubre
-**Alcance:** Requisitos 16, 17, 18 (Sector cocina / Sector bar / Aviso de pedido completo)
-
-| Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
-|---|---|---|---|---|
-| | | | | |
-| | | | | |
-| | | | | |
-
----
 
 ### Sprint 7 — Sábado 17 de octubre
-**Alcance:** Requisitos 19, 20, 21, 22 (Entrega del pedido / Encuesta / Solicitud de cuenta / Confirmación de pago y liberación de mesa)
+**Alcance:** Muestra de la interaccion completa de la app de parte de los 4 integrantes del grupo y mejora de la experiencia de usuario en general
 
-| Apellidos y nombres | Módulos (objetivos) a desarrollar | Fecha de inicio | Fecha de finalización | Branch |
-|---|---|---|---|---|
-| | | | | |
-| | | | | |
-| | | | | |
+
 
 ---
 
@@ -166,13 +138,30 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 > _### Estado de los módulos 1 al 6 (primera fecha de entrega)
 
-| # | Módulo | Responsable | Estado |
+ # | Módulo | Responsable | Estado |
 |---|---|---|---|
 | 1 | Agregar un empleado (dispositivo 1) | Delgobbo Giuliana | ✅ Finalizado |
 | 2 | Agregar un nuevo plato (dispositivo 2) | Jauregui Enzo | ✅ Finalizado |
-| 3 | Agregar una nueva bebida (dispositivo 3) | Jauregui Enzo | ✅ Finalizado|
-| 4 | Agregar una nueva mesa (dispositivo 4) | Gómez Facundo | ✅ Finalizado  |
+| 3 | Agregar una nueva bebida (dispositivo 3) | Jauregui Enzo | ✅ Finalizado |
+| 4 | Agregar una nueva mesa (dispositivo 4) | Gómez Facundo | ✅ Finalizado |
 | 5 | Crear un cliente registrado (dispositivo 2) | Delgobbo Giuliana | ✅ Finalizado |
+| 6 | Verificar ingreso del cliente registrado (dispositivo 1) | Gómez Facundo | ✅ Finalizado |
+| 7 | Rechazo de un cliente por el dueño o supervisor | Almonacid Emir | ✅ Finalizado ||
+| 8 | Aceptación de un cliente por el dueño o supervisor | Almonacid Emir | ✅ Finalizado ||
+| 9 | Ingreso al local como cliente anónimo | Jauregui Enzo |✅ Finalizado ||
+| 10 | Asignación de mesa por el metre | Jauregui Enzo | ✅ Finalizado |
+| 11 | Listado de productos y consulta al mozo (chat) | Delgobbo Giuliana | ✅ Finalizado |
+| 12 | Pedido del cliente para todos los comensales | Almonacid Emir | ✅ Finalizado |
+| 13 | Rechazo del pedido por el mozo | Almonacid Emir | ✅ Finalizado |
+| 14 | Confirmación del pedido por el mozo y derivación a sectores | Gómez Facundo | ✅ Finalizado |
+| 15 | Juegos y descuentos | Jauregui Enzo | ✅ Finalizado | |
+| 16 | Sector cocina recibe los productos | Jauregui Enzo | ✅ Finalizado | |
+| 17 | Sector bar recibe los productos | Jauregui Enzo | ✅ Finalizado ||
+| 18 | Aviso de pedido completo al mozo | Jauregui Enzo | ✅ Finalizado | |
+| 19 | Entrega del pedido | Delgobbo Giuliana | ✅ Finalizado ||
+| 20 | Encuesta de satisfacción | Delgobbo Giuliana | ✅ Finalizado | |
+| 21 | Solicitud de la cuenta y propina | Almonacid Emir | ✅ Finalizado | |
+| 22 | Confirmación de pago y liberación de mesa | Almonacid Emir | ✅ Finalizado | |
 
 
 
