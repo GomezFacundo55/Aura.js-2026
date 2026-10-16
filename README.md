@@ -136,8 +136,6 @@ Cada semana representa un sprint. Por cada sprint se detalla la tabla de tareas 
 
 ## 4. Estado general del proyecto
 
-> _### Estado de los módulos 1 al 6 (primera fecha de entrega)
-
  # | Módulo | Responsable | Estado |
 |---|---|---|---|
 | 1 | Agregar un empleado (dispositivo 1) | Delgobbo Giuliana | ✅ Finalizado |
